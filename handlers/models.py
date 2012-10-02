@@ -3,8 +3,9 @@
 
 from google.appengine.ext import ndb
 
+
 class UserInfo(ndb.Expando):
-    user = ndb.UserProperty() 
+    user = ndb.UserProperty()
     email = ndb.ComputedProperty(lambda self: self.user.email())
     data = ndb.DateTimeProperty(auto_now=True)
     mys = ndb.BooleanProperty(default=False)
@@ -18,7 +19,7 @@ class UserInfo(ndb.Expando):
         return Tags.query(Tags.user == self.user)
 
 
-class Tags(ndb.Model):
+class Tags(ndb.Expando):
     data = ndb.DateTimeProperty(auto_now=True)
     user = ndb.UserProperty(required=True)
     name = ndb.StringProperty()
@@ -38,21 +39,20 @@ class Tags(ndb.Model):
         return other
 
 
-class Feeds(ndb.Model):
-    user = ndb.UserProperty() 
+class Feeds(ndb.Expando):
+    user = ndb.UserProperty()
     data = ndb.DateTimeProperty(auto_now=True)
-    tags = ndb.KeyProperty(kind=Tags,repeated=True)
-    feed = ndb.StringProperty()#url
-    blog = ndb.StringProperty(indexed=False)#feed.title
-    root = ndb.StringProperty(indexed=False)#feed.link
+    tags = ndb.KeyProperty(kind=Tags, repeated=True)
+    feed = ndb.StringProperty()  # url
+    blog = ndb.StringProperty(indexed=False)  # feed.title
+    root = ndb.StringProperty(indexed=False)  # feed.link
     notify = ndb.StringProperty(choices=['web', 'email', 'digest'], default="web")
-    url = ndb.StringProperty()#link 
+    url = ndb.StringProperty()  # link
 
     @property
     def id(self):
         return self.key.id()
 
-    @property
     def other_tags(self):
         q = ndb.gql("SELECT name FROM Tags WHERE user = :1", self.user)
         all_user_tags = [tagk.key for tagk in q]
@@ -61,36 +61,33 @@ class Feeds(ndb.Model):
         return all_user_tags
 
 
-class Bookmarks(ndb.Model):
+class Bookmarks(ndb.Expando):
     data = ndb.DateTimeProperty(auto_now=True)
-    create = ndb.DateTimeProperty(auto_now_add=True)
     user = ndb.UserProperty(required=True)
-    original = ndb.StringProperty()
     url = ndb.StringProperty()
-    title = ndb.StringProperty()
+    title = ndb.StringProperty(indexed=False)
     comment = ndb.TextProperty(indexed=False)
     domain = ndb.StringProperty()
+    blob_bey = ndb.BlobKeyProperty()
     feed = ndb.KeyProperty(kind=Feeds)
-    labels = ndb.StringProperty(repeated=True)
-    tags = ndb.KeyProperty(kind=Tags,repeated=True)
+    tags = ndb.KeyProperty(kind=Tags, repeated=True)
     archived = ndb.BooleanProperty(default=False)
     starred = ndb.BooleanProperty(default=False)
     shared = ndb.BooleanProperty(default=False)
     trashed = ndb.BooleanProperty(default=False)
     have_tags = ndb.ComputedProperty(lambda self: bool(self.tags))
-    
+
     @property
     def id(self):
         return self.key.id()
-        
-    @property
+
     def other_tags(self):
         q = ndb.gql("SELECT name FROM Tags WHERE user = :1", self.user)
         all_user_tags = [tagk.key for tagk in q]
         for tagk in self.tags:
             all_user_tags.remove(tagk)
         return all_user_tags
-    
+
     @property
     def ha_mys(self):
         return UserInfo.query(UserInfo.user == self.user).get().mys

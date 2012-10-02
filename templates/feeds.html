@@ -1,44 +1,19 @@
-{% extends "base.html" %}
-
-{% block navbar %}
-{% include "navbar.html" %}
-{% endblock %}
-
-{% block content %}
-
-<div class="container">
-<div class="row">
-{% include "sidebar.html" %}
-<div class="span10">
-
-
-<div class="row-fluid"> 
-    <div class="well well-small"> 
-        <form class="form-horizontal" action="/feed" method="post">
-            <div class="control-group">
-                <label class="control-label" for="inputEmail">Add Feed</label>
-                <div class="controls">
-                    <input type="text" class="input span12" name="url" allowBlank="true">
-                </div>
-            </div>
-        </form> 
-        <div class="alert alert-info" id="tips-feed"> 
-            <button type="button" class="close" data-dismiss="alert">×</button> 
-            <h4>Tips:</h4> 
-            <dt>Starred items in Google Reader:</dt>
-            <dd>http://www.google.com/reader/public/atom/user/<strong>[user-id]</strong>/state/com.google/starred</dd>
-            <dt>Favorite tweet in Twitter:</dt>
-                <dd>http://twitter.com/favorites/<strong>[username]</strong>.rss</dd>
-            <dt>Youtube user upload:</dt>
-                <dd>http://gdata.youtube.com/feeds/base/users/<strong>[username]</strong>/uploads?alt=rss</dd>
-
-        </div> 
-    </div> 
+<div class="row-fluid">
+<div class="well well-small">
+<form class="form-horizontal" action="/feed" method="post">
+    <div class="control-group">
+        <label class="control-label">Add Feed</label>
+        <div class="controls">
+            <input type="text" class="input span12" name="url" allowBlank="true">
+        </div>
+    </div>
+</form>
+</div>
 </div>
 
 {% for feed in feeds %}
 <div class="well well-small" id="row-{{ feed.id }}" >
-    <dt> 
+    <dt>
         <a class="btn disabled btn-mini"><i class="icon-time"></i> {{ feed.data|dtf }}</a>
         <a href="{{ feed.root }}" ><strong> {{ feed.blog }}</strong></a>
     </dt>
@@ -66,8 +41,6 @@
     </dd>
     <dd id="comment-{{ feed.id }}" class=""></dd>
 </div>
-    
-    <script src="js/feeds.js"></script>
     {% if feed.notify == 'digest' %}
     <script>$("#n-d-{{ feed.id }}").button('toggle')</script>
     {% elif feed.notify == 'email' %}
@@ -75,10 +48,4 @@
     {% else  %}
     <script>$("#n-w-{{ feed.id }}").button('toggle')</script>
     {% endif %}
-
 {% endfor %}
-
-</div><!-- span9 -->
-</div><!-- row -->
-</div><!-- container -->
-{% endblock %}

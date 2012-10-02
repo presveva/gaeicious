@@ -14,10 +14,6 @@ queue:
   rate: 5/s
   bucket_size: 20
 
-- name: importer
-  rate: 5/s
-  bucket_size: 20
-
 - name: bookmarks
   rate: 5/s
   bucket_size: 20
@@ -25,3 +21,13 @@ queue:
 - name: emails
   rate: 5/s
   bucket_size: 20
+
+- name: importer
+  rate: 5/s
+  bucket_size: 20
+  target: worker
+
+- name: delicious
+  rate: 20/s
+  bucket_size: 40
+  target: worker

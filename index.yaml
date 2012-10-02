@@ -30,7 +30,7 @@ indexes:
   - name: feed
   - name: trashed
   - name: user
-  - name: create
+  - name: data
     direction: desc
 
 - kind: Bookmarks
@@ -74,13 +74,6 @@ indexes:
   properties:
   - name: trashed
   - name: user
-  - name: create
-    direction: desc
-
-- kind: Bookmarks
-  properties:
-  - name: trashed
-  - name: user
   - name: data
     direction: desc
 
@@ -88,17 +81,6 @@ indexes:
   properties:
   - name: user
   - name: data
-    direction: desc
-
-- kind: Tags
-  properties:
-  - name: user
-  - name: counter
-
-- kind: Tags
-  properties:
-  - name: user
-  - name: counter
     direction: desc
 
 - kind: Tags

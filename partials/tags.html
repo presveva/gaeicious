@@ -1,7 +1,7 @@
 <div class="btn-toolbar">
 {% for tag in bm.tags %}
 <div class="btn-group">
-    <a class="btn btn-mini btn-link disabled" href="/filter?tag={{ tag.get().name }}">
+    <a class="btn btn-mini btn-link disabled" onclick="getbms('filter','','{{ tag.get().name }}')"
         <i class="icon-tag"></i> {{ tag.get().name }}</a>
     <a class="btn btn-mini btn-link disabled" onclick="removetag({{ bm.id }}, {{ tag.id() }})" >
         <i class="icon-remove"></i></a>

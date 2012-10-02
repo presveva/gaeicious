@@ -1,3 +1,3 @@
-{% for tag in bm.other_tags %}   
-  <a class="btn btn-mini btn-link " onclick="assigntag({{ bm.id }}, {{ tag.id() }})">{{ tag.get().name }}</a>
+{% for tag in bm.other_tags() %}
+  <a id="tag-{{ tag.id() }}" class="btn btn-mini btn-link " onclick="assigntag({{ bm.id }}, {{ tag.id() }})">{{ tag.get().name }}</a>
 {% endfor %}

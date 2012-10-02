@@ -1,15 +1,5 @@
-{% extends "base.html" %}
-
-{% block navbar %}
-{% include "navbar.html" %}
-{% endblock %}
-
-{% block content %}
-<div class="container">
-<div class="row">
-{% include "sidebar.html" %}
-<div class="span10"> 
-    <div> 
+<div class="span10">
+    <div>
         <form action="/admin/delattr" class="form-inline" method="post">
             <input type="text" placeholder="Model" class="input-medium" name="model">
             <input type="text" placeholder="Property" class="input-medium" name="prop">
@@ -17,7 +7,7 @@
         </form>
     </div>
     <hr>
-    <div> 
+    <div>
         <a class="btn" href="/admin/script" > Script </a>
         <a class="btn" href="/admin/digest" > digest </a>
         <a class="btn" href="/admin/activity" > activity </a>
@@ -26,6 +16,3 @@
     </div>
     <hr>
 </div>
-</div>
-</div>
-{% endblock %}

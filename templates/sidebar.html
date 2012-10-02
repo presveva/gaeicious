@@ -1,0 +1,33 @@
+<div class="span2 ">
+<div class=" sidebar-nav-fixed">
+    <ul class="nav nav-list  hidden-phone" id="navbar">
+        <li id="inbox" ><a onclick="getbms('inbox')" href="#inbox" >
+            <i class="icon-inbox" ></i> Inbox </a></li>
+        <li id="starred" ><a onclick="getbms('starred')" href="#starred" ><i class="icon-star"></i> Starred </a></li>
+        <li id="shared" ><a onclick="getbms('shared')" href="#shared"><i class="icon-eye-open" ></i> Shared </a></li>
+        <li id="archived" ><a onclick="getbms('archived')" href="#archived"><i class="icon-book" ></i> Archive </a></li>
+        <li id="untagged" ><a onclick="getbms('untagged')" href="#untagged"><i class="icon-flag"></i> Untagged </a></li>
+        <li id="trashed" ><a onclick="getbms('trashed')" href="#trashed"><i class="icon-trash"></i> Trash </a></li>
+        <li class="divider"></li>
+        <li id="stream" ><a onclick="getbms('stream')" href="#stream" ><i class="icon-globe" ></i> Stream </a></li>
+        <li class="divider"></li>
+        <li id="tagcloud" ><a href="#" onclick="support('/gettagcloud')"><i class="icon-tags" ></i> Tagcloud </a></li>
+        <li id="feeds" ><a onclick="getpages('feeds')" href="#feeds" ><i class="icon-fire" ></i> Feeds </a></li>
+        <li id="setting" ><a onclick="getpages('setting')" href="#setting" ><i class="icon-wrench" ></i> Setting </a></li>
+
+
+        {% if admin %}
+        <li class="divider"></li>
+        <li id="admin"><a onclick="getpages('admin')" href="#admin" ><i class="icon-lock" ></i> Admin </a></li>
+        {% endif %}
+
+        {% if tagset %}
+        <li class="divider"></li>
+        <li class="nav-header"><i class="icon-filter"></i> Refine the filter<li>
+        {% for tagk in tagset %}
+        <li> <a href="/refine?arg1={{ arg1.name }}&arg2={{ tagk.get().name }}"> {{ tagk.get().name }} </a> </li>
+        {% endfor %}
+        {% endif %}
+    </ul>
+</div>
+</div>

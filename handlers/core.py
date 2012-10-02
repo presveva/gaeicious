@@ -1,44 +1,14 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 
-import utils
 from webapp2 import RequestHandler
 from google.appengine.api import users
 from google.appengine.ext import ndb, deferred
 from models import Feeds, Bookmarks, Tags, UserInfo
-
-class AddFeed(RequestHandler): 
-    def post(self):
-        from libs.feedparser import parse
-        user = users.get_current_user()
-        url = self.request.get('url')
-        p = parse(str(url))
-        try:
-            d = p['items'][0]
-        except IndexError:
-            pass
-        if user:
-            q = Feeds.query(Feeds.user == user, Feeds.url == url)
-            if q.get() is None:
-                feed = Feeds()
-                def txn():
-                    feed.blog = p.feed.title
-                    feed.root = p.feed.link
-                    feed.user = user
-                    feed.feed = url
-                    feed.url = d.link
-                    feed.put()
-                ndb.transaction(txn)
-                deferred.defer(utils.new_bm, d, feed.key, _queue="admin")
-            self.redirect(self.request.referer)
-        else:
-            self.redirect('/')
-    def get(self):
-        feed = Feeds.get_by_id(int(self.request.get('id')))
-        feed.key.delete()
+from handlers import util, parser
 
 
-class EditBM(RequestHandler): 
+class EditBM(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         if users.get_current_user() == bm.user:
@@ -51,18 +21,30 @@ class EditBM(RequestHandler):
         self.redirect('/')
 
 
-class DeleteTag(RequestHandler): 
+# class DeleteTag(RequestHandler):
+#     def get(self):
+#         tag = Tags.get_by_id(int(self.request.get('tag')))
+#         if users.get_current_user() == tag.user:
+#             bmq = Bookmarks.query(Bookmarks.tags == tag.key)
+#             for bm in bmq:
+#                 bm.tags.remove(tag.key)
+#                 bm.put()
+#             tag.key.delete()
+#         self.redirect(self.request.referer)
+
+
+class Empty_Trash(RequestHandler):
     def get(self):
-        tag = Tags.get_by_id(int(self.request.get('tag')))
-        if users.get_current_user() == tag.user:
-            tag.key.delete()
+        bmq = Bookmarks.query(Bookmarks.user == users.get_current_user())
+        bmq = bmq.filter(Bookmarks.trashed == True)
+        ndb.delete_multi([bm.key for bm in bmq])
         self.redirect(self.request.referer)
 
 
-class AssTagFeed(RequestHandler): 
+class AssTagFeed(RequestHandler):
     def get(self):
         feed = Feeds.get_by_id(int(self.request.get('feed')))
-        tag  = Tags.get_by_id(int(self.request.get('tag')))
+        tag = Tags.get_by_id(int(self.request.get('tag')))
         if users.get_current_user() == feed.user:
             if tag in feed.tags:
                 pass
@@ -72,66 +54,58 @@ class AssTagFeed(RequestHandler):
         self.redirect(self.request.referer)
 
 
-class RemoveTagFeed(RequestHandler): 
+class RemoveTagFeed(RequestHandler):
     def get(self):
         feed = Feeds.get_by_id(int(self.request.get('feed')))
-        tag  = Tags.get_by_id(int(self.request.get('tag')))
+        tag = Tags.get_by_id(int(self.request.get('tag')))
         if users.get_current_user() == feed.user:
             feed.tags.remove(tag.key)
             feed.put()
-        self.redirect(self.request.referer) 
-
-
-class Empty_Trash(RequestHandler): 
-    def get(self):
-        bmq = Bookmarks.query(Bookmarks.user == users.get_current_user())
-        bmq = bmq.filter(Bookmarks.trashed == True)
-        bmq = bmq.order(-Bookmarks.data).fetch()
-        ndb.delete_multi([bmk.key for bmk in bmq])
         self.redirect(self.request.referer)
+
+
+class CheckFeed(RequestHandler):
+    def get(self):
+        feed = Feeds.get_by_id(int(self.request.get('feed')))
+        deferred.defer(parser.pop_feed, feed.key, _target="worker", _queue="admin")
 
 
 #### admin ###
 
-class CheckFeed(RequestHandler): 
-    def get(self):
-        feed = Feeds.get_by_id(int(self.request.get('feed')))
-        deferred.defer(utils.pop_feed, feed.key, _queue="admin")
-
-
 class CheckFeeds(RequestHandler):
-    def get(self): 
-        for feed in Feeds.query(): 
-            deferred.defer(utils.pop_feed, feed.key, _target="worker", _queue="admin")
+    def get(self):
+        for feed in Feeds.query():
+            deferred.defer(parser.pop_feed, feed.key, _target="worker", _queue="admin")
 
 
 class SendDigest(RequestHandler):
-    def get(self): 
-        for feed in Feeds.query(): 
-            if feed.notify == 'digest': 
-                deferred.defer(utils.feed_digest, feed.key, _target="worker", _queue="admin")
+    def get(self):
+        for feed in Feeds.query():
+            if feed.notify == 'digest':
+                deferred.defer(util.feed_digest, feed.key, _target="worker", _queue="emails")
 
 
 class SendActivity(RequestHandler):
-    def get(self): 
-        for ui in UserInfo.query(): 
-            if ui.daily: 
-                deferred.defer(utils.daily_digest, ui.user, _target="worker", _queue="admin")
+    def get(self):
+        for ui in UserInfo.query():
+            if ui.daily:
+                deferred.defer(util.daily_digest, ui.user, _target="worker", _queue="emails")
 
 
 class del_attr(RequestHandler):
     """delete old property from datastore"""
-    def post(self): 
-        model = self.request.get('model') 
-        prop = self.request.get('prop') 
-        q = ndb.gql("SELECT * FROM %s" % (model)) 
-        for r in q: 
-            deferred.defer(delatt, r.key, prop, _queue="admin") 
+    def post(self):
+        model = self.request.get('model')
+        prop = self.request.get('prop')
+        q = ndb.gql("SELECT %s FROM %s" % (prop, model))
+        for r in q:
+            deferred.defer(delatt, r.key, prop, _queue="admin")
         self.redirect('/admin')
 
-def delatt(rkey, prop): 
-    r = rkey.get() 
-    delattr(r, '%s' % prop) 
+
+def delatt(rkey, prop):
+    r = rkey.get()
+    delattr(r, '%s' % prop)
     r.put()
 
 
@@ -141,7 +115,7 @@ class Upgrade(RequestHandler):
     """change this handler for admin operations"""
     def get(self):
         for tag in Tags.query():
-            tag.put() 
+            tag.put()
 
 
 def upgrade(itemk):
@@ -149,15 +123,15 @@ def upgrade(itemk):
         tag.put()
 
 
-class Script(RequestHandler): 
+class Script(RequestHandler):
     def get(self):
         for bm in Bookmarks.query():
             deferred.defer(add_domain, bm.key, _target="worker", _queue="admin")
 
+
 def add_domain(bmk):
-    import urlparse
     bm = bmk.get()
-    url_parsed = urlparse.urlparse(bm.url)
-    if bm.domain != url_parsed.netloc:
-        bm.domain = url_parsed.netloc
+    for t in bm.tags:
+        name = t.get().name
+        bm.labels.append(name)
         bm.put()

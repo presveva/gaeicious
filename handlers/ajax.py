@@ -9,18 +9,20 @@ from models import Bookmarks, UserInfo, Feeds, Tags
 jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(['templates', 'partials']))
 
-class TrashBM(RequestHandler): 
+
+class TrashBM(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         if users.get_current_user() == bm.user:
             if bm.trashed == False:
-                bm.trashed = True
                 bm.archived = False
+                bm.trashed = True
                 bm.put()
             else:
                 bm.key.delete()
 
-class ArchiveBM(RequestHandler): 
+
+class ArchiveBM(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         if users.get_current_user() == bm.user:
@@ -33,36 +35,66 @@ class ArchiveBM(RequestHandler):
                 bm.archived = True
             bm.put()
 
-class GetComment(RequestHandler): 
+
+class GetComment(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         self.response.write(bm.comment)
 
-class GetTagsFeed(RequestHandler): 
+
+class GetTagsFeed(RequestHandler):
     def get(self):
         feed = Feeds.get_by_id(int(self.request.get('feed')))
-        template = jinja_environment.get_template('gettagsfeed.html') 
-        values = {'feed': feed} 
+        template = jinja_environment.get_template('gettagsfeed.html')
+        values = {'feed': feed}
         other_tags = template.render(values)
         self.response.write(other_tags)
 
-class GetTags(RequestHandler): 
+
+class GetTags(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
-        template = jinja_environment.get_template('other_tags.html') 
-        values = {'bm': bm} 
+        template = jinja_environment.get_template('other_tags.html')
+        values = {'bm': bm}
         other_tags = template.render(values)
         self.response.write(other_tags)
 
-class GetEdit(RequestHandler): 
+
+class GetEdit(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
-        template = jinja_environment.get_template('edit.html') 
-        values = {'bm': bm} 
+        template = jinja_environment.get_template('edit.html')
+        values = {'bm': bm}
         html_page = template.render(values)
         self.response.write(html_page)
 
-class StarBM(RequestHandler): 
+
+class gettagcloud(RequestHandler):
+    def get(self):
+        q = Tags.query(Tags.user == users.get_current_user())
+        q = q.order(Tags.name)
+        template = jinja_environment.get_template('tagcloud.html')
+        values = {'q': q}
+        html = template.render(values)
+        self.response.set_cookie('active-tab', 'tagcloud')
+        self.response.write(html)
+
+
+class get_tips(RequestHandler):
+    def get(self):
+        template = jinja_environment.get_template('tips.html')
+        html = template.render({})
+        self.response.write(html)
+
+
+class get_empty_trash(RequestHandler):
+    def get(self):
+        template = jinja_environment.get_template('empty_trash.html')
+        html = template.render({})
+        self.response.write(html)
+
+
+class StarBM(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         if users.get_current_user() == bm.user:
@@ -75,7 +107,8 @@ class StarBM(RequestHandler):
             bm.put()
         self.response.write(html)
 
-class ShareBM(RequestHandler): 
+
+class ShareBM(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         if users.get_current_user() == bm.user:
@@ -89,7 +122,7 @@ class ShareBM(RequestHandler):
         self.response.write(html)
 
 
-class AddTag(RequestHandler): 
+class AddTag(RequestHandler):
     def get(self):
         user = users.get_current_user()
         tag_str = self.request.get('tag')
@@ -98,12 +131,13 @@ class AddTag(RequestHandler):
             if tag is None:
                 newtag = Tags()
                 newtag.name = tag_str
-                newtag.user = user 
+                newtag.user = user
             else:
                 newtag = tag
             newtag.put()
 
-class AssignTag(RequestHandler): 
+
+class AssignTag(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         tag = Tags.get_by_id(int(self.request.get('tag')))
@@ -111,11 +145,12 @@ class AssignTag(RequestHandler):
         bm.tags.append(tag.key)
         bm.put()
         template = jinja_environment.get_template('tags.html')
-        values = {'bm': bm} 
-        tags = template.render(values)
-        self.response.write(tags)
-        
-class RemoveTag(RequestHandler): 
+        values = {'bm': bm}
+        html = template.render(values)
+        self.response.write(html)
+
+
+class RemoveTag(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         tag = Tags.get_by_id(int(self.request.get('tag')))
@@ -123,12 +158,32 @@ class RemoveTag(RequestHandler):
         bm.tags.remove(tag.key)
         bm.put()
         template = jinja_environment.get_template('tags.html')
-        values = {'bm': bm} 
-        tags = template.render(values)
-        self.response.write(tags)
+        values = {'bm': bm}
+        html = template.render(values)
+        self.response.write(html)
 
 
-class SetMys(RequestHandler): 
+class get_refine_tags(RequestHandler):
+    def get(self):
+        from util import tag_set
+        arg1 = self.request.get('arg1')
+        q1 = Bookmarks.query(Bookmarks.user == users.get_current_user())
+        q2 = q1.order(-Bookmarks.data)
+        t1 = Tags.query(Tags.user == users.get_current_user())
+        tag1 = t1.filter(Tags.name == arg1).get()
+        bmq = q2.filter(Bookmarks.tags == tag1.key)
+        tagset = tag_set(bmq)
+        tagset.remove(tag1.key)
+        template = jinja_environment.get_template('tagset.html')
+        html = template.render({'tagset': tagset, 'arg1': arg1})
+        self.response.write(html)
+
+###################################################
+## Setting page
+###################################################
+
+
+class SetMys(RequestHandler):
     def get(self):
         ui = UserInfo.query(UserInfo.user == users.get_current_user()).get()
         if ui.mys == False:
@@ -140,7 +195,8 @@ class SetMys(RequestHandler):
         ui.put()
         self.response.write(html)
 
-class SetDaily(RequestHandler): 
+
+class SetDaily(RequestHandler):
     def get(self):
         ui = UserInfo.query(UserInfo.user == users.get_current_user()).get()
         if ui.daily == False:
@@ -152,7 +208,8 @@ class SetDaily(RequestHandler):
         ui.put()
         self.response.write(html)
 
-class SetTwitt(RequestHandler): 
+
+class SetTwitt(RequestHandler):
     def get(self):
         ui = UserInfo.query(UserInfo.user == users.get_current_user()).get()
         if ui.twitt == False:
@@ -165,7 +222,7 @@ class SetTwitt(RequestHandler):
         self.response.write(html)
 
 
-class SetNotify(RequestHandler): 
+class SetNotify(RequestHandler):
     def get(self):
         feed = Feeds.get_by_id(int(self.request.get('feed')))
         feed.notify = self.request.get('notify')
