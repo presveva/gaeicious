@@ -1,4 +1,4 @@
-<dt > <i class="icon-bookmark"></i> <a href="{{ bm.url }}" target="_blank">{{ bm.title|e }}</a>
+<dt > <i class="icon-bookmark"></i> <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(110) }}</a>
     <a class="btn btn-link btn-mini " onclick="getbms('domain','','{{ bm.domain }}')"><em>{{ bm.domain }}</em> </a>
     {% if ui.twitt %}
     <div class=" hidden-phone btn-group pull-right" >

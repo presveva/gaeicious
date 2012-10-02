@@ -45,6 +45,13 @@ indexes:
   properties:
   - name: shared
   - name: trashed
+  - name: data
+    direction: desc
+
+- kind: Bookmarks
+  properties:
+  - name: shared
+  - name: trashed
   - name: user
   - name: data
     direction: desc
@@ -74,13 +81,6 @@ indexes:
   properties:
   - name: trashed
   - name: user
-  - name: data
-    direction: desc
-
-- kind: Bookmarks
-  properties:
-  - name: shared
-  - name: trashed
   - name: data
     direction: desc
 
