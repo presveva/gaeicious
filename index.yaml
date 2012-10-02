@@ -77,6 +77,13 @@ indexes:
   - name: data
     direction: desc
 
+- kind: Bookmarks
+  properties:
+  - name: shared
+  - name: trashed
+  - name: data
+    direction: desc
+
 - kind: Feeds
   properties:
   - name: user
@@ -87,9 +94,3 @@ indexes:
   properties:
   - name: user
   - name: name
-
-- kind: Bookmarks
-  properties:
-  - name: shared
-  - name: trashed
-  - name: user

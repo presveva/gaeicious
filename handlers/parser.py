@@ -33,7 +33,7 @@ def submit_bm(feed, user, title, url, comment):
     ext = name.split('.')[-1].lower()
 
     if title == '':
-        bm.title = name
+        bm.title = url_candidate
     else:
         bm.title = title
 
