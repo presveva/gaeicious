@@ -88,10 +88,10 @@ class Main_Frame(BaseHandler):
             bmq = q2.filter(Bookmarks.tags == tag1.key)
             bmq = bmq.filter(Bookmarks.tags == tag2.key)
         elif page == 'stream':
-            bmq = Bookmarks.query(Bookmarks.shared == True)
+            bmq = Bookmarks.query(Bookmarks.user != users.get_current_user())
             bmq = bmq.filter(Bookmarks.trashed == False)
-            bmq = bmq.filter(Bookmarks.user != users.get_current_user())
-            bmq = bmq.order(Bookmarks.user, -Bookmarks.data, Bookmarks._key)
+            bmq = bmq.filter(Bookmarks.shared == True)
+            bmq = bmq.order(Bookmarks.user, Bookmarks.key, -Bookmarks.data)
         else:
             bmq = q3.filter(Bookmarks.archived == False)
         return bmq
@@ -99,7 +99,7 @@ class Main_Frame(BaseHandler):
     def build(self, page, bmq, cursor, arg1, arg2):
         c = ndb.Cursor(urlsafe=cursor)
         bms, next_curs, more = bmq.fetch_page(10, start_cursor=c)
-        if more:
+        if more and next_curs:
             next_c = next_curs.urlsafe()
         else:
             next_c = None

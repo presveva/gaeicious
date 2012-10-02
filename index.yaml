@@ -87,3 +87,9 @@ indexes:
   properties:
   - name: user
   - name: name
+
+- kind: Bookmarks
+  properties:
+  - name: shared
+  - name: trashed
+  - name: user
