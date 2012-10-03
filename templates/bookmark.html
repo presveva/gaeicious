@@ -8,10 +8,13 @@
 
 <dt>
 <div class="btn-toolbar visible-phone">
-        <button class="btn btn-mini" onclick="star({{ bm.id }})" id="star-{{ bm.id }}">
-            {% if bm.starred %}<i class="icon-star">{% else %}<i class="icon-star-empty">{% endif %}</i>
+        <button class="btn btn-mini star-{{ bm.id }}" onclick="star({{ bm.id }})">
+            {% if bm.starred %}<i class="icon-star"></i> starred
+            {% else %}<i class="icon-star-empty"></i>{% endif %}
         </button>
+
         <button class="btn btn-mini" onclick="comment('/getcomment',{{ bm.id }})"><i class="icon-comment"></i> comment</button>
+
         <button class="btn btn-mini" onclick="archive({{ bm.id }})">
         {% if bm.archived or bm.trashed %}
         <i class="icon-inbox"></i> inbox</button>
@@ -29,11 +32,13 @@
 
 <div class="btn-toolbar hidden-phone">
     <div class="btn-group" >
-        <button class="btn btn-mini" onclick="star({{ bm.id }})" id="star-{{ bm.id }}">
-            {% if bm.starred %}<i class="icon-star">{% else %}<i class="icon-star-empty">{% endif %}</i>
+        <button class="btn btn-mini star-{{ bm.id }}" onclick="star({{ bm.id }})">
+            {% if bm.starred %}<i class="icon-star"></i> starred
+            {% else %}<i class="icon-star-empty"></i>{% endif %}
         </button>
-        <button class="btn btn-mini" onclick="share({{ bm.id }})" id="share-{{ bm.id }}">
-            {% if bm.shared %}<i class="icon-eye-open"></i> shared{% else %}<i class="icon-eye-close"></i>{% endif %}
+        <button class="btn btn-mini share-{{ bm.id }}" onclick="share({{ bm.id }})" >
+            {% if bm.shared %}<i class="icon-eye-open"></i> shared
+            {% else %}<i class="icon-eye-close"></i>{% endif %}
         </button>
     </div>
 

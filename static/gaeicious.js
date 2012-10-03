@@ -68,7 +68,7 @@ function star (id) {
         data: { bm: id },
         success: function(html) {
             $("#dashboard").html('<a>Star status changed</a>');
-            $("#star-"+id).html(html);
+            $(".star-"+id).html(html);
         } }); }
 
 function share (id) {
@@ -77,7 +77,7 @@ function share (id) {
         data: { bm: id },
         success: function(html) {
             $("#dashboard").html('<a>Share status changed</a>');
-            $("#share-"+id).html(html);
+            $(".share-"+id).html(html);
         } }); }
 
 function comment (url, id) {
