@@ -62,10 +62,17 @@ class ReceiveMail(RequestHandler):
             txtmsg = text[1].decode()
         f = None
         u = users.User(utils.parseaddr(message.sender)[1])
-        t = header.decode_header(message.subject)[0][0]
         o = txtmsg.encode('utf8')
+        t = self.get_subject(o, message)
         c = 'Sent via email'
         deferred.defer(submit_bm, f, u, t, o, c, _queue="admin")
+
+    def get_subject(self, o, message):
+        try:
+            t = header.decode_header(message.subject)[0][0]
+            return t
+        except:
+            return o
 
 
 class CopyBM(RequestHandler):

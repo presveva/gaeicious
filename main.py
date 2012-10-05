@@ -74,7 +74,7 @@ class Main_Frame(BaseHandler):
         elif page == 'starred':
             bmq = q3.filter(Bookmarks.starred == True)
         elif page == 'untagged':
-            bmq = q3.filter(Bookmarks.have_tags == False)
+            bmq = q3.filter(Bookmarks.tags == False)
         elif page == 'trashed':
             bmq = q2.filter(Bookmarks.trashed == True)
         elif page == 'domain':

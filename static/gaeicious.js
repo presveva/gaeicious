@@ -24,8 +24,8 @@ function getpages (page) {
         url: "/other",
         data: { page: page},
         success: function(html) {
-            $("#main_frame").html(html);
             $(window).scrollTop(0);
+            $("#main_frame").html(html);
             set_dashboard(page);
         } });}
 
@@ -85,7 +85,7 @@ function comment (url, id) {
         url: url,
         data: { bm: id },
         success: function(html) {
-            $("#comment-"+id).html(html);
+            $(".comment-"+id).html(html);
         } }); }
 
 function removetag (bm, tag) {
@@ -117,7 +117,7 @@ function get_tags (id) {
         url: "/gettagsfeed",
         data: { feed: id},
         success: function(html) {
-            $("#comment-"+id).html(html);
+            $(".comment-"+id).html(html);
         } });}
 
 function del_feed (id) {

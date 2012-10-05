@@ -68,7 +68,7 @@ class Bookmarks(ndb.Expando):
     title = ndb.StringProperty(indexed=False)
     comment = ndb.TextProperty(indexed=False)
     domain = ndb.StringProperty()
-    blob_bey = ndb.BlobKeyProperty()
+    blob_key = ndb.BlobKeyProperty(indexed=False)
     feed = ndb.KeyProperty(kind=Feeds)
     tags = ndb.KeyProperty(kind=Tags, repeated=True)
     archived = ndb.BooleanProperty(default=False)
@@ -87,7 +87,3 @@ class Bookmarks(ndb.Expando):
         for tagk in self.tags:
             all_user_tags.remove(tagk)
         return all_user_tags
-
-    @property
-    def ha_mys(self):
-        return UserInfo.query(UserInfo.user == self.user).get().mys

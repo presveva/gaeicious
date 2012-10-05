@@ -65,4 +65,5 @@
     </div>
 </div>
     <dd id="tags-{{ bm.id }}"> {% include "tags.html" %}
-    <dd id="comment-{{ bm.id }}"> {% if bm.tags == [] %} {{bm.comment}} {% endif%}
+    <dd class="visible-phone comment-{{ bm.id }}">
+    <dd class="hidden-phone comment-{{ bm.id }}"> {% if bm.tags == [] %} {{bm.comment}} {% endif%}

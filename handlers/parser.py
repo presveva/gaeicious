@@ -2,37 +2,30 @@ from __future__ import with_statement
 from google.appengine.ext import ndb, deferred, blobstore
 from google.appengine.api import urlfetch, files, images
 from urlparse import urlparse, parse_qs
-from models import Bookmarks
+from models import Bookmarks, UserInfo
 from util import send_bm, mys_on, mys_off
 from HTMLParser import HTMLParser
 
 
 def submit_bm(feed, user, title, url, comment):
     bm = Bookmarks()
+    ui_f = UserInfo.query(UserInfo.user == user).get_async()
     result = urlfetch.fetch(url=url, follow_redirects=True, allow_truncated=True, deadline=60)
     if result.status_code == 200 and result.final_url:
         a = result.final_url
+    elif result.status_code == 500:
+        return
     else:
         a = url
     b = a.lstrip().rstrip()
     c = b.split('?utm_source')[0]
     url_candidate = c.split('&feature')[0]
-    bmq = Bookmarks.query(Bookmarks.user == user, Bookmarks.url == url_candidate)
-    if bmq.get():
-        tag_list = []
-        for bm in bmq:
-            for t in bm.tags:
-                if t not in tag_list:
-                    tag_list.append(t)
-                    bm.tags = tag_list
-        ndb.delete_multi([bm.key for bm in bmq])
-
     url_parsed = urlparse(url_candidate)
     query = parse_qs(url_parsed.query)
     name = url_parsed.path.split('/')[-1]
     ext = name.split('.')[-1].lower()
 
-    if title == '':
+    if title == '' or None:
         bm.title = url_candidate
     else:
         bm.title = title
@@ -62,6 +55,16 @@ def submit_bm(feed, user, title, url, comment):
         bm.comment = comment
         bm.url = url_candidate
 
+    bmq = Bookmarks.query(Bookmarks.user == user, Bookmarks.url == bm.url)
+    if bmq.get():
+        tag_list = []
+        for bm in bmq:
+            for t in bm.tags:
+                if t not in tag_list:
+                    tag_list.append(t)
+                    bm.tags = tag_list
+        ndb.delete_multi([bm.key for bm in bmq])
+
     bm.domain = url_parsed.netloc
     bm.user = user
     bm.feed = feed
@@ -71,7 +74,8 @@ def submit_bm(feed, user, title, url, comment):
         if bm.feed.get().notify == 'email':
             deferred.defer(send_bm, bm.key, _queue="emails")
     except:
-        if bm.ha_mys:
+        ui = ui_f.get_result()
+        if ui.mys:
             deferred.defer(send_bm, bm.key, _queue="emails")
 
 
