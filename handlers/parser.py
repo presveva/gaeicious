@@ -9,8 +9,8 @@ from HTMLParser import HTMLParser
 
 def submit_bm(feed, user, title, url, comment):
     bm = Bookmarks()
-    ui_f = UserInfo.query(UserInfo.user == user).get_async()
     result = urlfetch.fetch(url=url, follow_redirects=True, allow_truncated=True, deadline=60)
+    ui_f = UserInfo.query(UserInfo.user == user).get_async()
     if result.status_code == 200 and result.final_url:
         a = result.final_url
     elif result.status_code == 500:
@@ -25,7 +25,7 @@ def submit_bm(feed, user, title, url, comment):
     name = url_parsed.path.split('/')[-1]
     ext = name.split('.')[-1].lower()
 
-    if title == '' or None:
+    if title == '' or title == None:
         bm.title = url_candidate
     else:
         bm.title = title
@@ -58,12 +58,12 @@ def submit_bm(feed, user, title, url, comment):
     bmq = Bookmarks.query(Bookmarks.user == user, Bookmarks.url == bm.url)
     if bmq.get():
         tag_list = []
-        for bm in bmq:
-            for t in bm.tags:
+        for old in bmq:
+            for t in old.tags:
                 if t not in tag_list:
                     tag_list.append(t)
                     bm.tags = tag_list
-        ndb.delete_multi([bm.key for bm in bmq])
+        ndb.delete_multi([old.key for old in bmq])
 
     bm.domain = url_parsed.netloc
     bm.user = user
