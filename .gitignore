@@ -165,3 +165,4 @@ pip-log.txt
 aeta/
 config.py
 *.bat
+*.todo
