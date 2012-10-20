@@ -1,14 +1,23 @@
 {% extends "base.html" %}
-
 {% block content %}
+<div class="visible-desktop">
 <div class="container">
-<div class="row">
-{% include "sidebar.html" %}
-<div class="span10">
-    <div id="support"> </div>
-    <div id="main_frame"> </div>
+<div class="row-fluid">
+    <div class="span2"> {% include "sidebar.html" %} </div>
+    <div class="span10">
+        <div class="support"> </div>
+        <div class="main_frame"> </div>
+    </div>
+</div>
+</div>
 </div>
 
+<div class="hidden-desktop">
+<div class="container-fluid">
+<div class="row-fluid">
+    <div class="support"> </div>
+    <div class="main_frame"> </div>
+</div>
 </div>
 </div>
 {% endblock %}

@@ -29,7 +29,6 @@ class BaseHandler(webapp2.RequestHandler):
                 return ui
 
     def generate(self, template_name, template_values={}):
-
         if users.get_current_user():
             url = users.create_logout_url("/")
             linktext = 'Logout'
@@ -74,7 +73,7 @@ class Main_Frame(BaseHandler):
         elif page == 'starred':
             bmq = q3.filter(Bookmarks.starred == True)
         elif page == 'untagged':
-            bmq = q3.filter(Bookmarks.tags == False)
+            bmq = q3.filter(Bookmarks.have_tags == False)
         elif page == 'trashed':
             bmq = q2.filter(Bookmarks.trashed == True)
         elif page == 'domain':
@@ -97,7 +96,7 @@ class Main_Frame(BaseHandler):
 
     def build(self, page, bmq, cursor, arg1, arg2):
         c = ndb.Cursor(urlsafe=cursor)
-        bms, next_curs, more = bmq.fetch_page(10, start_cursor=c)
+        bms, next_curs, more = bmq.fetch_page(15, start_cursor=c)
         if more and next_curs:
             next_c = next_curs.urlsafe()
         else:
@@ -106,7 +105,9 @@ class Main_Frame(BaseHandler):
                   'c': next_c,
                   'ui': self.ui(),
                   'arg1': arg1,
-                  'arg2': arg2}
+                  'arg2': arg2,
+                  'bm_ids': list(bm.id for bm in bms)
+                  }
         if page == '':
             self.response.set_cookie('active-tab', 'inbox')
             self.generate('home.html', values)
@@ -115,6 +116,8 @@ class Main_Frame(BaseHandler):
                 temp = jinja_environment.get_template('stream.html')
             else:
                 temp = jinja_environment.get_template('frame.html')
+            # if page == 'inbox':
+                # values['bm_ids'] = list(bm.id for bm in bms)
             html = temp.render(values)
             self.response.set_cookie('active-tab', page)
             self.response.write(html)
@@ -215,6 +218,8 @@ app = webapp2.WSGIApplication([
     ('/gettagsfeed', ajax.GetTagsFeed),
     ('/getcomment', ajax.GetComment),
     ('/getedit', ajax.GetEdit),
+    ('/archive_all', core.archive_all),
+    ('/trash_all', core.trash_all),
     ], debug=debug)
 
 

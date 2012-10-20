@@ -14,9 +14,11 @@
         </ul>
 
         <ul class="nav pull-right">
-            <form class="navbar-form pull-left" action="/addtag" method="get" id="addtag">
+            <li>
+            <form class="navbar-form" onsubmit="addtag()" id="addtag">
                 <input type="text" class="span2" name="tag" placeholder="new tag" allowBlank="true">
             </form>
+            </li>
             <li class="dropdown">
                 <a href="" class="dropdown-toggle" data-toggle="dropdown"> Menu <b class="caret"></b> </a>
                 <ul class="dropdown-menu">

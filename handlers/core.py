@@ -8,6 +8,30 @@ from models import Feeds, Bookmarks, Tags, UserInfo
 from handlers import util, parser
 
 
+class archive_all(RequestHandler):
+    def get(self):
+        bm_ids = eval(self.request.get('bm_ids'))
+        queue = []
+        for bm_id in bm_ids:
+            bm = Bookmarks.get_by_id(int(bm_id))
+            if bm.archived == False and bm.trashed == False:
+                bm.archived = True
+                queue.append(bm)
+        ndb.put_multi(queue)
+
+
+class trash_all(RequestHandler):
+    def get(self):
+        bm_ids = eval(self.request.get('bm_ids'))
+        queue = []
+        for bm_id in bm_ids:
+            bm = Bookmarks.get_by_id(int(bm_id))
+            if bm.trashed == False and bm.starred == False and bm.archived == False:
+                bm.trashed = True
+                queue.append(bm)
+        ndb.put_multi(queue)
+
+
 class EditBM(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))

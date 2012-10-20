@@ -100,7 +100,7 @@ class StarBM(RequestHandler):
         if users.get_current_user() == bm.user:
             if bm.starred == False:
                 bm.starred = True
-                html = '<i class="icon-star"></i> starred'
+                html = '<i class="icon-star"></i>'
             else:
                 bm.starred = False
                 html = '<i class="icon-star-empty"></i>'

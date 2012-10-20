@@ -1,0 +1,9 @@
+{% if c %}
+{% if arg2 %}
+    <a  class="btn more_btn pull-right" onclick="getbms(active(),'{{c}}','{{arg1}}','{{arg2}}')"> more <i class="icon-chevron-right"></i></a>
+{% elif arg1 %}
+    <a  class="btn more_btn pull-right" onclick="getbms(active(),'{{c}}','{{arg1}}')"> more <i class="icon-chevron-right"></i></a>
+{% else %}
+    <a  class="btn more_btn pull-right" onclick="getbms(active(),'{{c}}')"> more <i class="icon-chevron-right"></i></a>
+{% endif %}
+{% endif %}

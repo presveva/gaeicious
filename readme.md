@@ -33,10 +33,10 @@ How to post
   - the app creates a new bookmark for each new item in the feed
   - if MYS is active you will get new posts in your inbox
 - Import from Delicious
-  - In setting page users can upload the delicious.
+  - In setting page users can upload the delicious file.
 
 
-Open source libraries used in gae.icio.us
+Open source libraries used in gaeicious
 ---
 - Twitter Bootstrap [github](https://github.com/twitter/bootstrap)
 - jquery [github](https://github.com/jquery/jquery)

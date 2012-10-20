@@ -12,9 +12,10 @@ skip_files:
 - ^(.*/)?#.*#
 - ^(.*/)?.*~
 - ^(.*/)?.*\.py[co]
-- ^(.*/)?\..*
+- ^(.*\.git/.*)
+- ^(.*/)?.*\.bat
 
-# default_expiration: "7d"
+default_expiration: "2d"
 
 handlers:
 - url: /static

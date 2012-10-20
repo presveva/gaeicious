@@ -1,0 +1,11 @@
+{% if bms != [] %}
+<div class="btn-toolbar toolbars">
+<div class="well well-small">
+    <a class="btn archive_all_btn" onclick="archive_all('{{bm_ids}}')"> <i class="icon-folder-close"></i> Archive all </a>
+    <a class="btn trash_all_btn hide" onclick="trash_all('{{bm_ids}}')"> <i class="icon-trash"></i> Trash all </a>
+    {% include "more.html" %}
+    <a class="btn pull-right collapse_btn" onclick="hide_all()"> <i class="icon-circle-arrow-up"></i> Collapse all</a>
+    <a class="btn pull-right expande_btn hide" onclick="show_all()"> <i class="icon-circle-arrow-down"></i> Expande all</a>
+</div>
+</div>
+{% endif %}

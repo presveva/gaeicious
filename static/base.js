@@ -27,12 +27,20 @@ function set_dashboard(arg1){
         refine : "<a>Bookmarks refinded by tag</a>"
     };
     $("#dashboard").html(stringhe[page]);
-    $("#support").html('');
+    $(".support").html('');
     $(".nav li").removeClass('active');
-    $("#"+page).addClass('active');
+    $("." + page).addClass('active');
 
+    if (page == 'inbox' || 'filter' || 'refine') {
+        $(".trash_all_btn").removeClass('hide');
+    }
+    if (page == 'archived') {
+        $(".archive_all_btn").addClass('hide');
+        $(".trash_all_btn").addClass('hide');
+    }
     if (page == 'trashed') {
         support('/get_empty_trash');
+        $(".toolbars").addClass('hide');
     }
     if (page == 'filter') {
         refine_tags(arg1);
