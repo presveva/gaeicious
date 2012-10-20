@@ -4,7 +4,7 @@
 import jinja2
 import webapp2
 import os
-from google.appengine.api import users, app_identity
+from google.appengine.api import users, app_identity, memcache
 from google.appengine.ext import ndb, blobstore
 from handlers import ajax, util, core, submit
 from handlers.models import Bookmarks, UserInfo, Feeds, Tags
@@ -16,7 +16,7 @@ jinja_environment.filters['dtf'] = util.dtf
 
 
 class BaseHandler(webapp2.RequestHandler):
-
+    @property
     def ui(self):
         if users.get_current_user():
             q = UserInfo.query(UserInfo.user == users.get_current_user())
@@ -39,7 +39,7 @@ class BaseHandler(webapp2.RequestHandler):
             'brand': app_identity.get_application_id(),
             'url': url,
             'linktext': linktext,
-            'ui': self.ui(),
+            'ui': self.ui,
             'admin': users.is_current_user_admin()
             }
         values.update(template_values)
@@ -103,11 +103,13 @@ class Main_Frame(BaseHandler):
             next_c = None
         values = {'bms': bms,
                   'c': next_c,
-                  'ui': self.ui(),
+                  'ui': self.ui,
                   'arg1': arg1,
                   'arg2': arg2,
-                  'bm_ids': list(bm.id for bm in bms)
+                  # 'bm_ids': list(bm.id for bm in bms)
                   }
+        bm_ids_key = 'bm_ids_' + str(self.ui.user_id)
+        memcache.set(bm_ids_key, list(bm.id for bm in bms))
         if page == '':
             self.response.set_cookie('active-tab', 'inbox')
             self.generate('home.html', values)
@@ -137,7 +139,7 @@ class OtherPage(BaseHandler):
                 self.redirect('/')
 
     def setting(self):
-        ui = self.ui()
+        ui = self.ui
         upload_url = blobstore.create_upload_url('/upload')
         brand = app_identity.get_application_id()
         bookmarklet = """
@@ -169,7 +171,7 @@ javascript:location.href=
 
     def admin(self):
         if users.is_current_user_admin():
-            ui = self.ui()
+            ui = self.ui
             self.response.set_cookie('active-tab', 'admin')
             temp = jinja_environment.get_template('admin.html')
             html = temp.render({'ui': ui})
@@ -199,6 +201,8 @@ app = webapp2.WSGIApplication([
     ('/admin/activity', core.SendActivity),
     ('/admin/check', core.CheckFeeds),
     ('/admin/delattr', core.del_attr),
+    ('/archive', core.ArchiveBM),
+    ('/trash', core.TrashBM),
     ('/get_tips', ajax.get_tips),
     ('/get_refine_tags', ajax.get_refine_tags),
     ('/get_empty_trash', ajax.get_empty_trash),
@@ -207,8 +211,6 @@ app = webapp2.WSGIApplication([
     ('/setdaily', ajax.SetDaily),
     ('/setnotify', ajax.SetNotify),
     ('/settwitt', ajax.SetTwitt),
-    ('/archive', ajax.ArchiveBM),
-    ('/trash', ajax.TrashBM),
     ('/star', ajax.StarBM),
     ('/share', ajax.ShareBM),
     ('/addtag', ajax.AddTag),

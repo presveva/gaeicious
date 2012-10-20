@@ -7,12 +7,12 @@ from google.appengine.ext import ndb
 class UserInfo(ndb.Model):
     user = ndb.UserProperty()
     email = ndb.ComputedProperty(lambda self: self.user.email())
+    user_id = ndb.ComputedProperty(lambda self: self.user.user_id())
     data = ndb.DateTimeProperty(auto_now=True)
     mys = ndb.BooleanProperty(default=False)
     daily = ndb.BooleanProperty(default=False)
     twitt = ndb.BooleanProperty(default=False)
     delicious = ndb.BlobKeyProperty()
-    cursor = ndb.IntegerProperty(default=0)
 
     @property
     def tag_list(self):

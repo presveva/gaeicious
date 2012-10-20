@@ -10,32 +10,6 @@ jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(['templates', 'partials']))
 
 
-class TrashBM(RequestHandler):
-    def get(self):
-        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
-        if users.get_current_user() == bm.user:
-            if bm.trashed == False:
-                bm.archived = False
-                bm.trashed = True
-                bm.put()
-            else:
-                bm.key.delete()
-
-
-class ArchiveBM(RequestHandler):
-    def get(self):
-        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
-        if users.get_current_user() == bm.user:
-            if bm.trashed:
-                bm.archived = False
-                bm.trashed = False
-            elif bm.archived:
-                bm.archived = False
-            else:
-                bm.archived = True
-            bm.put()
-
-
 class GetComment(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))

@@ -20,18 +20,16 @@ function show_all() {
     $('.collapse_btn').removeClass('hide');
 }
 
-function archive_all(bm_ids) {
+function archive_all() {
     $.ajax({
         url: '/archive_all',
-        data: {bm_ids: bm_ids},
         success: function () {
             $('.more_btn').trigger('click');
         } }); }
 
-function trash_all(bm_ids) {
+function trash_all() {
     $.ajax({
         url: '/trash_all',
-        data: {bm_ids: bm_ids},
         success: function () {
             $('.more_btn').trigger('click');
         } }); }

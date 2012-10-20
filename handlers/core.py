@@ -2,17 +2,53 @@
 # -*- coding: utf-8 -*-
 
 from webapp2 import RequestHandler
-from google.appengine.api import users
+from google.appengine.api import users, memcache
 from google.appengine.ext import ndb, deferred
 from models import Feeds, Bookmarks, Tags, UserInfo
 from handlers import util, parser
 
 
+class ArchiveBM(RequestHandler):
+    def get(self):
+        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
+        if users.get_current_user() == bm.user:
+            if bm.trashed:
+                bm.archived = False
+                bm.trashed = False
+            elif bm.archived:
+                bm.archived = False
+            else:
+                bm.archived = True
+            bm.put()
+        bm_ids_key = 'bm_ids_' + str(users.get_current_user().user_id())
+        bm_ids_list = memcache.get(bm_ids_key)
+        bm_ids_list.remove(int(self.request.get('bm')))
+        memcache.set(bm_ids_key, bm_ids_list)
+
+
+class TrashBM(RequestHandler):
+    def get(self):
+        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
+        if users.get_current_user() == bm.user:
+            if bm.trashed == False:
+                bm.archived = False
+                bm.trashed = True
+                bm.put()
+            else:
+                bm.key.delete()
+        bm_ids_key = 'bm_ids_' + str(users.get_current_user().user_id())
+        bm_ids_list = memcache.get(bm_ids_key)
+        bm_ids_list.remove(int(self.request.get('bm')))
+        memcache.set(bm_ids_key, bm_ids_list)
+
+
 class archive_all(RequestHandler):
     def get(self):
-        bm_ids = eval(self.request.get('bm_ids'))
+        bm_ids_key = 'bm_ids_' + str(users.get_current_user().user_id())
+        bm_ids_list = memcache.get(bm_ids_key)
+        # bm_ids = eval(self.request.get('bm_ids'))
         queue = []
-        for bm_id in bm_ids:
+        for bm_id in bm_ids_list:
             bm = Bookmarks.get_by_id(int(bm_id))
             if bm.archived == False and bm.trashed == False:
                 bm.archived = True
@@ -22,11 +58,13 @@ class archive_all(RequestHandler):
 
 class trash_all(RequestHandler):
     def get(self):
-        bm_ids = eval(self.request.get('bm_ids'))
+        # bm_ids = eval(self.request.get('bm_ids'))
+        bm_ids_key = 'bm_ids_' + str(users.get_current_user().user_id())
+        bm_ids_list = memcache.get(bm_ids_key)
         queue = []
-        for bm_id in bm_ids:
+        for bm_id in bm_ids_list:
             bm = Bookmarks.get_by_id(int(bm_id))
-            if bm.trashed == False and bm.starred == False and bm.archived == False:
+            if bm.trashed == False and bm.starred == False:
                 bm.trashed = True
                 queue.append(bm)
         ndb.put_multi(queue)
@@ -42,7 +80,6 @@ class EditBM(RequestHandler):
                 bm.comment = self.request.get('comment').encode('utf8')
                 bm.put()
             ndb.transaction(txn)
-        self.redirect('/')
 
 
 # class DeleteTag(RequestHandler):
