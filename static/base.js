@@ -40,6 +40,9 @@ function set_dashboard(arg1){
     if (page == 'trashed') {
         support('/get_empty_trash');
         $(".toolbars").addClass('hide');
+        // $(".archive_all_btn").addClass('hide');
+        // $(".trash_all_btn").addClass('hide');
+        $(".footer_btn").removeClass('hide');
     }
     if (page == 'filter') {
         refine_tags(arg1);

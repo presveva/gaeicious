@@ -1,0 +1,11 @@
+{% if c %}
+<div class="well well-small">
+{% if arg2 %}
+<a class="btn btn-block" onclick="getbms(active(),'{{c}}','{{arg1}}','{{arg2}}')" type="button">more...</a>
+{% elif arg1 %}
+<a class="btn btn-block" onclick="getbms(active(),'{{c}}','{{arg1}}')" type="button">more...</a>
+{% else %}
+<a class="btn btn-block" onclick="getbms(active(),'{{c}}')" type="button">more...</a>
+{% endif %}
+</div>
+{% endif %}

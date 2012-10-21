@@ -80,6 +80,7 @@ class EditBM(RequestHandler):
                 bm.comment = self.request.get('comment').encode('utf8')
                 bm.put()
             ndb.transaction(txn)
+        self.redirect(self.request.referer)
 
 
 # class DeleteTag(RequestHandler):
