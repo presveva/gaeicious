@@ -1,13 +1,22 @@
 {% if bms != [] %}
 <div class="btn-toolbar toolbars">
 <div class="well well-small">
-
-<a class="btn archive_all_btn" onclick="archive_all()"> <i class="icon-folder-close"></i> Archive all </a>
-<a class="btn trash_all_btn hide" onclick="trash_all()"> <i class="icon-trash"></i> Trash all </a>
-{% include "more.html" %}
-<a class="btn pull-right collapse_btn" onclick="hide_all()"> <i class="icon-circle-arrow-up"></i> Collapse all</a>
-<a class="btn pull-right expande_btn hide" onclick="show_all()"> <i class="icon-circle-arrow-down"></i> Expande all</a>
-
+    <div class="btn-group">
+        <a class="btn archive_all_btn" onclick="archive_all()"> <i class="icon-folder-close"></i> Archive all </a>
+        <a class="btn trash_all_btn hide" onclick="trash_all()"> <i class="icon-trash"></i> Trash all </a>
+    </div>
+    {% include "more.html" %}
+    <div class="btn-group pull-right">
+        <a class="btn collapse_btn" onclick="hide_all()"> <i class="icon-circle-arrow-up"></i> Collapse all</a>
+    </div>
+    <div class="btn-group pull-right">
+        <a class="btn expande_btn hide" onclick="show_all()"> <i class="icon-circle-arrow-down"></i> Expande all</a>
+    </div>
+    <div class="btn-group pull-right">
+        <form class="form-inline" onsubmit="addtag()" id="addtag">
+            <input type="text" name="tag" placeholder="new tag" allowBlank="true">
+        </form>
+    </div>
 </div>
 </div>
 {% endif %}

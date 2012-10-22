@@ -84,16 +84,16 @@ class StarBM(RequestHandler):
 
 class ShareBM(RequestHandler):
     def get(self):
-        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
+        bm = Bookmarks.get_by_id(int(self.request.get('id')))
         if users.get_current_user() == bm.user:
             if bm.shared == False:
                 bm.shared = True
-                html = '<i class="icon-eye-open"></i> shared'
+                eye = '<i class="icon-eye-open"></i>'
             else:
                 bm.shared = False
-                html = '<i class="icon-eye-close"></i>'
+                eye = '<i class="icon-eye-close"></i>'
             bm.put()
-        self.response.write(html)
+        self.response.write(eye)
 
 
 class AddTag(RequestHandler):

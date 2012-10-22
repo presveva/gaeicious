@@ -106,7 +106,6 @@ class Main_Frame(BaseHandler):
                   'ui': self.ui,
                   'arg1': arg1,
                   'arg2': arg2,
-                  # 'bm_ids': list(bm.id for bm in bms)
                   }
         bm_ids_key = 'bm_ids_' + str(self.ui.user_id)
         memcache.set(bm_ids_key, list(bm.id for bm in bms))
@@ -118,11 +117,18 @@ class Main_Frame(BaseHandler):
                 temp = jinja_environment.get_template('stream.html')
             else:
                 temp = jinja_environment.get_template('frame.html')
-            # if page == 'inbox':
-                # values['bm_ids'] = list(bm.id for bm in bms)
             html = temp.render(values)
             self.response.set_cookie('active-tab', page)
             self.response.write(html)
+
+
+class ItemPage(BaseHandler):
+    def get(self):
+        bm = Bookmarks.get_by_id(int(self.request.get('id')))
+        if bm.shared == True:
+            self.generate('item.html', {'bm': bm})
+        else:
+            self.redirect('/')
 
 
 class OtherPage(BaseHandler):
@@ -222,6 +228,7 @@ app = webapp2.WSGIApplication([
     ('/getedit', ajax.GetEdit),
     ('/archive_all', core.archive_all),
     ('/trash_all', core.trash_all),
+    ('/bm', ItemPage),
     ], debug=debug)
 
 

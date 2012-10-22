@@ -49,7 +49,7 @@ def submit_bm(feed, user, title, url, comment):
             width="640" height="360" frameborder="0" webkitAllowFullScreen mozallowfullscreen
             allowFullScreen></iframe>''' % video
 
-        elif ext in ['jpg', 'png', 'jpeg']:
+        elif ext in ['jpg', 'png', 'jpeg', 'gif']:
             bm.url = url_candidate
             blob_key = upload_to_blobstore(url_candidate, ext)
             bm.blob_key = blob_key

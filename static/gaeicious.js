@@ -100,11 +100,15 @@ function star(id) {
 function share(id) {
     $.ajax({
         url: "/share",
-        data: { bm: id },
-        success: function(html) {
+        data: { id: id },
+        success: function(eye) {
+            $(".share-" + id).html(eye);
             $("#dashboard").html('<a>Share status changed</a>');
-            $(".share-" + id).html(html);
-        } }); }
+            if (eye == ('<i class="icon-eye-close"></i>')) {
+                $(".link-" + id).html('');
+            } else {
+                $(".link-" + id).html('<a class="btn btn-small btn-link " href="/bm?id='+id+'" target="_blank">link</a>');
+            } } }); }
 
 function comment(url, id) {
     $.ajax({
