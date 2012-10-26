@@ -187,8 +187,21 @@ def upgrade(itemk):
 
 class Script(RequestHandler):
     def get(self):
-        for bm in Bookmarks.query():
-            deferred.defer(add_domain, bm.key, _target="worker", _queue="admin")
+        bmq = Bookmarks.query(Bookmarks.archived == False)
+        bmq = bmq.filter(Bookmarks.domain == None)
+        for bm in bmq:
+            f = None
+            u = bm.user
+            t = bm.title
+            o = bm.url
+            c = bm.comment
+            deferred.defer(parser.submit_bm, f, u, t, o, c, _target="worker")
+
+
+def add_url(bmk):
+    bm = bmk.get()
+    bm.url = bm.original
+    bm.put()
 
 
 def add_domain(bmk):

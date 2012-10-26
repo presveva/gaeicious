@@ -30,6 +30,7 @@ function set_dashboard(arg1){
     $(".support").html('');
     $(".nav li").removeClass('active');
     $("." + page).addClass('active');
+    $('.comments a').attr('target', '_blank');
 
     if (page == 'inbox' || 'filter' || 'refine') {
         $(".trash_all_btn").removeClass('hide');

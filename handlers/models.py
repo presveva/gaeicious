@@ -4,7 +4,7 @@
 from google.appengine.ext import ndb
 
 
-class UserInfo(ndb.Model):
+class UserInfo(ndb.Expando):
     user = ndb.UserProperty()
     email = ndb.ComputedProperty(lambda self: self.user.email())
     user_id = ndb.ComputedProperty(lambda self: self.user.user_id())
@@ -39,7 +39,7 @@ class Tags(ndb.Model):
         return other
 
 
-class Feeds(ndb.Model):
+class Feeds(ndb.Expando):
     user = ndb.UserProperty()
     data = ndb.DateTimeProperty(auto_now=True)
     tags = ndb.KeyProperty(kind=Tags, repeated=True)
@@ -61,7 +61,7 @@ class Feeds(ndb.Model):
         return all_user_tags
 
 
-class Bookmarks(ndb.Model):
+class Bookmarks(ndb.Expando):
     data = ndb.DateTimeProperty(auto_now=True)
     user = ndb.UserProperty(required=True)
     url = ndb.StringProperty(required=True)
