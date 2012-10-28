@@ -1,21 +1,21 @@
 window.onhashchange = get_body;
 
 function init(){
-    var hash = location.hash;
-    if (hash == '') {
-        hash = '#inbox';
+    if (location.hash === '') {
+        location.hash = '#inbox';
     }
     get_body();
 }
 
 function get_body(){
-    var hash = location.hash;
-    if (hash == '#setting' || '#feeds' || '#admin' ) {
-        getpages(hash.split('#')[1]);
-    } else if (hash === '#tagcloud') {
+    if (location.hash === '#setting' ||
+        location.hash === '#feeds' ||
+        location.hash === '#admin' ) {
+        getpages(location.hash.split('#')[1]);
+    } else if (location.hash === '#tagcloud') {
         support('/gettagcloud');
     } else {
-        getbms(hash.split('#')[1]);
+        getbms(location.hash.split('#')[1]);
     }
     set_dashboard();
 }
