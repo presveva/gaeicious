@@ -101,12 +101,13 @@ class Main_Frame(BaseHandler):
             next_c = next_curs.urlsafe()
         else:
             next_c = None
-        values = {'bms': bms,
-                  'c': next_c,
-                  'ui': self.ui,
-                  'arg1': arg1,
-                  'arg2': arg2,
-                  }
+        values = {
+        'bms': bms,
+        'c': next_c,
+        'ui': self.ui,
+        'arg1': arg1,
+        'arg2': arg2,
+        }
         bm_ids_key = 'bm_ids_' + str(self.ui.user_id)
         memcache.set(bm_ids_key, list(bm.id for bm in bms))
         if page == '':

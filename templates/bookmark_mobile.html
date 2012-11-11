@@ -25,5 +25,5 @@
     {% endif %}
 </div>
     <dd class="tags-{{ bm.id }}"> {% include "tags.html" %}
-    <dd class="comments comment-{{ bm.id }}">
+    <dd class="comments comment-{{ bm.id }}"> {% if bm.tags == [] %} {{bm.comment}} {% endif%}
 </div>

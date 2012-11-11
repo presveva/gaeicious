@@ -5,20 +5,15 @@
     <meta name="author" content="presveva">
     <meta name="description" content="a bookmarking service">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link type="text/css" href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet">
-    <link rel="shortcut icon" href="static/favicon.ico">
     <title>{% block title %}{{ brand }}{% endblock %}</title>
-    <style>
-        body { padding-top: 50px; }
-        @media (max-width: 979px) {
-            body { padding-top: 0; }
-        }
-        .sidebar-nav-fixed {
-            position:fixed;
-            width:150px;
-        }
-    </style>
+    <link rel="shortcut icon" href="static/favicon.ico">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap-responsive.min.css" type="text/css">
+    <link rel="stylesheet" href="static/style.css" type="text/css" >
+    <script src="static/jquery-1.8.2.min.js"></script>
+    <script src="static/jquery.cookie.js"></script>
+    <script src="static/base.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
 </head>
 
 <body onload="init()">
@@ -27,12 +22,6 @@
 {% endblock %}
 {% block content %}
 {% endblock %}
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-<script src="bootstrap/js/bootstrap.min.js"></script>
-<script src="static/jquery.cookie.js"></script>
-<script src="static/base.js"></script>
-<!-- <script src="static/pagify.js"></script> -->
-<!-- <script src="static/gaeicious.js"></script> -->
 </body>
 </html>
 
