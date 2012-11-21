@@ -1,34 +1,106 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{{brand}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="a bookmarking service">
+    <meta name="author" content="presveva">
 
-{% block content %}
+    <!-- Le styles -->
+    <link href="../bootstrap/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 20px;
+        padding-bottom: 40px;
+      }
 
-<div class="container">
+      /* Custom container */
+      .container-narrow {
+        margin: 0 auto;
+        max-width: 700px;
+      }
+      .container-narrow > hr {
+        margin: 30px 0;
+      }
 
-<div class="hero-unit">
-    <h2>Gaeicious</h2>
-    <p>A bookmarking service</p>
-    <p><a href="{{url}}" class="btn ">Login</a></p>
-</div>
+      /* Main marketing message and sign up button */
+      .jumbotron {
+        margin: 60px 0;
+        text-align: center;
+      }
+      .jumbotron h1 {
+        font-size: 72px;
+        line-height: 1;
+      }
+      .jumbotron .btn {
+        font-size: 21px;
+        padding: 14px 24px;
+      }
 
-<div class="row">
-    <div class="span4">
-        <h3>Goodies</h3>
-        <dl>
+      /* Supporting marketing content */
+      .marketing {
+        margin: 60px 0;
+      }
+      .marketing p + h4 {
+        margin-top: 28px;
+      }
+    </style>
+    <link href="../bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+    <link rel="shortcut icon" href="../static/favicon.ico">
+  </head>
+
+  <body>
+
+    <div class="container-narrow">
+
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li class="active"><a href="/">Home</a></li>
+          <li><a href="https://github.com/presveva/gaeicious">Code</a></li>
+          <!-- <li><a href="#">Contact</a></li> -->
+        </ul>
+        <h3 class="muted">{{brand}}</h3>
+      </div>
+
+      <hr>
+
+      <div class="jumbotron">
+        <h1>{{brand}}</h1>
+        <p class="lead">A bookmarking service</p>
+        <a class="btn btn-large btn-success" href="{{ url }}">Sign up</a>
+      </div>
+
+      <hr>
+
+      <div class="row-fluid marketing">
+        <div class="span6">
+          <h4>Goodies</h4>
+          <dl>
             <dt>Tagging
-                <dd>Associate tags to the bookmark
-                <dd>Filter and refine the bookmarks by tags
+              <dd>Associate tags to the bookmark
+              <dd>Filter and refine the bookmarks by tags
             <dt>Content optimization
-                <dd>Images, Youtube and Vimeo video is incorporated as comment
-                <dd>Urls is sanitized
+              <dd>Images, Youtube and Vimeo video is incorporated as comment
+              <dd>Urls is sanitized
             <dt>Mail yourself (MYS)
-                <dd>the user can receive an email for each bookmark
+              <dd>the user can receive an email for each bookmark
             <dt>Import from delicious.com
-                <dd>Upload your delicious backup file and {{brand}} create new bookmarks.
-        </dl>
-    </div>
-    <div class="span4">
-        <h3>How to post</h3>
-        <dl>
+              <dd>Upload your delicious backup file and {{brand}} create new bookmarks.
+          </dl>
+
+          <h4>Autors and tools</h4>
+          <dl>
+          <dt><a href="https://github.com/presveva/gaeicious">Gaeicious</a>
+            <dd>is maintained by <a href="https://twitter.com/presveva">presveva</a>
+            <dd>powered by <a href="https://developers.google.com/appengine/">Google App Engine</a>
+            <dd>and styled by <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap</a>
+          </dl>
+        </div>
+
+        <div class="span6">
+          <h4>How to post</h4>
+          <dl>
             <dt>Bookmarklet
                 <dd>Drag and drop the bookmarklet in your bookmarks bar
                 <dd>click on bookmarklet in order to create a new bookmark
@@ -44,18 +116,17 @@
                 <dd>For each feed you can choice from: 8 hourly digest/only web/email for each bookmark.
             <dt>Import from Delicious
                 <dd>In setting page users can upload the delicious.
-        </dl>
-    </div>
-    <div class="span4">
-        <h3>Autors and tools</h3>
-        <dl>
-            <dt><a href="https://github.com/presveva/gaeicious">Gaeicious</a>
-                <dd>is maintained by <a href="https://twitter.com/presveva">presveva</a>
-                <dd>powered by <a href="https://developers.google.com/appengine/">Google App Engine</a>
-                <dd>and styled by <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap</a>
-        </dl>
-    </div>
-</div>
+          </dl>
+        </div>
+      </div>
 
-</div> <!-- /container -->
-{% endblock %}
+      <hr>
+
+      <div class="footer">
+        <p>&copy; {{brand}} 2012</p>
+      </div>
+
+    </div>
+
+  </body>
+</html>

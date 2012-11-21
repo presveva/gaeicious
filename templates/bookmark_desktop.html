@@ -1,5 +1,5 @@
 <div class="well well-small row-{{ bm.id }}">
-<dt > <i class="icon-bookmark"></i> <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(110) }}</a>
+<dt > <i class="icon-bookmark"></i> <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(75) }}</a>
     <a class="btn btn-link btn-mini " onclick="getbms('domain','','{{ bm.domain }}')"><em>{{ bm.domain }}</em> </a>
     <div class="pull-right"> {% if ui.twitt %} {% include "tweet.html" %} {% endif %} </div>
 <dt>

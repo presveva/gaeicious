@@ -1,13 +1,10 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 
-import jinja2
+import utils
 from webapp2 import RequestHandler
 from google.appengine.api import users
 from models import Bookmarks, UserInfo, Feeds, Tags
-
-jinja_environment = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(['templates', 'partials']))
 
 
 class GetComment(RequestHandler):
@@ -19,7 +16,7 @@ class GetComment(RequestHandler):
 class GetTagsFeed(RequestHandler):
     def get(self):
         feed = Feeds.get_by_id(int(self.request.get('feed')))
-        template = jinja_environment.get_template('gettagsfeed.html')
+        template = utils.jinja_environment.get_template('gettagsfeed.html')
         values = {'feed': feed}
         other_tags = template.render(values)
         self.response.write(other_tags)
@@ -28,7 +25,7 @@ class GetTagsFeed(RequestHandler):
 class GetTags(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
-        template = jinja_environment.get_template('other_tags.html')
+        template = utils.jinja_environment.get_template('other_tags.html')
         values = {'bm': bm}
         other_tags = template.render(values)
         self.response.write(other_tags)
@@ -37,7 +34,7 @@ class GetTags(RequestHandler):
 class GetEdit(RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
-        template = jinja_environment.get_template('edit.html')
+        template = utils.jinja_environment.get_template('edit.html')
         values = {'bm': bm}
         html_page = template.render(values)
         self.response.write(html_page)
@@ -47,7 +44,7 @@ class gettagcloud(RequestHandler):
     def get(self):
         q = Tags.query(Tags.user == users.get_current_user())
         q = q.order(Tags.name)
-        template = jinja_environment.get_template('tagcloud.html')
+        template = utils.jinja_environment.get_template('tagcloud.html')
         values = {'q': q}
         html = template.render(values)
         self.response.set_cookie('active-tab', 'tagcloud')
@@ -56,14 +53,14 @@ class gettagcloud(RequestHandler):
 
 class get_tips(RequestHandler):
     def get(self):
-        template = jinja_environment.get_template('tips.html')
+        template = utils.jinja_environment.get_template('tips.html')
         html = template.render({})
         self.response.write(html)
 
 
 class get_empty_trash(RequestHandler):
     def get(self):
-        template = jinja_environment.get_template('empty_trash.html')
+        template = utils.jinja_environment.get_template('empty_trash.html')
         html = template.render({})
         self.response.write(html)
 
@@ -118,7 +115,7 @@ class AssignTag(RequestHandler):
         # if users.get_current_user() == bm.user:
         bm.tags.append(tag.key)
         bm.put()
-        template = jinja_environment.get_template('tags.html')
+        template = utils.jinja_environment.get_template('tags.html')
         values = {'bm': bm}
         html = template.render(values)
         self.response.write(html)
@@ -131,7 +128,7 @@ class RemoveTag(RequestHandler):
         # if users.get_current_user() == bm.user:
         bm.tags.remove(tag.key)
         bm.put()
-        template = jinja_environment.get_template('tags.html')
+        template = utils.jinja_environment.get_template('tags.html')
         values = {'bm': bm}
         html = template.render(values)
         self.response.write(html)
@@ -148,7 +145,7 @@ class get_refine_tags(RequestHandler):
         bmq = q2.filter(Bookmarks.tags == tag1.key)
         tagset = tag_set(bmq)
         tagset.remove(tag1.key)
-        template = jinja_environment.get_template('tagset.html')
+        template = utils.jinja_environment.get_template('tagset.html')
         html = template.render({'tagset': tagset, 'arg1': arg1})
         self.response.write(html)
 

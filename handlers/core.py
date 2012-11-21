@@ -5,7 +5,7 @@ from webapp2 import RequestHandler
 from google.appengine.api import users, memcache
 from google.appengine.ext import ndb, deferred
 from models import Feeds, Bookmarks, Tags, UserInfo
-from handlers import util, parser
+from handlers import utils, parser
 
 
 class ArchiveBM(RequestHandler):
@@ -46,7 +46,6 @@ class archive_all(RequestHandler):
     def get(self):
         bm_ids_key = 'bm_ids_' + str(users.get_current_user().user_id())
         bm_ids_list = memcache.get(bm_ids_key)
-        # bm_ids = eval(self.request.get('bm_ids'))
         queue = []
         for bm_id in bm_ids_list:
             bm = Bookmarks.get_by_id(int(bm_id))
@@ -58,7 +57,6 @@ class archive_all(RequestHandler):
 
 class trash_all(RequestHandler):
     def get(self):
-        # bm_ids = eval(self.request.get('bm_ids'))
         bm_ids_key = 'bm_ids_' + str(users.get_current_user().user_id())
         bm_ids_list = memcache.get(bm_ids_key)
         queue = []

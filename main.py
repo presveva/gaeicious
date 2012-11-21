@@ -1,18 +1,13 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 
-import jinja2
+
 import webapp2
 import os
 from google.appengine.api import users, app_identity, memcache
 from google.appengine.ext import ndb, blobstore
-from handlers import ajax, util, core, submit
+from handlers import ajax, utils, core, submit
 from handlers.models import Bookmarks, UserInfo, Feeds, Tags
-
-
-jinja_environment = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(['templates', 'partials']))
-jinja_environment.filters['dtf'] = util.dtf
 
 
 class BaseHandler(webapp2.RequestHandler):
@@ -43,7 +38,7 @@ class BaseHandler(webapp2.RequestHandler):
             'admin': users.is_current_user_admin()
             }
         values.update(template_values)
-        template = jinja_environment.get_template(template_name)
+        template = utils.jinja_environment.get_template(template_name)
         self.response.write(template.render(values))
 
 
@@ -115,9 +110,9 @@ class Main_Frame(BaseHandler):
             self.generate('home.html', values)
         else:
             if page == 'stream':
-                temp = jinja_environment.get_template('stream.html')
+                temp = utils.jinja_environment.get_template('stream.html')
             else:
-                temp = jinja_environment.get_template('frame.html')
+                temp = utils.jinja_environment.get_template('frame.html')
             html = temp.render(values)
             self.response.set_cookie('active-tab', page)
             self.response.write(html)
@@ -157,7 +152,7 @@ javascript:location.href=
 '&comment='+document.getSelection().toString()
 """ % (self.request.host_url, ui.email)
 
-        temp = jinja_environment.get_template('setting.html')
+        temp = utils.jinja_environment.get_template('setting.html')
         html = temp.render({'bookmarklet': bookmarklet,
                            'upload_url': upload_url,
                            'brand': brand,
@@ -171,7 +166,7 @@ javascript:location.href=
     def feeds(self):
         feed_list = Feeds.query(Feeds.user == users.get_current_user())
         feed_list = feed_list.order(-Feeds.data)
-        temp = jinja_environment.get_template('feeds.html')
+        temp = utils.jinja_environment.get_template('feeds.html')
         html = temp.render({'feeds': feed_list})
         self.response.set_cookie('active-tab', 'feeds')
         self.response.write(html)
@@ -180,7 +175,7 @@ javascript:location.href=
         if users.is_current_user_admin():
             ui = self.ui
             self.response.set_cookie('active-tab', 'admin')
-            temp = jinja_environment.get_template('admin.html')
+            temp = utils.jinja_environment.get_template('admin.html')
             html = temp.render({'ui': ui})
             self.response.write(html)
         else:

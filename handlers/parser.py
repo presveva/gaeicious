@@ -3,7 +3,7 @@ from google.appengine.ext import ndb, deferred, blobstore
 from google.appengine.api import urlfetch, files, images
 from urlparse import urlparse, parse_qs
 from models import Bookmarks, UserInfo
-from util import send_bm, mys_on, mys_off
+from utils import send_bm, mys_on, mys_off
 from HTMLParser import HTMLParser
 
 

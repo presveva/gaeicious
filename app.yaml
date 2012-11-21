@@ -60,3 +60,6 @@ builtins:
 
 inbound_services:
 - mail
+
+includes:
+- mapreduce/include.yaml

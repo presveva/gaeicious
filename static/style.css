@@ -8,7 +8,7 @@ body { padding-top: 50px; }
     body { padding-top: 0; }
 }
 
-.sidebar-nav-fixed {
-    position:fixed;
-    width:150px;
+.container-narrow {
+margin: 0 auto;
+max-width: 767px;
 }

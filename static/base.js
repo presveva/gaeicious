@@ -240,3 +240,11 @@ function sync_feed (id) {
         success: function() {
             $("#dashboard").html('<a>OK sync started </a>');
         } }); }
+
+function copy_bm(id) {
+    $.ajax({
+        url: "/copy",
+        data: { bm: id },
+        success: function() {
+            $("#dashboard").html('<a>Bookmark copied</a>');
+        } }); }
