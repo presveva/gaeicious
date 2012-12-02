@@ -136,7 +136,7 @@ class RemoveTag(RequestHandler):
 
 class get_refine_tags(RequestHandler):
     def get(self):
-        from util import tag_set
+        from utils import tag_set
         arg1 = self.request.get('arg1')
         q1 = Bookmarks.query(Bookmarks.user == users.get_current_user())
         q2 = q1.order(-Bookmarks.data)
@@ -159,10 +159,10 @@ class SetMys(RequestHandler):
         ui = UserInfo.query(UserInfo.user == users.get_current_user()).get()
         if ui.mys == False:
             ui.mys = True
-            html = '<i class="icon-thumbs-up"></i> <strong>Enabled </strong>'
+            html = '<i class="icon-thumbs-up"></i> <b>Enabled </b>'
         else:
             ui.mys = False
-            html = '<i class="icon-thumbs-down"></i> <strong>Disabled</strong>'
+            html = '<i class="icon-thumbs-down"></i> <b>Disabled</b>'
         ui.put()
         self.response.write(html)
 
@@ -172,10 +172,10 @@ class SetDaily(RequestHandler):
         ui = UserInfo.query(UserInfo.user == users.get_current_user()).get()
         if ui.daily == False:
             ui.daily = True
-            html = '<i class="icon-thumbs-up"></i> <strong>Enabled </strong>'
+            html = '<i class="icon-thumbs-up"></i> <b>Enabled </b>'
         else:
             ui.daily = False
-            html = '<i class="icon-thumbs-down"></i> <strong>Disabled</strong>'
+            html = '<i class="icon-thumbs-down"></i> <b>Disabled</b>'
         ui.put()
         self.response.write(html)
 
@@ -185,10 +185,10 @@ class SetTwitt(RequestHandler):
         ui = UserInfo.query(UserInfo.user == users.get_current_user()).get()
         if ui.twitt == False:
             ui.twitt = True
-            html = '<i class="icon-thumbs-up"></i> <strong>Enabled </strong>'
+            html = '<i class="icon-thumbs-up"></i> <b>Enabled </b>'
         else:
             ui.twitt = False
-            html = '<i class="icon-thumbs-down"></i> <strong>Disabled</strong>'
+            html = '<i class="icon-thumbs-down"></i> <b>Disabled</b>'
         ui.put()
         self.response.write(html)
 

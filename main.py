@@ -1,7 +1,5 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-
-
 import webapp2
 import os
 from google.appengine.api import users, app_identity, memcache

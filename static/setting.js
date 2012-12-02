@@ -1,24 +1,24 @@
 if ($.cookie('mys') == 'True') {
-    $("#mys-text").html('<i class="icon-thumbs-up"></i> <strong>Enabled </strong>');
+    $("#mys-text").html('<i class="icon-thumbs-up"></i> <b>Enabled </b>');
     $("#mys-check").prop("checked", true);
 } else {
-    $("#mys-text").html('<i class="icon-thumbs-down"></i> <strong>Disabled</strong>');
+    $("#mys-text").html('<i class="icon-thumbs-down"></i> <b>Disabled</b>');
     $("#mys-check").prop("checked", false);
 }
 
 if ($.cookie('daily') == 'True') {
-    $("#daily-text").html('<i class="icon-thumbs-up"></i> <strong>Enabled </strong>');
+    $("#daily-text").html('<i class="icon-thumbs-up"></i> <b>Enabled </b>');
     $("#daily-check").prop("checked", true);
 } else {
-    $("#daily-text").html('<i class="icon-thumbs-down"></i> <strong>Disabled</strong>');
+    $("#daily-text").html('<i class="icon-thumbs-down"></i> <b>Disabled</b>');
     $("#daily-check").prop("checked", false);
 }
 
 if ($.cookie('twitt') == 'True') {
-    $("#twitt-text").html('<i class="icon-thumbs-up"></i> <strong>Enabled </strong>');
+    $("#twitt-text").html('<i class="icon-thumbs-up"></i> <b>Enabled </b>');
     $("#twitt-check").prop("checked", true);
 } else {
-    $("#twitt-text").html('<i class="icon-thumbs-down"></i> <strong>Disabled</strong>');
+    $("#twitt-text").html('<i class="icon-thumbs-down"></i> <b>Disabled</b>');
     $("#twitt-check").prop("checked", false);
 }
 

@@ -142,14 +142,14 @@ class SendDigest(RequestHandler):
     def get(self):
         for feed in Feeds.query():
             if feed.notify == 'digest':
-                deferred.defer(util.feed_digest, feed.key, _target="worker", _queue="emails")
+                deferred.defer(utils.feed_digest, feed.key, _target="worker", _queue="emails")
 
 
 class SendActivity(RequestHandler):
     def get(self):
         for ui in UserInfo.query():
             if ui.daily:
-                deferred.defer(util.daily_digest, ui.user, _target="worker", _queue="emails")
+                deferred.defer(utils.daily_digest, ui.user, _target="worker", _queue="emails")
 
 
 class del_attr(RequestHandler):

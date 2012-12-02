@@ -2,9 +2,9 @@ window.onhashchange = get_body;
 
 function init(){
     if (location.hash === '') {
-        location.hash = '#inbox';
+        getbms('inbox');
     }
-    get_body();
+    // get_body();
 }
 
 function get_body(){
@@ -12,6 +12,8 @@ function get_body(){
         location.hash === '#feeds' ||
         location.hash === '#admin' ) {
         getpages(location.hash.split('#')[1]);
+    } else if (location.hash === '') {
+        getpages('/');
     } else if (location.hash === '#tagcloud') {
         support('/gettagcloud');
     } else {
