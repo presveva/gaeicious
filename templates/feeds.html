@@ -1,50 +1,50 @@
 <div class="row-fluid">
 <div class="well well-small">
 <form class="form-horizontal" action="/feed" method="post">
-    <div class="control-group">
-        <label class="control-label">Add Feed</label>
-        <div class="controls">
-            <input type="text" class="input span12" name="url" allowBlank="true">
-        </div>
+  <div class="control-group">
+    <label class="control-label">Add Feed</label>
+    <div class="controls">
+      <input type="text" class="input span12" name="url" allowBlank="true">
     </div>
+  </div>
 </form>
 </div>
 </div>
 
 {% for feed in feeds %}
 <div class="well well-small" id="row-{{ feed.id }}" >
-    <dt>
-        <a class="btn disabled btn-mini"><i class="icon-time"></i> {{ feed.data|dtf }}</a>
-        <a href="{{ feed.root }}" ><b> {{ feed.blog }}</b></a>
-    <dd>{{ feed.feed }}
-    <dd>
-    <div class="btn-toolbar">
-        <div class="btn-group">
-            <a class="btn btn-mini" onclick="del_feed({{ feed.id }})"> <i class="icon-remove"></i> delete </a>
-            <a class="btn btn-mini" onclick="sync_feed({{ feed.id }})">  <i class="icon-refresh"></i> sync </a>
-            <a class="btn btn-mini" onclick="get_tags({{ feed.id }})"> <i class="icon-tags"></i> tags </a>
-        </div>
-        <div class="btn-group" data-toggle="buttons-radio">
-            <button type="button" class="btn btn-mini" onclick="setnotify({{ feed.id }},'web')" id="n-w-{{ feed.id }}">web</button>
-            <button type="button" class="btn btn-mini" onclick="setnotify({{ feed.id }},'email')" id="n-e-{{ feed.id }}">email</button>
-            <button type="button" class="btn btn-mini" onclick="setnotify({{ feed.id }},'digest')" id="n-d-{{ feed.id }}">digest</button>
-        </div>
-        {% for tag in feed.tags %}
-        <div class="btn-group">
-            <a class="btn btn-mini btn-link disabled"> {{ tag.get().name }} </a>
-            <a class="btn btn-mini btn-link disabled" href="/rtf?feed={{ feed.id }}&tag={{ tag.id() }}">
-                <i class="icon-remove"></i></a>
-        </div>
-        {% endfor %}
+  <dt>
+    <a class="btn disabled btn-mini"><i class="icon-time"></i> {{ feed.data|dtf }}</a>
+    <a href="{{ feed.root }}" ><b> {{ feed.blog }}</b></a>
+  <dd>{{ feed.feed }}
+  <dd>
+  <div class="btn-toolbar">
+    <div class="btn-group">
+      <a class="btn btn-mini" onclick="del_feed({{ feed.id }})"> <i class="icon-remove"></i> delete </a>
+      <a class="btn btn-mini" onclick="sync_feed({{ feed.id }})">  <i class="icon-refresh"></i> sync </a>
+      <a class="btn btn-mini" onclick="get_tags({{ feed.id }})"> <i class="icon-tags"></i> tags </a>
     </div>
+    <div class="btn-group" data-toggle="buttons-radio">
+      <button type="button" class="btn btn-mini" onclick="setnotify({{ feed.id }},'web')" id="n-w-{{ feed.id }}">web</button>
+      <button type="button" class="btn btn-mini" onclick="setnotify({{ feed.id }},'email')" id="n-e-{{ feed.id }}">email</button>
+      <button type="button" class="btn btn-mini" onclick="setnotify({{ feed.id }},'digest')" id="n-d-{{ feed.id }}">digest</button>
+    </div>
+    {% for tag in feed.tags %}
+    <div class="btn-group">
+      <a class="btn btn-mini btn-link disabled"> {{ tag.get().name }} </a>
+      <a class="btn btn-mini btn-link disabled" href="/rtf?feed={{ feed.id }}&tag={{ tag.id() }}">
+        <i class="icon-remove"></i></a>
+    </div>
+    {% endfor %}
+  </div>
 
-    <dd id="comment-{{ feed.id }}" class="">
+  <dd id="comment-{{ feed.id }}" class="">
 </div>
-    {% if feed.notify == 'digest' %}
-    <script>$("#n-d-{{ feed.id }}").button('toggle')</script>
-    {% elif feed.notify == 'email' %}
-    <script>$("#n-e-{{ feed.id }}").button('toggle')</script>
-    {% else  %}
-    <script>$("#n-w-{{ feed.id }}").button('toggle')</script>
-    {% endif %}
+  {% if feed.notify == 'digest' %}
+  <script>$("#n-d-{{ feed.id }}").button('toggle')</script>
+  {% elif feed.notify == 'email' %}
+  <script>$("#n-e-{{ feed.id }}").button('toggle')</script>
+  {% else  %}
+  <script>$("#n-w-{{ feed.id }}").button('toggle')</script>
+  {% endif %}
 {% endfor %}

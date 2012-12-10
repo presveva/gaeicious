@@ -58,7 +58,7 @@ function set_dashboard(arg1){
         trashed : "<a>Trashed items</a>",
         stream : "<a>Our public stream</a>",
         tagcloud : "<a>Your tagcloud</a>",
-        feeds : "<a>Your Subscriprtion</a>",
+        feeds : "<a>Your Subscription</a>",
         setting : "<a>Your Setting</a>",
         admin : "<a>Administration</a>",
         domfilter : "<a>Bookmarks filtered by domain</a>",
