@@ -4,7 +4,7 @@
 import jinja2
 import datetime
 from google.appengine.api import mail, app_identity
-from google.appengine.ext import deferred
+from google.appengine.ext import deferred, ndb
 from models import Bookmarks, UserInfo
 
 
@@ -47,7 +47,13 @@ def feed_digest(feedk):
     values = {'bmq': bmq, 'title': title}
     html = template.render(values)
     if bmq.get():
-        deferred.defer(send_digest, feed.user.email(), html, title, _target="worker", _queue="emails")
+        deferred.defer(send_digest,
+                       feed.user.email(),
+                       html,
+                       title,
+                       _target="worker",
+                       _queue="emails")
+        ndb.delete_multi([bm.key for bm in bmq])
 
 
 def send_bm(bmk):

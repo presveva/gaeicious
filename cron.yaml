@@ -9,4 +9,4 @@ cron:
 
 - description: send feed digests
   url: /admin/digest
-  schedule: every day 17:00
+  schedule: every 8 hours synchronized
