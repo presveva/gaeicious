@@ -1,7 +1,0 @@
-<div class="alert alert-info" id="tagcloud">
-    <h4>Refine:</h4>
-    <button type="button" class="close" data-dismiss="alert">×</button>
-    {% for tag in tagset %}
-    <a class="btn btn-link" onclick="getbms('refine','','{{arg1}}','{{tag.get().name}}')"> {{ tag.get().name }}</a>
-    {% endfor %}
-</div>

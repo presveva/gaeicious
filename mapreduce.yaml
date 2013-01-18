@@ -1,0 +1,8 @@
+mapreduce:
+- name: delattr from bookmarks
+  mapper:
+    input_reader: mapreduce.input_readers.DatastoreKeyInputReader
+    handler: reduce.delattr
+    params:
+    - name: entity_kind
+      default: handlers.models.Bookmarks

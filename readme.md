@@ -7,9 +7,7 @@ How to install
 
 Goodies
 ---
-- Tagging
-    - Associate tags to the bookmark
-    - Filter and refine the bookmarks by tags
+- Searchable
 - Content optimization
     - Images, Youtube and Vimeo video is incorporated as comment
     - Urls is sanitized

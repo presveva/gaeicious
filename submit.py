@@ -1,10 +1,79 @@
+#!/usr/local/bin/python
+# -*- coding: utf-8 -*-
 from __future__ import with_statement
+import util
+from webapp2 import RequestHandler
+from google.appengine.api import users, urlfetch, files, images
 from google.appengine.ext import ndb, deferred, blobstore
-from google.appengine.api import urlfetch, files, images
+from google.appengine.ext.webapp import blobstore_handlers
+from models import Feeds, Bookmarks, UserInfo
+from email import header
 from urlparse import urlparse, parse_qs
-from models import Bookmarks, UserInfo
-from utils import send_bm, mys_on, mys_off
 from HTMLParser import HTMLParser
+
+
+class AddFeed(RequestHandler):
+    def get(self):
+        feed = Feeds.get_by_id(int(self.request.get('id')))
+        feed.key.delete()
+        self.redirect(self.request.referer)
+
+    def post(self):
+        from libs.feedparser import parse
+        user = users.get_current_user()
+        url = self.request.get('url')
+        p = parse(str(url))
+        try:
+            d = p['items'][0]
+        except IndexError:
+            pass
+        if user:
+            q = Feeds.query(Feeds.user == user, Feeds.url == url)
+            if q.get() is None:
+                feed = Feeds()
+
+                @ndb.transactional
+                def txn():
+                    feed.blog = p.feed.title
+                    feed.root = p.feed.link
+                    feed.user = user
+                    feed.feed = url
+                    feed.url = d.link
+                    feed.put()
+                # ndb.transaction(txn)
+                deferred.defer(pop_feed, feed.key, _target="worker", _queue="admin")
+            self.redirect(self.request.referer)
+        else:
+            self.redirect('/')
+
+
+class AddBM(RequestHandler):
+    def get(self):
+        f = None
+        u = users.User(str(self.request.get('user')))
+        t = self.request.get('title')  # .encode('utf8')
+        o = self.request.get('url')  # .encode('utf8')
+        c = self.request.get('comment')  # .encode('utf8')
+        submit_bm(f, u, t, o, c)
+        self.redirect('/')
+
+    def get_subject(self, o, message):
+        try:
+            t = header.decode_header(message.subject)[0][0]
+            return t
+        except:
+            return o
+
+
+class CopyBM(RequestHandler):
+    def get(self):
+        old = Bookmarks.get_by_id(int(self.request.get('bm')))
+        f = None
+        u = users.get_current_user()
+        t = old.title
+        o = old.url
+        c = old.comment
+        deferred.defer(submit_bm, f, u, t, o, c, _queue="admin")
 
 
 def submit_bm(feed, user, title, url, comment):
@@ -12,11 +81,11 @@ def submit_bm(feed, user, title, url, comment):
         bm = Bookmarks()
 
         result = urlfetch.fetch(url=url, follow_redirects=True, allow_truncated=True, deadline=60)
-        ui_f = UserInfo.query(UserInfo.user == user).get_async()
+        ui_f = UserInfo.query(UserInfo.user == user).get()
         if result.status_code == 200 and result.final_url:
             a = result.final_url
         elif result.status_code == 500:
-            return
+            pass
         else:
             a = url
         b = a.lstrip().rstrip()
@@ -54,37 +123,21 @@ def submit_bm(feed, user, title, url, comment):
             blob_key = upload_to_blobstore(url_candidate, ext)
             bm.blob_key = blob_key
             bm.comment = '<img src="%s" />' % images.get_serving_url(blob_key, size=1600)
-        # elif ext in ['exe', 'msi']:
-            # bm.url = url_candidate
-            # blob_key = upload_to_blobstore(url_candidate, ext)
-            # bm.blob_key = blob_key
-            # bm.comment = '<a href="/%s" />download</a>' % images.get_serving_url(blob_key, size=1600)
         else:
             bm.comment = comment
             bm.url = url_candidate
-
-        bmq = Bookmarks.query(Bookmarks.user == user, Bookmarks.url == bm.url)
-        if bmq.get():
-            tag_list = []
-            for old in bmq:
-                for t in old.tags:
-                    if t not in tag_list:
-                        tag_list.append(t)
-                        bm.tags = tag_list
-            ndb.delete_multi([old.key for old in bmq])
 
         bm.domain = url_parsed.netloc
         bm.user = user
         bm.feed = feed
         bm.put()
-
+        util.index_bm(bm.key)
         try:
             if bm.feed.get().notify == 'email':
-                deferred.defer(send_bm, bm.key, _queue="emails")
+                deferred.defer(util.send_bm, bm.key, _queue="emails")
         except:
-            ui = ui_f.get_result()
-            if ui.mys:
-                deferred.defer(send_bm, bm.key, _queue="emails")
+            if ui_f.mys:
+                deferred.defer(util.send_bm, bm.key, _queue="emails")
     except:
         pass
 
@@ -100,6 +153,18 @@ def upload_to_blobstore(url_candidate, ext):
         files.finalize(file_name)
         blob_key = files.blobstore.get_blob_key(file_name)
         return blob_key
+
+
+class UploadDelicious(blobstore_handlers.BlobstoreUploadHandler):
+    def post(self):
+        user = users.get_current_user()
+        upload_files = self.get_uploads('file')
+        blob_info = upload_files[0]
+        ui = UserInfo.query(UserInfo.user == user).get()
+        ui.delicious = blob_info.key()
+        ui.put()
+        self.redirect('/')
+        deferred.defer(delicious, ui.delicious, user, _target="worker", _queue="admin")
 
 
 def pop_feed(feedk):
@@ -128,6 +193,8 @@ def pop_feed(feedk):
     feed.url = s['link']
     feed.put()
 
+# Delicious import
+
 
 def delicious(blob_key, user):
     blob_reader = blobstore.BlobReader(blob_key, buffer_size=1048576)
@@ -135,7 +202,7 @@ def delicious(blob_key, user):
     parser.feed(blob_reader.read())
     parser.close()
 
-    was = mys_off(user)
+    was = util.mys_off(user)
     for bm in parser.bookmarks:
         f = None
         u = user
@@ -144,7 +211,7 @@ def delicious(blob_key, user):
         c = bm['comment']
         deferred.defer(submit_bm, f, u, t, o, c, _queue="delicious")
     if was == 'was_true':
-        deferred.defer(mys_on, user, _queue="delicious")
+        deferred.defer(util.mys_on, user, _queue="delicious")
 
 
 class BookmarkParser(HTMLParser):

@@ -1,3 +1,11 @@
+{% extends "base.html" %}
+
+{% block navbar %}
+{% include "navbar.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="container-narrow">
 <div class="row-fluid">
 <div class="span6">
 
@@ -5,28 +13,28 @@
 
 <!-- Bookmarklet -->
 <form>
-    <label><b>Bookmarklet</b></label>
-    <span class="help-block">Drag and drop in your bookmarks bar.</span>
-    <a class="btn btn-link disabled" id="bookmarklet" href="{{ bookmarklet }}" rel="tooltip" data-placement="bottom" title="This is a bookmarklet, drag and drop in your bookmarks bar"><i class="icon-bookmark"></i> {{ brand }} it!</a>
+  <label><b>Bookmarklet</b></label>
+  <span class="help-block">Drag and drop in your bookmarks bar.</span>
+  <a class="btn btn-link disabled" id="bookmarklet" href="{{ bookmarklet }}" rel="tooltip" data-placement="bottom" title="This is a bookmarklet, drag and drop in your bookmarks bar"><i class="icon-bookmark"></i> {{ brand }} it!</a>
 </form>
 <hr>
 <!-- Bookmark via email -->
 <label><b>Bookmark via email</b></label>
 <dl class="dl-horizontal">
-    <dt>From:<dd> the email used in {{brand}}
-    <dt>To:<dd> post@{{brand}}.appspotmail.com
-    <dt>Subject:<dd> the <em>title</em> of the Bookmark
-    <dt>Body:<dd> the <em>link</em> of the Bookmark
+  <dt>From:<dd> the email used in {{brand}}
+  <dt>To:<dd> post@{{brand}}.appspotmail.com
+  <dt>Subject:<dd> the bookmark's <em>title</em>
+  <dt>Body:<dd> the bookmark's <em>link</em>
 </dl>
 <hr>
 <form action="{{upload_url}}" method="POST" enctype="multipart/form-data">
 <label><b>Import from delicious file (delicious.html)</b></label>
 <span class="help-block">
-    <a href="http://export.delicious.com/settings/bookmarks/export" >
-    Export the 'delicious.html'</a> file and upload here.
+  <a href="http://export.delicious.com/settings/bookmarks/export" >
+  Export the 'delicious.html'</a> file and upload here.
 </span>
-    <input type="file" name="file">
-    <input class="btn" type="submit"name="submit" value="Upload">
+  <input type="file" name="file">
+  <input class="btn" type="submit"name="submit" value="Upload">
 </form>
 <hr>
 <label><b>Feeds</b></label>
@@ -35,35 +43,27 @@
 </div>
 
 <div class="span6">
-
-<legend>Setting</legend>
-<!-- mail yourself -->
-<form>
+  <legend>Setting</legend>
+  <!-- mail yourself -->
+  <form>
     <label><b>Mail yourself</b></label>
     <span class="help-block">If enabled you will receive an email for each new bookmark.</span>
     <label class="checkbox">
-        <input type="checkbox" id="mys-check"><p id="mys-text"></p>
+      <input type="checkbox" id="mys-check"><p id="mys-text"></p>
     </label>
-</form>
-<hr>
-<!-- daily digest -->
-<form>
+  </form>
+  <hr>
+  <!-- daily digest -->
+  <form>
     <label><b>Daily Digest</b></label>
-    <span class="help-block">If enabled you will receive a daily digest of your activity.</span>
-    <label class="checkbox">
-        <input type="checkbox" id="daily-check"><p id="daily-text"></p>
+    <span class="help-block">If enabled you will receive a daily digest of your activity.</span> <label class="checkbox">
+      <input type="checkbox" id="daily-check"><p id="daily-text"></p>
     </label>
-</form>
-<hr>
-<!-- Twitter buttons -->
-<form>
-    <label><b>Twitter buttons</b></label>
-    <span class="help-block">If enabled you see a twitter share button for each bookmark.</span>
-    <label class="checkbox">
-        <input type="checkbox" id="twitt-check"><p id="twitt-text"></p>
-    </label>
-</form>
+  </form>
+  <hr>
+</div>
 </div>
 </div>
 
 <script src="static/setting.js"></script>
+{% endblock %}

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from google.appengine.ext import ndb
+from google.appengine.api import search
 
 
 class UserInfo(ndb.Expando):
@@ -11,38 +12,12 @@ class UserInfo(ndb.Expando):
     data = ndb.DateTimeProperty(auto_now=True)
     mys = ndb.BooleanProperty(default=False)
     daily = ndb.BooleanProperty(default=False)
-    twitt = ndb.BooleanProperty(default=False)
     delicious = ndb.BlobKeyProperty()
-
-    @property
-    def tag_list(self):
-        return Tags.query(Tags.user == self.user)
-
-
-class Tags(ndb.Model):
-    data = ndb.DateTimeProperty(auto_now=True)
-    user = ndb.UserProperty(required=True)
-    name = ndb.StringProperty()
-
-    @property
-    def bm_set(self):
-        return Bookmarks.query(Bookmarks.tags == self.key)
-
-    @property
-    def refine_set(self):
-        other = []
-        for bm in self.bm_set.fetch():
-            for tag in bm.tags:
-                if not tag in other:
-                    other.append(tag)
-        other.remove(self.key)
-        return other
 
 
 class Feeds(ndb.Expando):
     user = ndb.UserProperty()
     data = ndb.DateTimeProperty(auto_now=True)
-    tags = ndb.KeyProperty(kind=Tags, repeated=True)
     feed = ndb.StringProperty()  # url
     blog = ndb.StringProperty(indexed=False)  # feed.title
     root = ndb.StringProperty(indexed=False)  # feed.link
@@ -52,13 +27,6 @@ class Feeds(ndb.Expando):
     @property
     def id(self):
         return self.key.id()
-
-    def other_tags(self):
-        q = ndb.gql("SELECT name FROM Tags WHERE user = :1", self.user)
-        all_user_tags = [tagk.key for tagk in q]
-        for tagk in self.tags:
-            all_user_tags.remove(tagk)
-        return all_user_tags
 
 
 class Bookmarks(ndb.Expando):
@@ -70,20 +38,17 @@ class Bookmarks(ndb.Expando):
     domain = ndb.StringProperty()
     blob_key = ndb.BlobKeyProperty(indexed=False)
     feed = ndb.KeyProperty(kind=Feeds)
-    tags = ndb.KeyProperty(kind=Tags, repeated=True)
     archived = ndb.BooleanProperty(default=False)
     starred = ndb.BooleanProperty(default=False)
     shared = ndb.BooleanProperty(default=False)
     trashed = ndb.BooleanProperty(default=False)
-    have_tags = ndb.ComputedProperty(lambda self: bool(self.tags))
 
     @property
     def id(self):
         return self.key.id()
 
-    def other_tags(self):
-        q = ndb.gql("SELECT name FROM Tags WHERE user = :1", self.user)
-        all_user_tags = [tagk.key for tagk in q]
-        for tagk in self.tags:
-            all_user_tags.remove(tagk)
-        return all_user_tags
+    @classmethod
+    def _pre_delete_hook(cls, key):
+        bm = key.get()
+        index = search.Index(name=bm.user.user_id())
+        index.remove(str(bm.id))

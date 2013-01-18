@@ -8,53 +8,52 @@
   </a>
   <a class="brand" href="/">{{ brand }}</a>
 
-  <div class="nav hidden-phone">
+  <div class="nav">
     <ul class="nav">
-      <li> <a href="/#starred" ><i class="icon-star"></i></a> </li>
-      <li> <a href="/#archived" ><i class="icon-folder-close"></i></a> </li>
-      <li> <a href="/#shared" ><i class="icon-eye-open"></i></a> </li>
-      <li> <a href="/#trashed" ><i class="icon-trash"></i></a> </li>
-      <li> <a href="/#stream" ><i class="icon-gift"></i></a> </li>
-      <li> <a href="/#untagged" ><i class="icon-tags"></i></a> </li>
-      <li class="hidden-phone hide">
-        <form class="navbar-search pull-left" method="POST" action="/ricerca" >
-          <input type="text" class="search-query" name="query_string" placeholder="Cerca (beta)">
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown"> Menu <b class="caret"></b>
+        </a>
+        <ul class="dropdown-menu">
+          <li><a href="#" onclick="getbms('starred','{{c}}')">Starred</a></li>
+          <li><a href="#" onclick="getbms('archived','{{c}}')">Archived</a></li>
+          <li><a href="#" onclick="getbms('shared','{{c}}')">Shared</a></li>
+          <li><a href="#" onclick="getbms('stream','{{c}}')">Stream</a></li>
+          <li><a href="#" onclick="getbms('trashed','{{c}}')">Trash</a></li>
+        </ul>
+      </li>
+      <li>
+        <form id="search" class="navbar-search hidden-phone" action="/search" onsubmit="search()">
+          <input type="text" class="search-query" name="query_string" placeholder="Search">
         </form>
+      </li>
+    </ul>
+    <ul class="nav pull-right">
+      <li id="more">
+        {% include 'more.html' %}
       </li>
     </ul>
   </div>
 
   <div class="nav-collapse">
-
     <ul class="nav pull-right">
-      <li id="dashboard" class="visible-desktop"></li>
-
-      <li class="dropdown visible-phone">
-        <a href="" class="dropdown-toggle" data-toggle="dropdown"> Menu <b class="caret"></b> </a>
-        <ul class="dropdown-menu">
-          <li><a href="/" > Inbox </a></li>
-          <li><a href="/#starred" > Starred </a></li>
-          <li><a href="/#shared" > Shared </a></li>
-          <li><a href="/#archived" > Archive </a></li>
-          <li><a href="/#trashed" > Trash </a></li>
-          <li><a href="/#stream" > Stream </a></li>
-          <li><a href="/#untagged" > untagged </a></li>
-        </ul>
+      <li id="collapse_btn" >
+        <a href="#" onclick="hide_all()"> <i class="icon-circle-arrow-up"></i></a>
+      </li>
+      <li id="expande_btn" class="hide">
+        <a href="#" onclick="show_all()"> <i class="icon-circle-arrow-down"></i></a>
       </li>
       <li class="dropdown">
         <a href="" class="dropdown-toggle" data-toggle="dropdown">
-          <i class="icon-user"></i> {{ ui.user }} <b class="caret"></b>
+          <i class="icon-user"></i> You <b class="caret"></b>
         </a>
         <ul class="dropdown-menu">
-          <li><a href="#tagcloud"><i class="icon-tags"></i> Tagcloud </a></li>
-          <li><a href="#feeds"><i class="icon-fire"></i> Feeds</a></li>
-          <li><a href="#setting"><i class="icon-wrench"></i> Setting</a></li>
+          <li><a href="/feeds"><i class="icon-fire"></i> Feeds</a></li>
+          <li><a href="/setting"><i class="icon-cog"></i> Setting</a></li>
+          <li class="divider"></li>
           {% if admin %}
-          <li class="divider"></li>
-          <li ><a href="#admin"><i class="icon-lock"></i> Admin </a></li>
+          <li ><a href="/admin"><i class="icon-lock"></i> Admin </a></li>
           {% endif %}
-          <li class="divider"></li>
-          <li><a href="{{ url }}"><i class="icon-off"></i> {{ linktext }}</a></li>
+          <li><a href="{{ url }}"><i class="icon-off"></i> Logout</a></li>
         </ul>
       </li>
     </ul>

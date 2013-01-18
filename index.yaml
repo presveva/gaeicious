@@ -35,14 +35,6 @@ indexes:
 
 - kind: Bookmarks
   properties:
-  - name: have_tags
-  - name: trashed
-  - name: user
-  - name: data
-    direction: desc
-
-- kind: Bookmarks
-  properties:
   - name: shared
   - name: trashed
   - name: data
@@ -66,16 +58,8 @@ indexes:
 
 - kind: Bookmarks
   properties:
-  - name: tags
+  - name: trashed
   - name: data
-    direction: desc
-
-- kind: Bookmarks
-  properties:
-  - name: tags
-  - name: user
-  - name: data
-    direction: desc
 
 - kind: Bookmarks
   properties:

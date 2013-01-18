@@ -1,11 +1,14 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 import webapp2
-import os
-from google.appengine.api import users, app_identity, memcache
-from google.appengine.ext import ndb, blobstore
-from handlers import ajax, utils, core, submit
-from handlers.models import Bookmarks, UserInfo, Feeds, Tags
+import json
+import logging
+import util
+import submit
+from google.appengine.api import users, app_identity, search
+from google.appengine.ext import ndb, blobstore, deferred
+from models import *
+# from webapp2_extras import sessions
 
 
 class BaseHandler(webapp2.RequestHandler):
@@ -21,43 +24,56 @@ class BaseHandler(webapp2.RequestHandler):
                 ui.put()
                 return ui
 
+    # def dispatch(self):
+    #     self.session_store = sessions.get_store(request=self.request)
+    #     try:
+    #         webapp2.RequestHandler.dispatch(self)
+    #     finally:
+    #         self.session_store.save_sessions(self.response)
+
+    # @webapp2.cached_property
+    # def session(self):
+    #     return self.session_store.get_session(backend='memcache')
+
     def generate(self, template_name, template_values={}):
         if users.get_current_user():
-            url = users.create_logout_url("/")
-            linktext = 'Logout'
+            url = users.create_logout_url('/')
+            urltext = 'Logout'
         else:
-            url = users.create_login_url(self.request.uri)
-            linktext = 'Login'
+            url = users.create_login_url('/')
+            urltext = 'Login'
         values = {
-            'brand': app_identity.get_application_id(),
-            'url': url,
-            'linktext': linktext,
-            'ui': self.ui,
-            'admin': users.is_current_user_admin()
-            }
+        'url': url, 'urltext': urltext, 'ui': self.ui,
+        'brand': app_identity.get_application_id(),
+        'admin': users.is_current_user_admin()
+        }
         values.update(template_values)
-        template = utils.jinja_environment.get_template(template_name)
+        template = util.jinja_environment.get_template(template_name)
         self.response.write(template.render(values))
 
 
-class Main_Frame(BaseHandler):
+class HomePage(BaseHandler):
     def get(self):
         if users.get_current_user():
-            page = self.request.get('page')
-            cursor = self.request.get('cursor')
-            arg1 = self.request.get('arg1')
-            arg2 = self.request.get('arg2')
-            bmq = self.bmq(page, arg1, arg2)
-            self.build(page, bmq, cursor, arg1, arg2)
+            self.generate('home.html', {})
         else:
             self.response.set_cookie('active-tab', 'hero')
             self.generate('hero.html', {})
 
-    def bmq(self, page, arg1, arg2):
+
+class Main_Frame(BaseHandler):
+    def get(self, page):
+        if users.get_current_user():
+            cursor = self.request.get('cursor')
+            bmq = self.bmq(page)
+            self.build(page, bmq, cursor)
+        else:
+            self.redirect('/')
+
+    def bmq(self, page):
         q1 = Bookmarks.query(Bookmarks.user == users.get_current_user())
         q2 = q1.order(-Bookmarks.data)
         q3 = q2.filter(Bookmarks.trashed == False)
-        t1 = Tags.query(Tags.user == users.get_current_user())
 
         if page == 'archived':
             bmq = q3.filter(Bookmarks.archived == True)
@@ -65,80 +81,67 @@ class Main_Frame(BaseHandler):
             bmq = q3.filter(Bookmarks.shared == True)
         elif page == 'starred':
             bmq = q3.filter(Bookmarks.starred == True)
-        elif page == 'untagged':
-            bmq = q3.filter(Bookmarks.have_tags == False)
         elif page == 'trashed':
             bmq = q2.filter(Bookmarks.trashed == True)
         elif page == 'domain':
-            bmq = q2.filter(Bookmarks.domain == arg1)
-        elif page == 'filter':
-            tag1 = t1.filter(Tags.name == arg1).get()
-            bmq = q2.filter(Bookmarks.tags == tag1.key)
-        elif page == 'refine':
-            tag1 = t1.filter(Tags.name == arg1).get()
-            tag2 = t1.filter(Tags.name == arg2).get()
-            bmq = q2.filter(Bookmarks.tags == tag1.key)
-            bmq = bmq.filter(Bookmarks.tags == tag2.key)
+            bmq = q2.filter(Bookmarks.domain == self.request.get('domain'))
         elif page == 'stream':
-            bmq = Bookmarks.query(Bookmarks.trashed == False)
-            bmq = bmq.filter(Bookmarks.shared == True)
+            bmq = Bookmarks.query(Bookmarks.trashed == False,
+                                  Bookmarks.shared == True)
             bmq = bmq.order(-Bookmarks.data)
         else:
             bmq = q3.filter(Bookmarks.archived == False)
         return bmq
 
-    def build(self, page, bmq, cursor, arg1, arg2):
+    def build(self, page, bmq, cursor):
         c = ndb.Cursor(urlsafe=cursor)
         bms, next_curs, more = bmq.fetch_page(15, start_cursor=c)
         if more and next_curs:
             next_c = next_curs.urlsafe()
         else:
             next_c = None
-        values = {
-        'bms': bms,
-        'c': next_c,
-        'ui': self.ui,
-        'arg1': arg1,
-        'arg2': arg2,
-        }
-        bm_ids_key = 'bm_ids_' + str(self.ui.user_id)
-        memcache.set(bm_ids_key, list(bm.id for bm in bms))
-        if page == '':
-            self.response.set_cookie('active-tab', 'inbox')
-            self.generate('home.html', values)
+        values = {'bms': bms, 'c': next_c, 'ui': self.ui}
+        self.response.set_cookie('active-tab', page)  # todo
+        if page == 'stream':
+            tmpl = util.jinja_environment.get_template('stream.html')
         else:
-            if page == 'stream':
-                temp = utils.jinja_environment.get_template('stream.html')
+            tmpl = util.jinja_environment.get_template('frame.html')
+        self.response.headers['Content-Type'] = 'application/json'
+        html = tmpl.render(values)
+        tmpl1 = util.jinja_environment.get_template('more.html')
+        more = tmpl1.render(values)
+        data = json.dumps({"html": html, "more": more})
+        self.response.write(data)
+
+
+class StreamPage(BaseHandler):
+    def get(self):
+        if users.get_current_user():
+            cursor = self.request.get('cursor')
+            bmq = Bookmarks.query(Bookmarks.trashed == False,
+                                  Bookmarks.shared == True)
+            bmq = bmq.order(-Bookmarks.data)
+            c = ndb.Cursor(urlsafe=cursor)
+            bms, next_curs, more = bmq.fetch_page(15, start_cursor=c)
+            if more and next_curs:
+                next_c = next_curs.urlsafe()
             else:
-                temp = utils.jinja_environment.get_template('frame.html')
-            html = temp.render(values)
-            self.response.set_cookie('active-tab', page)
-            self.response.write(html)
+                next_c = None
+            values = {'bms': bms, 'c': next_c, 'ui': self.ui}
+            self.generate('item.html', values)
 
 
 class ItemPage(BaseHandler):
-    def get(self):
-        bm = Bookmarks.get_by_id(int(self.request.get('id')))
+    def get(self, id):
+        bm = Bookmarks.get_by_id(int(id))
         if bm.shared == True:
             self.generate('item.html', {'bm': bm})
         else:
             self.redirect('/')
 
 
-class OtherPage(BaseHandler):
+class SettingPage(BaseHandler):
     def get(self):
-        if users.get_current_user():
-            page = self.request.get('page')
-            if page == 'setting':
-                self.setting()
-            elif page == 'feeds':
-                self.feeds()
-            elif page == 'admin':
-                self.admin()
-            else:
-                self.redirect('/')
-
-    def setting(self):
         ui = self.ui
         upload_url = blobstore.create_upload_url('/upload')
         brand = app_identity.get_application_id()
@@ -146,84 +149,206 @@ class OtherPage(BaseHandler):
 javascript:location.href=
 '%s/submit?url='+encodeURIComponent(location.href)+
 '&title='+encodeURIComponent(document.title)+
-'&user='+'%s'+
-'&comment='+document.getSelection().toString()
+'&user='+'%s'+'&comment='+document.getSelection().toString()
 """ % (self.request.host_url, ui.email)
-
-        temp = utils.jinja_environment.get_template('setting.html')
-        html = temp.render({'bookmarklet': bookmarklet,
-                           'upload_url': upload_url,
-                           'brand': brand,
-                           })
         self.response.set_cookie('mys', '%s' % ui.mys)
         self.response.set_cookie('daily', '%s' % ui.daily)
         self.response.set_cookie('twitt', '%s' % ui.twitt)
         self.response.set_cookie('active-tab', 'setting')
-        self.response.write(html)
+        self.generate('setting.html', {'bookmarklet': bookmarklet,
+                      'upload_url': upload_url, 'brand': brand, })
 
-    def feeds(self):
+
+class FeedsPage(BaseHandler):
+    def get(self):
         feed_list = Feeds.query(Feeds.user == users.get_current_user())
         feed_list = feed_list.order(-Feeds.data)
-        temp = utils.jinja_environment.get_template('feeds.html')
-        html = temp.render({'feeds': feed_list})
         self.response.set_cookie('active-tab', 'feeds')
-        self.response.write(html)
+        self.generate('feeds.html', {'feeds': feed_list})
 
-    def admin(self):
-        if users.is_current_user_admin():
-            ui = self.ui
-            self.response.set_cookie('active-tab', 'admin')
-            temp = utils.jinja_environment.get_template('admin.html')
-            html = temp.render({'ui': ui})
-            self.response.write(html)
-        else:
+
+class EditBM(webapp2.RequestHandler):
+    def get(self):
+        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
+        if users.get_current_user() == bm.user:
+            def txn():
+                bm.url = self.request.get('url').encode('utf8')
+                bm.title = self.request.get('title').encode('utf8')
+                bm.comment = self.request.get('comment').encode('utf8')
+                bm.put()
+            ndb.transaction(txn)
+        self.redirect(self.request.referer)
+
+
+class ArchiveBM(BaseHandler):
+    def get(self):
+        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
+        if users.get_current_user() == bm.user:
+            if bm.trashed:
+                bm.archived = False
+                bm.trashed = False
+                bm.feed = None
+            elif bm.archived:
+                bm.archived = False
+            else:
+                bm.archived = True
+                bm.feed = None
+            bm.put()
+            # bms_ids = self.session.get('bms_ids')
+            # bms_ids.remove(int(self.request.get('bm')))
+            # self.session['bms_ids'] = bms_ids
+
+
+class TrashBM(BaseHandler):
+    def get(self):
+        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
+        if users.get_current_user() == bm.user:
+            if bm.trashed == False:
+                bm.archived = False
+                bm.trashed = True
+                bm.put()
+            else:
+                bm.key.delete()
+            # bms_ids = self.session.get('bms_ids')
+            # bms_ids.remove(int(self.request.get('bm')))
+            # self.session['bms_ids'] = bms_ids
+
+
+class indicizza(webapp2.RequestHandler):
+    def get(self):
+        for ui in UserInfo.query():
+            deferred.defer(util.index_bms,
+                           ui,
+                           _target='worker',
+                           _queue='admin')
             self.redirect('/')
 
 
-debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
+class cerca(BaseHandler):
+    def post(self):
+        user = users.get_current_user()
+        query_string = self.request.get('query_string')
+        try:
+            results = search.Index(name='%s' % user.user_id()).search(query_string)
+            bms_ids = [int(doc.doc_id) for doc in results]
+            keys = [ndb.Key(Bookmarks, id) for id in bms_ids]
+            bms = ndb.get_multi(keys)
+            # self.session['bms_ids'] = bms_ids
+            html = self.generate('frame.html', {'bms': bms})
+            self.response.write(html)
+        except search.Error:
+            logging.exception('Search failed')
+
+
+class GetComment(webapp2.RequestHandler):
+    def get(self):
+        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
+        self.response.write(bm.comment)
+
+
+class GetEdit(webapp2.RequestHandler):
+    def get(self):
+        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
+        template = util.jinja_environment.get_template('edit.html')
+        values = {'bm': bm}
+        html_page = template.render(values)
+        self.response.write(html_page)
+
+
+class StarBM(webapp2.RequestHandler):
+    def get(self):
+        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
+        if users.get_current_user() == bm.user:
+            if bm.starred == False:
+                bm.starred = True
+                html = '<i class="icon-star"></i>'
+            else:
+                bm.starred = False
+                html = '<i class="icon-star-empty"></i>'
+            bm.put()
+        self.response.write(html)
+
+
+class ShareBM(webapp2.RequestHandler):
+    def get(self):
+        bm = Bookmarks.get_by_id(int(self.request.get('id')))
+        if users.get_current_user() == bm.user:
+            if bm.shared == False:
+                bm.shared = True
+                eye = '<i class="icon-eye-open"></i>'
+            else:
+                bm.shared = False
+                eye = '<i class="icon-eye-close"></i>'
+            bm.put()
+        self.response.write(eye)
+
+
+class CheckFeed(webapp2.RequestHandler):
+    def get(self):
+        feed = Feeds.get_by_id(int(self.request.get('feed')))
+        deferred.defer(submit.pop_feed, feed.key, _target="worker", _queue="admin")
+
+###################################################
+## Setting page
+###################################################
+
+
+class SetMys(webapp2.RequestHandler):
+    def get(self):
+        ui = UserInfo.query(UserInfo.user == users.get_current_user()).get()
+        if ui.mys == False:
+            ui.mys = True
+            html = '<i class="icon-thumbs-up"></i> <b>Enabled </b>'
+        else:
+            ui.mys = False
+            html = '<i class="icon-thumbs-down"></i> <b>Disabled</b>'
+        ui.put()
+        self.response.write(html)
+
+
+class SetDaily(webapp2.RequestHandler):
+    def get(self):
+        ui = UserInfo.query(UserInfo.user == users.get_current_user()).get()
+        if ui.daily == False:
+            ui.daily = True
+            html = '<i class="icon-thumbs-up"></i> <b>Enabled </b>'
+        else:
+            ui.daily = False
+            html = '<i class="icon-thumbs-down"></i> <b>Disabled</b>'
+        ui.put()
+        self.response.write(html)
+
+
+class SetNotify(webapp2.RequestHandler):
+    def get(self):
+        feed = Feeds.get_by_id(int(self.request.get('feed')))
+        feed.notify = self.request.get('notify')
+        feed.put()
+
+
 app = webapp2.WSGIApplication([
-    ('/', Main_Frame),
-    ('/other', OtherPage),
+    ('/', HomePage),
+    ('/search', cerca),
+    (r'/bms/(.*)', Main_Frame),
     ('/submit', submit.AddBM),
-    ('/_ah/mail/post@.*', submit.ReceiveMail),
     ('/copy', submit.CopyBM),
     ('/upload', submit.UploadDelicious),
     ('/feed', submit.AddFeed),
-    ('/edit', core.EditBM),
-    # ('/deltag', core.DeleteTag),
-    ('/atf', core.AssTagFeed),
-    ('/rtf', core.RemoveTagFeed),
-    ('/empty_trash', core.Empty_Trash),
-    ('/checkfeed', core.CheckFeed),
-    ('/admin/upgrade', core.Upgrade),
-    ('/admin/script', core.Script),
-    ('/admin/digest', core.SendDigest),
-    ('/admin/activity', core.SendActivity),
-    ('/admin/check', core.CheckFeeds),
-    ('/admin/delattr', core.del_attr),
-    ('/archive', core.ArchiveBM),
-    ('/trash', core.TrashBM),
-    ('/get_tips', ajax.get_tips),
-    ('/get_refine_tags', ajax.get_refine_tags),
-    ('/get_empty_trash', ajax.get_empty_trash),
-    ('/gettagcloud', ajax.gettagcloud),
-    ('/setmys', ajax.SetMys),
-    ('/setdaily', ajax.SetDaily),
-    ('/setnotify', ajax.SetNotify),
-    ('/settwitt', ajax.SetTwitt),
-    ('/star', ajax.StarBM),
-    ('/share', ajax.ShareBM),
-    ('/addtag', ajax.AddTag),
-    ('/removetag', ajax.RemoveTag),
-    ('/assigntag', ajax.AssignTag),
-    ('/gettags', ajax.GetTags),
-    ('/gettagsfeed', ajax.GetTagsFeed),
-    ('/getcomment', ajax.GetComment),
-    ('/getedit', ajax.GetEdit),
-    ('/archive_all', core.archive_all),
-    ('/trash_all', core.trash_all),
-    ('/bm', ItemPage),
-    ], debug=debug)
+    ('/edit', EditBM),
+    ('/checkfeed', CheckFeed),
+    ('/archive', ArchiveBM),
+    ('/trash', TrashBM),
+    ('/setting', SettingPage),
+    ('/feeds', FeedsPage),
+    ('/setmys', SetMys),
+    ('/setdaily', SetDaily),
+    ('/setnotify', SetNotify),
+    ('/star', StarBM),
+    ('/share', ShareBM),
+    ('/getcomment', GetComment),
+    ('/getedit', GetEdit),
+    (r'/bm/(.*)', ItemPage),
+    ], debug=util.debug, config=util.config)
 
 
 def main():
