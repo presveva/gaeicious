@@ -54,14 +54,14 @@ class SendDigest(webapp2.RequestHandler):
     def get(self):
         for feed in Feeds.query():
             if feed.notify == 'digest':
-                deferred.defer(feed_digest, feed.key, _target="worker", _queue="emails")
+                deferred.defer(util.feed_digest, feed.key, _target="worker", _queue="emails")
 
 
 class SendActivity(webapp2.RequestHandler):
     def get(self):
         for ui in UserInfo.query():
             if ui.daily:
-                deferred.defer(daily_digest, ui.user, _target="worker", _queue="emails")
+                deferred.defer(util.daily_digest, ui.user, _target="worker", _queue="emails")
 
 
 class cron_trash(webapp2.RequestHandler):

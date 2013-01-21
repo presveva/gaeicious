@@ -92,7 +92,6 @@ def feed_digest(feedk):
                        title,
                        _target="worker",
                        _queue="emails")
-        # ndb.put_multi([bm.trashed=True for bm in bmq])
         queue = []
         for bm in bmq:
             bm.trashed = True
