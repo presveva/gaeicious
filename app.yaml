@@ -24,10 +24,10 @@ handlers:
 # - url: /_ah/login_required
 #   script: do_openid_login.app
 
-# - url: /favicon\.ico
-#   static_files: static/favicon.ico
-#   upload: static/favicon\.ico
-#   mime_type: image/x-icon
+- url: /favicon\.ico
+  static_files: static/favicon.ico
+  upload: static/favicon\.ico
+  mime_type: image/x-icon
 
 - url: /_ah/mail/post@.*
   script: main.app

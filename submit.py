@@ -30,17 +30,12 @@ class AddFeed(RequestHandler):
         if user:
             q = Feeds.query(Feeds.user == user, Feeds.url == url)
             if q.get() is None:
-                feed = Feeds()
-
-                @ndb.transactional
-                def txn():
-                    feed.blog = p.feed.title
-                    feed.root = p.feed.link
-                    feed.user = user
-                    feed.feed = url
-                    feed.url = d.link
-                    feed.put()
-                # ndb.transaction(txn)
+                feed = Feeds(blog=p.feed.title,
+                             root=p.feed.link,
+                             user=user,
+                             feed=url,
+                             url=d.link)
+                feed.put()
                 deferred.defer(pop_feed, feed.key, _target="worker", _queue="admin")
             self.redirect(self.request.referer)
         else:
