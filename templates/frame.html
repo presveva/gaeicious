@@ -1,7 +1,7 @@
 {% for bm in bms %}
 <div class="well well-small row-{{ bm.id }}">
   <dt > <i class="icon-bookmark"></i>
-    <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(75) }}</a>
+    <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(60) }}</a>
     <a class="btn btn-link btn-mini " onclick="getbms('domain','','{{ bm.domain }}')"><em>{{ bm.domain }}</em> </a>
     <dt>
       <div class="btn-toolbar">
