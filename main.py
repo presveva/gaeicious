@@ -8,7 +8,6 @@ import submit
 from google.appengine.api import users, app_identity, search
 from google.appengine.ext import ndb, blobstore, deferred
 from models import *
-# from webapp2_extras import sessions
 
 
 class BaseHandler(webapp2.RequestHandler):
@@ -23,17 +22,6 @@ class BaseHandler(webapp2.RequestHandler):
                 ui.user = users.get_current_user()
                 ui.put()
                 return ui
-
-    # def dispatch(self):
-    #     self.session_store = sessions.get_store(request=self.request)
-    #     try:
-    #         webapp2.RequestHandler.dispatch(self)
-    #     finally:
-    #         self.session_store.save_sessions(self.response)
-
-    # @webapp2.cached_property
-    # def session(self):
-    #     return self.session_store.get_session(backend='memcache')
 
     def generate(self, template_name, template_values={}):
         if users.get_current_user():
@@ -153,7 +141,6 @@ javascript:location.href=
 """ % (self.request.host_url, ui.email)
         self.response.set_cookie('mys', '%s' % ui.mys)
         self.response.set_cookie('daily', '%s' % ui.daily)
-        self.response.set_cookie('twitt', '%s' % ui.twitt)
         self.response.set_cookie('active-tab', 'setting')
         self.generate('setting.html', {'bookmarklet': bookmarklet,
                       'upload_url': upload_url, 'brand': brand, })
