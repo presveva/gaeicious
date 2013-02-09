@@ -181,9 +181,6 @@ class ArchiveBM(BaseHandler):
                 bm.archived = True
                 bm.feed = None
             bm.put()
-            # bms_ids = self.session.get('bms_ids')
-            # bms_ids.remove(int(self.request.get('bm')))
-            # self.session['bms_ids'] = bms_ids
 
 
 class TrashBM(BaseHandler):
@@ -196,9 +193,6 @@ class TrashBM(BaseHandler):
                 bm.put()
             else:
                 bm.key.delete()
-            # bms_ids = self.session.get('bms_ids')
-            # bms_ids.remove(int(self.request.get('bm')))
-            # self.session['bms_ids'] = bms_ids
 
 
 class indicizza(webapp2.RequestHandler):
@@ -220,7 +214,6 @@ class cerca(BaseHandler):
             bms_ids = [int(doc.doc_id) for doc in results]
             keys = [ndb.Key(Bookmarks, id) for id in bms_ids]
             bms = ndb.get_multi(keys)
-            # self.session['bms_ids'] = bms_ids
             html = self.generate('frame.html', {'bms': bms})
             self.response.write(html)
         except search.Error:

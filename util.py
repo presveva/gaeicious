@@ -21,9 +21,7 @@ jinja_environment.filters['dtf'] = dtf
 
 config = {}
 config['webapp2_extras.sessions'] = {
-    'secret_key': 'my-super-secret-key',
-    'backends': {'memcache': 'webapp2_extras.appengine.sessions_memcache.MemcacheSessionFactory'}
-}
+    'secret_key': 'my-super-secret-key'}
 
 
 def index_bms(ui):

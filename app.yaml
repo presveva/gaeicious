@@ -44,6 +44,9 @@ handlers:
   script: main.app
   login: required
 
+- url: /mapreduce(/.*)?
+  script: mapreduce.reduce.app
+
 libraries:
 - name: jinja2
   version: latest
@@ -53,7 +56,10 @@ libraries:
 builtins:
 - deferred: on
 - remote_api: off
-- appstats: on
+- appstats: off
 
 inbound_services:
 - mail
+
+includes:
+- mapreduce/include.yaml

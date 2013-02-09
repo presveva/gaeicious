@@ -3,6 +3,7 @@
 import webapp2
 import util
 import submit
+import datetime
 from google.appengine.api import users
 from google.appengine.ext import ndb, deferred
 from models import *
@@ -69,8 +70,8 @@ class cron_trash(webapp2.RequestHandler):
         delta = datetime.timedelta(days=30)
         now = datetime.datetime.now()
         period = now - delta
-        bmq = Bookmarks.query(Bookmarks.trashed == True)
-        bmq = bmq.filter(Bookmarks.data < period)
+        bmq = Bookmarks.query(Bookmarks.trashed == True,
+                              Bookmarks.data < period)
         ndb.delete_multi([bm.key for bm in bmq])
 
 

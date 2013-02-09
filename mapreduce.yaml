@@ -1,0 +1,8 @@
+mapreduce:
+- name: remove_bm
+  mapper:
+    input_reader: mapreduce.input_readers.DatastoreKeyInputReader
+    handler: reduce.remove_bm
+    params:
+    - name: entity_kind
+      default: models.Bookmarks

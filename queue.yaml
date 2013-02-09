@@ -3,8 +3,8 @@ total_storage_limit: 120M
 queue:
 
 - name: default
-  rate: 2/s
-  bucket_size: 10
+  rate: 40/s
+  bucket_size: 100
 
 - name: admin
   rate: 20/s

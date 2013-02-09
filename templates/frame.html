@@ -1,8 +1,7 @@
 {% for bm in bms %}
 <div class="well well-small row-{{ bm.id }}">
   <dt > <i class="icon-bookmark"></i>
-    <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(60) }}</a>
-    <a class="btn btn-link btn-mini " onclick="getbms('domain','','{{ bm.domain }}')"><em>{{ bm.domain }}</em> </a>
+    <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(90) }}</a>
     <dt>
       <div class="btn-toolbar">
         <div class="btn-group">
@@ -47,8 +46,10 @@
         <div class="btn-group link-{{ bm.id }}">
           {% if bm.shared %}
           <a class="btn btn-small btn-link " href="/bm/{{ bm.id }}" target="_blank">link</a>
-          {% else %}
           {% endif %}
+        </div>
+        <div class="btn-group">
+          <a class="btn btn-link btn-mini " onclick="getbms('domain','','{{ bm.domain }}')"><em>{{ bm.domain }}</em> </a>
         </div>
       </div><!-- btn-toolbar -->
     </dt>
