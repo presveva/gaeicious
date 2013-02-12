@@ -58,8 +58,7 @@ class CopyBM(RequestHandler):
                        user=users.get_current_user(),
                        title=old.title,
                        url=old.url,
-                       comment=old.comment,
-                       _queue="admin")
+                       comment=old.comment)
 
 
 def submit_bm(feed, user, title, url, comment):

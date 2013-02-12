@@ -1,5 +1,5 @@
 {% for bm in bms %}
-<div class="well well-small row-{{ bm.id }}">
+<div class="{%if bm.trashed%}alert alert-error{%else%}well well-small{%endif%} row-{{ bm.id }} success">
   <dt > <i class="icon-bookmark"></i>
     <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(90) }}</a>
     <dt>

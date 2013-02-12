@@ -9,11 +9,9 @@ from google.appengine.api import mail, app_identity, search
 from google.appengine.ext import deferred, ndb
 from models import Bookmarks, UserInfo
 
-
-def dtf(value, format='%d/%m/%Y - %H:%M UTC'):
-    return value.strftime(format)
-
 debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
+
+dtf = lambda value: value.strftime('%d/%m/%Y - %H:%M UTC')
 
 jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(['templates']))

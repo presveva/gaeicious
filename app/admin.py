@@ -36,8 +36,8 @@ class ReceiveMail(webapp2.RequestHandler):
             txtmsg = text[1].decode()
         submit_bm(feed=None,
                   user=users.User(utils.parseaddr(message.sender)[1]),
-                  title=self.get_subject(o, message),
                   url=txtmsg.encode('utf8'),
+                  title=self.get_subject(txtmsg.encode('utf8'), message),
                   comment='Sent via email')
 
     def get_subject(self, o, message):
@@ -90,9 +90,5 @@ app = ndb.toplevel(webapp2.WSGIApplication([
         ])
     ], debug=util.debug, config=util.config))
 
-
-def admin():
-    app.run()
-
 if __name__ == "__main__":
-    admin()
+    app.run()

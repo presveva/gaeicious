@@ -1,10 +1,9 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-import webapp2
-import json
-import logging
 import util
 import submit
+import webapp2
+from webapp2_extras import json
 from google.appengine.api import users, app_identity, search
 from google.appengine.ext import ndb, blobstore, deferred
 from models import *
@@ -13,15 +12,17 @@ from models import *
 class BaseHandler(webapp2.RequestHandler):
     @property
     def ui(self):
-        if users.get_current_user():
-            q = UserInfo.query(UserInfo.user == users.get_current_user())
-            if q.get():
-                return q.get()
-            else:
-                ui = UserInfo()
-                ui.user = users.get_current_user()
-                ui.put()
-                return ui
+        user = users.get_current_user()
+        if user:
+            return UserInfo.get_or_insert(str(user.user_id()), user=user)
+
+    def render(self, _template, _values):
+        template = util.jinja_environment.get_template(_template)
+        return template.render(_values)
+
+    def send_json(self, _values):
+        self.response.headers['Content-Type'] = 'application/json'
+        self.response.write(json.encode(_values))
 
     def generate(self, template_name, template_values={}):
         if users.get_current_user():
@@ -52,71 +53,43 @@ class HomePage(BaseHandler):
 class Main_Frame(BaseHandler):
     def get(self, page):
         if users.get_current_user():
-            cursor = self.request.get('cursor')
             bmq = self.bmq(page)
+            cursor = ndb.Cursor(urlsafe=self.request.get('cursor'))
             self.build(page, bmq, cursor)
         else:
             self.redirect('/')
 
     def bmq(self, page):
         q1 = Bookmarks.query(Bookmarks.user == users.get_current_user())
-        q2 = q1.order(-Bookmarks.data)
-        q3 = q2.filter(Bookmarks.trashed == False)
+        q2 = q1.filter.query(Bookmarks.trashed == False).order(-Bookmarks.data)
 
         if page == 'archived':
-            bmq = q3.filter(Bookmarks.archived == True)
+            bmq = q2.filter(Bookmarks.archived == True)
         elif page == 'shared':
-            bmq = q3.filter(Bookmarks.shared == True)
+            bmq = q2.filter(Bookmarks.shared == True)
         elif page == 'starred':
-            bmq = q3.filter(Bookmarks.starred == True)
+            bmq = q2.filter(Bookmarks.starred == True)
         elif page == 'trashed':
-            bmq = q2.filter(Bookmarks.trashed == True)
+            bmq = q1.filter(Bookmarks.trashed == True)
         elif page == 'domain':
-            bmq = q2.filter(Bookmarks.domain == self.request.get('domain'))
+            bmq = q1.filter(Bookmarks.domain == self.request.get('domain'))
         elif page == 'stream':
             bmq = Bookmarks.query(Bookmarks.trashed == False,
-                                  Bookmarks.shared == True)
-            bmq = bmq.order(-Bookmarks.data)
+                                  Bookmarks.shared == True).order(-Bookmarks.data)
         else:
-            bmq = q3.filter(Bookmarks.archived == False)
+            bmq = q2.filter(Bookmarks.archived == False)
         return bmq
 
     def build(self, page, bmq, cursor):
-        c = ndb.Cursor(urlsafe=cursor)
-        bms, next_curs, more = bmq.fetch_page(15, start_cursor=c)
-        if more and next_curs:
-            next_c = next_curs.urlsafe()
-        else:
-            next_c = None
-        values = {'bms': bms, 'c': next_c, 'ui': self.ui}
-        self.response.set_cookie('active-tab', page)  # todo
+        bms, next_curs, more = bmq.fetch_page(15, start_cursor=cursor)
+        next_c = next_curs.urlsafe() if more else None
         if page == 'stream':
-            tmpl = util.jinja_environment.get_template('stream.html')
+            html = self.render('stream.html', {'bms': bms})
         else:
-            tmpl = util.jinja_environment.get_template('frame.html')
-        self.response.headers['Content-Type'] = 'application/json'
-        html = tmpl.render(values)
-        tmpl1 = util.jinja_environment.get_template('more.html')
-        more = tmpl1.render(values)
-        data = json.dumps({"html": html, "more": more})
-        self.response.write(data)
-
-
-class StreamPage(BaseHandler):
-    def get(self):
-        if users.get_current_user():
-            cursor = self.request.get('cursor')
-            bmq = Bookmarks.query(Bookmarks.trashed == False,
-                                  Bookmarks.shared == True)
-            bmq = bmq.order(-Bookmarks.data)
-            c = ndb.Cursor(urlsafe=cursor)
-            bms, next_curs, more = bmq.fetch_page(15, start_cursor=c)
-            if more and next_curs:
-                next_c = next_curs.urlsafe()
-            else:
-                next_c = None
-            values = {'bms': bms, 'c': next_c, 'ui': self.ui}
-            self.generate('item.html', values)
+            html = self.render('frame.html', {'bms': bms})
+        more = self.render('more.html', {'cursor': next_c})
+        self.response.set_cookie('active-tab', page)
+        self.send_json({"html": html, "more": more})
 
 
 class ItemPage(BaseHandler):
@@ -158,12 +131,10 @@ class EditBM(webapp2.RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         if users.get_current_user() == bm.user:
-            def txn():
-                bm.url = self.request.get('url').encode('utf8')
-                bm.title = self.request.get('title').encode('utf8')
-                bm.comment = self.request.get('comment').encode('utf8')
-                bm.put()
-            ndb.transaction(txn)
+            bm.url = self.request.get('url').encode('utf8')
+            bm.title = self.request.get('title').encode('utf8')
+            bm.comment = self.request.get('comment').encode('utf8')
+            bm.put()
         self.redirect(self.request.referer)
 
 
@@ -195,36 +166,6 @@ class TrashBM(BaseHandler):
                 bm.key.delete()
 
 
-class cerca(BaseHandler):
-    def post(self):
-        user = users.get_current_user()
-        query_string = self.request.get('query_string')
-        try:
-            results = search.Index(name='%s' % user.user_id()).search(query_string)
-            bms_ids = [int(doc.doc_id) for doc in results]
-            keys = [ndb.Key(Bookmarks, id) for id in bms_ids]
-            bms = ndb.get_multi(keys)
-            html = self.generate('frame.html', {'bms': bms})
-            self.response.write(html)
-        except search.Error:
-            logging.exception('Search failed')
-
-
-class GetComment(webapp2.RequestHandler):
-    def get(self):
-        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
-        self.response.write(bm.comment)
-
-
-class GetEdit(webapp2.RequestHandler):
-    def get(self):
-        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
-        template = util.jinja_environment.get_template('edit.html')
-        values = {'bm': bm}
-        html_page = template.render(values)
-        self.response.write(html_page)
-
-
 class StarBM(webapp2.RequestHandler):
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
@@ -251,6 +192,33 @@ class ShareBM(webapp2.RequestHandler):
                 eye = '<i class="icon-eye-close"></i>'
             bm.put()
         self.response.write(eye)
+
+
+class cerca(BaseHandler):
+    def post(self):
+        user = users.get_current_user()
+        query_string = self.request.get('query_string')
+        try:
+            results = search.Index(name='%s' % user.user_id()).search(query_string)
+            bms_ids = [int(doc.doc_id) for doc in results]
+            keys = [ndb.Key(Bookmarks, id) for id in bms_ids]
+            bms = ndb.get_multi(keys)
+            html = self.generate('frame.html', {'bms': bms})
+            self.response.write(html)
+        except search.Error:
+            pass
+
+
+class GetComment(webapp2.RequestHandler):
+    def get(self):
+        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
+        self.response.write(bm.comment)
+
+
+class GetEdit(webapp2.RequestHandler):
+    def get(self):
+        bm = Bookmarks.get_by_id(int(self.request.get('bm')))
+        self.render('edit.html', {'bm': bm})
 
 
 class CheckFeed(webapp2.RequestHandler):
@@ -320,9 +288,5 @@ app = webapp2.WSGIApplication([
     (r'/bm/(.*)', ItemPage),
 ], debug=util.debug, config=util.config)
 
-
-def main():
-    app.run()
-
 if __name__ == "__main__":
-    main()
+    app.run()
