@@ -5,27 +5,11 @@ queue:
 - name: default
   rate: 40/s
   bucket_size: 100
-
-- name: admin
-  rate: 20/s
-  bucket_size: 40
-
-- name: parser
-  rate: 5/s
-  bucket_size: 20
-
-- name: bookmarks
-  rate: 5/s
-  bucket_size: 20
-
-- name: emails
-  rate: 5/s
-  bucket_size: 20
-
-- name: importer
-  rate: 5/s
-  bucket_size: 20
   target: worker
+
+- name: user
+  rate: 40/s
+  bucket_size: 100
 
 - name: delicious
   rate: 20/s

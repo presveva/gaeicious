@@ -27,21 +27,21 @@ handlers:
   mime_type: image/x-icon
 
 - url: /_ah/mail/post@.*
-  script: main.app
+  script: app.main.app
   login: admin
 
 - url: /admin.*
-  script: admin.app
+  script: app.admin.app
   login: admin
 
 - url: /*
-  script: main.app
+  script: app.main.app
 
 - url: /bm/.*
-  script: main.app
+  script: app.main.app
 
 - url: /.*
-  script: main.app
+  script: app.main.app
   login: required
 
 - url: /mapreduce(/.*)?

@@ -2,7 +2,7 @@ mapreduce:
 - name: remove_bm
   mapper:
     input_reader: mapreduce.input_readers.DatastoreKeyInputReader
-    handler: reduce.remove_bm
+    handler: app.reduce.remove_bm
     params:
     - name: entity_kind
       default: models.Bookmarks
@@ -10,7 +10,7 @@ mapreduce:
 - name: delete_all_in_index
   mapper:
     input_reader: mapreduce.input_readers.DatastoreKeyInputReader
-    handler: reduce.delete_all_in_index
+    handler: app.reduce.delete_all_in_index
     params:
     - name: entity_kind
       default: models.UserInfo
@@ -18,7 +18,7 @@ mapreduce:
 - name: re_index_all
   mapper:
     input_reader: mapreduce.input_readers.DatastoreKeyInputReader
-    handler: reduce.re_index_all
+    handler: app.reduce.re_index_all
     params:
     - name: entity_kind
       default: models.Bookmarks

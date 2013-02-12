@@ -23,9 +23,7 @@ class AdminPage(BaseHandler):
 class indicizza(webapp2.RequestHandler):
     def get(self):
         for ui in UserInfo.query():
-            deferred.defer(util.index_bms,
-                           ui,
-                           _queue='admin')
+            deferred.defer(util.index_bms, ui)
             self.redirect('/')
 
 
@@ -36,12 +34,18 @@ class ReceiveMail(webapp2.RequestHandler):
         for text in texts:
             txtmsg = ""
             txtmsg = text[1].decode()
-        f = None
-        u = users.User(utils.parseaddr(message.sender)[1])
-        o = txtmsg.encode('utf8')
-        t = self.get_subject(o, message)
-        c = 'Sent via email'
-        submit_bm(f, u, t, o, c)
+        submit_bm(feed=None,
+                  user=users.User(utils.parseaddr(message.sender)[1]),
+                  title=self.get_subject(o, message),
+                  url=txtmsg.encode('utf8'),
+                  comment='Sent via email')
+
+    def get_subject(self, o, message):
+        from email import header
+        try:
+            return header.decode_header(message.subject)[0][0]
+        except:
+            return o
 
 
 class CheckFeeds(webapp2.RequestHandler):
