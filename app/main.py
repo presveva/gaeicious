@@ -60,8 +60,8 @@ class Main_Frame(BaseHandler):
             self.redirect('/')
 
     def bmq(self, page):
-        q1 = Bookmarks.query(Bookmarks.user == users.get_current_user())
-        q2 = q1.filter(Bookmarks.trashed == False).order(-Bookmarks.data)
+        q1 = Bookmarks.query(Bookmarks.user == users.get_current_user()).order(-Bookmarks.data)
+        q2 = q1.filter(Bookmarks.trashed == False)
 
         if page == 'archived':
             bmq = q2.filter(Bookmarks.archived == True)

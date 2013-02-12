@@ -17,12 +17,12 @@ class UserInfo(ndb.Expando):
 
 class Feeds(ndb.Expando):
     user = ndb.UserProperty()
+    feed = ndb.StringProperty()  # link
+    title = ndb.StringProperty(indexed=False)  # feed title
+    link = ndb.StringProperty(indexed=False)  # blog url
     data = ndb.DateTimeProperty(auto_now=True)
-    feed = ndb.StringProperty()  # url
-    blog = ndb.StringProperty(indexed=False)  # feed.title
-    root = ndb.StringProperty(indexed=False)  # feed.link
     notify = ndb.StringProperty(choices=['web', 'email', 'digest'], default="web")
-    url = ndb.StringProperty()  # link
+    last_id = ndb.StringProperty()  # link
 
     @property
     def id(self):

@@ -25,8 +25,7 @@
 {% for feed in feeds %}
 <div class="well well-small" id="row-{{ feed.id }}" >
   <dt>
-    <a class="btn disabled btn-mini"><i class="icon-time"></i> {{ feed.data|dtf }}</a>
-    <a href="{{ feed.root }}" ><b> {{ feed.blog }}</b></a>
+    <a href="{{ feed.link }}" ><b> {{ feed.title }}</b></a>
   <dd>{{ feed.feed }}
   <dd>
   <div class="btn-toolbar">

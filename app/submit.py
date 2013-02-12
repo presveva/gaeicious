@@ -9,6 +9,7 @@ from google.appengine.ext.webapp import blobstore_handlers
 from models import Feeds, Bookmarks, UserInfo
 from urlparse import urlparse, parse_qs
 from HTMLParser import HTMLParser
+from libs.feedparser import parse
 
 
 class AddFeed(RequestHandler):
@@ -18,26 +19,45 @@ class AddFeed(RequestHandler):
         self.redirect(self.request.referer)
 
     def post(self):
-        from libs.feedparser import parse
         user = users.get_current_user()
-        url = self.request.get('url')
-        p = parse(str(url))
-        try:
-            d = p['items'][0]
-        except IndexError:
-            pass
-        if user:
-            q = Feeds.query(Feeds.user == user, Feeds.url == url)
-            if q.get() is None:
-                feed_k = Feeds(blog=p.feed.title,
-                               root=p.feed.link,
-                               user=user,
-                               feed=url,
-                               url=d.link).put()
-                deferred.defer(pop_feed, feed_k, _queue="user")
-            self.redirect(self.request.referer)
+        feed = self.request.get('url')
+        q = Feeds.query(Feeds.user == user, Feeds.feed == feed)
+        if user and q.get() == None:
+            d = parse(str(feed))
+            feed_k = Feeds(feed=feed,
+                           title=d['channel']['title'],
+                           link=d['channel']['link'],
+                           user=user,
+                           last_id=d['items'][0].id).put()
+            deferred.defer(pop_feed, feed_k, _queue="user")
+            self.redirect('/feeds')
         else:
             self.redirect('/')
+
+
+def pop_feed(feedk):
+    feed = feedk.get()
+    result = urlfetch.fetch(str(feed.feed), deadline=60)
+    d = parse(result.content)
+    e = 0
+    try:
+        entry = d['items'][e]
+        while feed.last_id != d.entries[0].id:
+            f = feedk
+            u = feed.user
+            t = entry['title']
+            o = entry['link']
+            try:
+                c = entry['description']
+            except KeyError:
+                c = 'no comment'
+            deferred.defer(submit_bm, f, u, t, o, c)
+            e += 1
+            entry = d['items'][e]
+    except IndexError:
+        pass
+    feed.last_id = d.entries[0].id
+    feed.put()
 
 
 class AddBM(RequestHandler):
@@ -161,33 +181,6 @@ class UploadDelicious(blobstore_handlers.BlobstoreUploadHandler):
         ui.put()
         self.redirect('/')
         deferred.defer(delicious, ui.delicious, user, _queue="delicious")
-
-
-def pop_feed(feedk):
-    from libs.feedparser import parse
-    feed = feedk.get()
-    result = urlfetch.fetch(url="%s" % feed.feed, deadline=60)
-    p = parse(result.content)
-    e = 0
-    try:
-        entry = p['items'][e]
-        while feed.url != entry['link']:
-            f = feedk
-            u = feed.user
-            t = entry['title']
-            o = entry['link']
-            try:
-                c = entry['description']
-            except KeyError:
-                c = 'no comment'
-            deferred.defer(submit_bm, f, u, t, o, c)
-            e += 1
-            entry = p['items'][e]
-    except IndexError:
-        pass
-    s = p['items'][0]
-    feed.url = s['link']
-    feed.put()
 
 # Delicious import
 
