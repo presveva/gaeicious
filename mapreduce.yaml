@@ -6,3 +6,19 @@ mapreduce:
     params:
     - name: entity_kind
       default: models.Bookmarks
+
+- name: delete_all_in_index
+  mapper:
+    input_reader: mapreduce.input_readers.DatastoreKeyInputReader
+    handler: reduce.delete_all_in_index
+    params:
+    - name: entity_kind
+      default: models.UserInfo
+
+- name: re_index_all
+  mapper:
+    input_reader: mapreduce.input_readers.DatastoreKeyInputReader
+    handler: reduce.re_index_all
+    params:
+    - name: entity_kind
+      default: models.Bookmarks

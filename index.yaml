@@ -73,8 +73,3 @@ indexes:
   - name: user
   - name: data
     direction: desc
-
-- kind: Tags
-  properties:
-  - name: user
-  - name: name
