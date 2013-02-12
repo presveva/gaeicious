@@ -61,7 +61,7 @@ class Main_Frame(BaseHandler):
 
     def bmq(self, page):
         q1 = Bookmarks.query(Bookmarks.user == users.get_current_user())
-        q2 = q1.filter.query(Bookmarks.trashed == False).order(-Bookmarks.data)
+        q2 = q1.filter(Bookmarks.trashed == False).order(-Bookmarks.data)
 
         if page == 'archived':
             bmq = q2.filter(Bookmarks.archived == True)
