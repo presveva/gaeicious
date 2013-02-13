@@ -8,8 +8,6 @@ from google.appengine.api import search
 class UserInfo(ndb.Expando):
     user = ndb.UserProperty()
     email = ndb.ComputedProperty(lambda self: self.user.email())
-    # user_id = ndb.ComputedProperty(lambda self: self.user.user_id())
-    # data = ndb.DateTimeProperty(auto_now=True)
     mys = ndb.BooleanProperty(default=False)
     daily = ndb.BooleanProperty(default=False)
     delicious = ndb.BlobKeyProperty()
@@ -17,12 +15,12 @@ class UserInfo(ndb.Expando):
 
 class Feeds(ndb.Expando):
     user = ndb.UserProperty()
-    feed = ndb.StringProperty()  # link
-    title = ndb.StringProperty(indexed=False)  # feed title
-    link = ndb.StringProperty(indexed=False)  # blog url
+    feed = ndb.StringProperty()
+    title = ndb.StringProperty(indexed=False)
+    link = ndb.StringProperty(indexed=False)
     data = ndb.DateTimeProperty(auto_now=True)
     notify = ndb.StringProperty(choices=['web', 'email', 'digest'], default="web")
-    last_id = ndb.StringProperty()  # link
+    last_id = ndb.StringProperty()
 
     @property
     def id(self):
@@ -34,7 +32,6 @@ class Bookmarks(ndb.Expando):
     url = ndb.StringProperty(required=True)
     title = ndb.StringProperty(indexed=False)
     comment = ndb.TextProperty(indexed=False)
-    # blob_key = ndb.BlobKeyProperty(indexed=False)
     archived = ndb.BooleanProperty(default=False)
     starred = ndb.BooleanProperty(default=False)
     shared = ndb.BooleanProperty(default=False)

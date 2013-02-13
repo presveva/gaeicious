@@ -94,11 +94,11 @@ def submit_bm(feed, user, title, url, comment):
     url_candidate = a.lstrip().rstrip().split('?utm_source')[0].split('&feature')[0]
 
     copie = Bookmarks.query(Bookmarks.url == url_candidate,
-                            Bookmarks.user == user)
+                            Bookmarks.user == user,
+                            Bookmarks.trashed == False)
     if copie.get():
         for cp in copie:
             cp.archived = False
-            cp.trashed = False
             cp.put()
 
     url_parsed = urlparse(url_candidate)
@@ -107,11 +107,6 @@ def submit_bm(feed, user, title, url, comment):
     ext = name.split('.')[-1].lower()
 
     bm.title = url_candidate if title == '' or None else title
-
-    # if title == '' or title == None:
-    #     bm.title = url_candidate
-    # else:
-    #     bm.title = title
 
     if url_parsed.netloc == 'www.youtube.com':
         bm.url = 'http://www.youtube.com/watch?v=%s' % query["v"][0]
@@ -130,7 +125,6 @@ def submit_bm(feed, user, title, url, comment):
     elif ext in ['jpg', 'png', 'jpeg', 'gif']:
         bm.url = url_candidate
         blob_key = upload_to_blobstore(url_candidate, ext)
-        # bm.blob_key = blob_key
         bm.comment = '<img src="%s" />' % images.get_serving_url(blob_key, size=1600)
     else:
         bm.comment = comment
@@ -141,7 +135,6 @@ def submit_bm(feed, user, title, url, comment):
     bm.feed = feed
     bm.put()
     Bookmarks.index_bm(bm.key)
-    # deferred.defer(util.send_bm, bm.key, _queue="user")
 
     ui = UserInfo.get_or_insert(str(user.user_id()), user=user)
     if feed == None and ui.mys == True:
