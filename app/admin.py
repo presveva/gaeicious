@@ -43,22 +43,22 @@ class ReceiveMail(webapp2.RequestHandler):
 
 class CheckFeeds(webapp2.RequestHandler):
     def get(self):
-        for feed in Feeds.query():
-            deferred.defer(submit.pop_feed, feed.key)
+        for feedk in Feeds.query().fetch(keys_only=True):
+            deferred.defer(submit.pop_feed, feedk)
 
 
 class SendDigest(webapp2.RequestHandler):
     def get(self):
-        for feed in Feeds.query():
+        for feedk in Feeds.query().fetch(keys_only=True):
             if feed.notify == 'digest':
-                deferred.defer(util.feed_digest, feed.key)
+                deferred.defer(util.feed_digest, feedk)
 
 
 class SendActivity(webapp2.RequestHandler):
     def get(self):
         for ui in UserInfo.query():
             if ui.daily:
-                deferred.defer(util.daily_digest, ui.user)
+                deferred.defer(util.daily_digest, ui.key)
 
 
 class cron_trash(webapp2.RequestHandler):

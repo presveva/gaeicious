@@ -21,11 +21,12 @@ config['webapp2_extras.sessions'] = {
     'secret_key': 'my-super-secret-key'}
 
 
-def daily_digest(user):
+def daily_digest(uik):
+    ui = uik.get()
     delta = datetime.timedelta(days=1)
     now = datetime.datetime.now()
     period = now - delta
-    bmq = Bookmarks.query(Bookmarks.user == user,
+    bmq = Bookmarks.query(Bookmarks.user == ui.user,
                           Bookmarks.trashed == False,
                           Bookmarks.data > period).order(-Bookmarks.data)
     title = '[%s] Daily digest for your activity: %s' % (app_identity.get_application_id(), dtf(now))
@@ -33,7 +34,7 @@ def daily_digest(user):
     values = {'bmq': bmq, 'title': title}
     html = template.render(values)
     if bmq.get() != None:
-        deferred.defer(send_digest, user.email(), html, title)
+        deferred.defer(send_digest, ui.email, html, title)
 
 
 def feed_digest(feedk):
@@ -62,12 +63,19 @@ def send_bm(bmk):
     bm = bmk.get()
     sender = 'bm@%s.appspotmail.com' % app_identity.get_application_id()
     subject = "[%s] %s" % (app_identity.get_application_id(), bm.title)
-    html = """%s (%s)<br>%s<br><br>%s """ % (bm.title, dtf(bm.data), bm.url, bm.comment)
+    html = """
+<html> <table> <tbody>
+    <tr> <td><b>%s</b> (%s)</td> </tr>
+    <tr> <td>%s</td> </tr>
+    <hr>
+    <tr> <td>%s</td> </tr>
+</tbody> </table> </html>
+""" % (bm.title, dtf(bm.data), bm.url, bm.comment)
     mail.send_mail(sender=sender,
-              to=bm.user.email(),
-              subject=subject,
-              body=html,
-              html=html)
+                   to=bm.user.email(),
+                   subject=subject,
+                   body=html,
+                   html=html)
 
 
 def send_digest(email, html, title):
@@ -80,7 +88,7 @@ def send_digest(email, html, title):
 
 
 def mys_off(user):
-    ui = UserInfo.query(UserInfo.user == user).get()
+    ui = UserInfo.get_by_id(str(user.user_id()))
     if ui.mys == True:
         ui.mys = False
         ui.put()
@@ -88,7 +96,7 @@ def mys_off(user):
 
 
 def mys_on(user):
-    ui = UserInfo.query(UserInfo.user == user).get()
+    ui = UserInfo.get_by_id(str(user.user_id()))
     if ui.mys == False:
         ui.mys = True
         ui.put()

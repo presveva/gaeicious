@@ -8,8 +8,8 @@ from google.appengine.api import search
 class UserInfo(ndb.Expando):
     user = ndb.UserProperty()
     email = ndb.ComputedProperty(lambda self: self.user.email())
-    user_id = ndb.ComputedProperty(lambda self: self.user.user_id())
-    data = ndb.DateTimeProperty(auto_now=True)
+    # user_id = ndb.ComputedProperty(lambda self: self.user.user_id())
+    # data = ndb.DateTimeProperty(auto_now=True)
     mys = ndb.BooleanProperty(default=False)
     daily = ndb.BooleanProperty(default=False)
     delicious = ndb.BlobKeyProperty()
@@ -34,7 +34,7 @@ class Bookmarks(ndb.Expando):
     url = ndb.StringProperty(required=True)
     title = ndb.StringProperty(indexed=False)
     comment = ndb.TextProperty(indexed=False)
-    blob_key = ndb.BlobKeyProperty(indexed=False)
+    # blob_key = ndb.BlobKeyProperty(indexed=False)
     archived = ndb.BooleanProperty(default=False)
     starred = ndb.BooleanProperty(default=False)
     shared = ndb.BooleanProperty(default=False)
@@ -53,13 +53,15 @@ class Bookmarks(ndb.Expando):
         index = search.Index(name=bm.user.user_id())
         index.remove(str(bm.id))
 
-    def index_bm(self):
-        index = search.Index(name=self.user.user_id())
-        doc = search.Document(doc_id=str(self.id),
+    @classmethod
+    def index_bm(cls, key):
+        bm = key.get()
+        index = search.Index(name=str(bm.user.user_id()))
+        doc = search.Document(doc_id=str(bm.id),
                               fields=[
-                              search.TextField(name='url', value=self.url),
-                              search.TextField(name='title', value=self.title),
-                              search.HtmlField(name='comment', value=self.comment)
+                              search.TextField(name='url', value=bm.url),
+                              search.TextField(name='title', value=bm.title),
+                              search.HtmlField(name='comment', value=bm.comment)
                               ])
         try:
             index.put(doc)
