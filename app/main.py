@@ -145,12 +145,10 @@ class ArchiveBM(BaseHandler):
             if bm.trashed:
                 bm.archived = False
                 bm.trashed = False
-                bm.feed = None
             elif bm.archived:
                 bm.archived = False
             else:
                 bm.archived = True
-                bm.feed = None
             bm.put()
 
 

@@ -52,3 +52,16 @@ class Bookmarks(ndb.Expando):
         bm = key.get()
         index = search.Index(name=bm.user.user_id())
         index.remove(str(bm.id))
+
+    def index_bm(self):
+        index = search.Index(name=self.user.user_id())
+        doc = search.Document(doc_id=str(self.id),
+                              fields=[
+                              search.TextField(name='url', value=self.url),
+                              search.TextField(name='title', value=self.title),
+                              search.HtmlField(name='comment', value=self.comment)
+                              ])
+        try:
+            index.put(doc)
+        except search.Error:
+            pass

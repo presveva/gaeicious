@@ -42,8 +42,7 @@ def pop_feed(feedk):
     e = 0
     try:
         entry = d['items'][e]
-        while feed.last_id != d.entries[0].id:
-            f = feedk
+        while u'%s' % feed.last_id != u'%s' % d.entries[0].id:
             u = feed.user
             t = entry['title']
             o = entry['link']
@@ -51,12 +50,12 @@ def pop_feed(feedk):
                 c = entry['description']
             except KeyError:
                 c = 'no comment'
-            deferred.defer(submit_bm, f, u, t, o, c)
+            deferred.defer(submit_bm, feedk, u, t, o, c)
             e += 1
             entry = d['items'][e]
     except IndexError:
         pass
-    feed.last_id = d.entries[0].id
+    feed.last_id = u'%s' % d.entries[0].id
     feed.put()
 
 
@@ -86,7 +85,6 @@ def submit_bm(feed, user, title, url, comment):
         bm = Bookmarks()
 
         result = urlfetch.fetch(url=url, follow_redirects=True, allow_truncated=True, deadline=60)
-        ui_f = UserInfo.query(UserInfo.user == user).get()
         if result.status_code == 200 and result.final_url:
             a = result.final_url
         elif result.status_code == 500:
@@ -136,24 +134,22 @@ def submit_bm(feed, user, title, url, comment):
         bm.user = user
         bm.feed = feed
         bm.put()
-        util.index_bm(bm.key)
-        copie = Bookmarks.query(Bookmarks.url == url_candidate,
-                                Bookmarks.user == user).fetch(key_only=True)
+        bm.index_bm()
 
-        if copie.count() > 1:
-            copie.remove(bm.key)
-            for cpk in copie:
-                cp = cpk.get()
+        copie = Bookmarks.query(Bookmarks.url == url_candidate,
+                                Bookmarks.user == user)
+        if copie.count() >= 2:
+            copie.remove(bm)
+            for cp in copie:
                 cp.archived = False
                 cp.trashed = False
                 cp.put()
-        else:
-            try:
-                if bm.feed.get().notify == 'email':
-                    deferred.defer(util.send_bm, bm.key)
-            except:
-                if ui_f.mys:
-                    deferred.defer(util.send_bm, bm.key)
+
+        ui_f = UserInfo.query(UserInfo.user == user).get()
+        if feed == None and ui_f.mys:
+            deferred.defer(util.send_bm, bm.key, _queue='user')
+        elif feed != None and feed.get().notify == 'email':
+            deferred.defer(util.send_bm, bm.key)
     except:
         pass
 

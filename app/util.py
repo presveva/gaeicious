@@ -4,8 +4,7 @@
 import os
 import jinja2
 import datetime
-import logging
-from google.appengine.api import mail, app_identity, search
+from google.appengine.api import mail, app_identity
 from google.appengine.ext import deferred, ndb
 from models import Bookmarks, UserInfo
 
@@ -22,46 +21,18 @@ config['webapp2_extras.sessions'] = {
     'secret_key': 'my-super-secret-key'}
 
 
-def index_bms(ui):
-    bmq = Bookmarks.query(Bookmarks.user == ui.user)
-    for bm in bmq:
-        deferred.defer(index_bm, bm.key)
-
-
-def index_bm(bmk):
-    bm = bmk.get()
-    index = search.Index(name=bm.user.user_id())
-    doc = search.Document(doc_id=str(bm.id),
-                          fields=[
-                          search.TextField(name='url', value=bm.url),
-                          search.TextField(name='title', value=bm.title),
-                          search.HtmlField(name='comment', value=bm.comment)
-                          ])
-    try:
-        index.put(doc)
-    except search.Error:
-        logging.exception('Add failed')
-
-
-def remove_bm(bmk):
-    bm = bmk.get()
-    index = search.Index(name=bm.user.user_id())
-    index.remove(str(bm.id))
-
-
 def daily_digest(user):
     delta = datetime.timedelta(days=1)
     now = datetime.datetime.now()
     period = now - delta
-    bmq = Bookmarks.query(Bookmarks.user == user)
-    bmq = bmq.filter(Bookmarks.trashed == False)
-    bmq = bmq.filter(Bookmarks.data > period)
-    bmq = bmq.order(-Bookmarks.data)
-    title = '(%s) Daily digest for your activity: %s' % (app_identity.get_application_id(), dtf(now))
+    bmq = Bookmarks.query(Bookmarks.user == user,
+                          Bookmarks.trashed == False,
+                          Bookmarks.data > period).order(-Bookmarks.data)
+    title = '[%s] Daily digest for your activity: %s' % (app_identity.get_application_id(), dtf(now))
     template = jinja_environment.get_template('digest.html')
     values = {'bmq': bmq, 'title': title}
     html = template.render(values)
-    if bmq.get():
+    if bmq.get() != None:
         deferred.defer(send_digest, user.email(), html, title)
 
 
@@ -70,16 +41,15 @@ def feed_digest(feedk):
     now = datetime.datetime.now()
     period = now - delta
     feed = feedk.get()
-    bmq = Bookmarks.query(Bookmarks.user == feed.user)
-    bmq = bmq.filter(Bookmarks.feed == feed.key)
-    bmq = bmq.filter(Bookmarks.trashed == False)
-    bmq = bmq.filter(Bookmarks.data > period)
-    bmq = bmq.order(-Bookmarks.data)
-    title = '(%s) Daily digest for %s' % (app_identity.get_application_id(), feed.blog)
+    bmq = Bookmarks.query(Bookmarks.user == feed.user,
+                          Bookmarks.feed == feed.key,
+                          Bookmarks.trashed == False,
+                          Bookmarks.data > period).order(-Bookmarks.data)
+    title = '[%s] Daily digest for %s' % (app_identity.get_application_id(), feed.link)
     template = jinja_environment.get_template('digest.html')
     values = {'bmq': bmq, 'title': title}
     html = template.render(values)
-    if bmq.get():
+    if bmq.get() != None:
         deferred.defer(send_digest, feed.user.email(), html, title)
         queue = []
         for bm in bmq:
@@ -90,19 +60,19 @@ def feed_digest(feedk):
 
 def send_bm(bmk):
     bm = bmk.get()
-    message = mail.EmailMessage()
-    message.sender = 'bm@' + "%s" % app_identity.get_application_id() + '.appspotmail.com'
-    message.to = bm.user.email()
-    message.subject = "(%s) %s" % (app_identity.get_application_id(), bm.title)
-    message.html = """
-%s (%s)<br>%s<br><br>%s
-""" % (bm.title, dtf(bm.data), bm.url, bm.comment)
-    message.send()
+    sender = 'bm@%s.appspotmail.com' % app_identity.get_application_id()
+    subject = "[%s] %s" % (app_identity.get_application_id(), bm.title)
+    html = """%s (%s)<br>%s<br><br>%s """ % (bm.title, dtf(bm.data), bm.url, bm.comment)
+    mail.send_mail(sender=sender,
+              to=bm.user.email(),
+              subject=subject,
+              body=html,
+              html=html)
 
 
 def send_digest(email, html, title):
     message = mail.EmailMessage()
-    message.sender = 'bm@' + "%s" % app_identity.get_application_id() + '.appspotmail.com'
+    message.sender = 'bm@%s.appspotmail.com' % app_identity.get_application_id()
     message.to = email
     message.subject = title
     message.html = html

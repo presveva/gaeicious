@@ -20,13 +20,6 @@ class AdminPage(BaseHandler):
             self.redirect('/')
 
 
-class indicizza(webapp2.RequestHandler):
-    def get(self):
-        for ui in UserInfo.query():
-            deferred.defer(util.index_bms, ui)
-            self.redirect('/')
-
-
 class ReceiveMail(webapp2.RequestHandler):
     def post(self):
         message = mail.InboundEmailMessage(self.request.body)
@@ -85,7 +78,6 @@ app = ndb.toplevel(webapp2.WSGIApplication([
         webapp2.Route('/digest', SendDigest),
         webapp2.Route('/activity', SendActivity),
         webapp2.Route('/check', CheckFeeds),
-        webapp2.Route('/indicizza', indicizza),
         webapp2.Route('/cron_trash', cron_trash),
         ])
     ], debug=util.debug, config=util.config))
