@@ -62,7 +62,7 @@ def pop_feed(feedk):
 class AddBM(RequestHandler):
     def get(self):
         submit_bm(feed=None,
-                  user=users.User(str(self.request.get('user'))),
+                  user=users.User("%s" % self.request.get('user')),
                   title=self.request.get('title'),
                   url=self.request.get('url'),
                   comment=self.request.get('comment'))
@@ -81,77 +81,73 @@ class CopyBM(RequestHandler):
 
 
 def submit_bm(feed, user, title, url, comment):
-    try:
-        bm = Bookmarks()
+    bm = Bookmarks()
 
-        result = urlfetch.fetch(url=url, follow_redirects=True, allow_truncated=True, deadline=60)
-        if result.status_code == 200 and result.final_url:
-            a = result.final_url
-        elif result.status_code == 500:
-            pass
-        else:
-            a = url
-        b = a.lstrip().rstrip()
-        c = b.split('?utm_source')[0]
-        url_candidate = c.split('&feature')[0]
-
-        url_parsed = urlparse(url_candidate)
-        query = parse_qs(url_parsed.query)
-        name = url_parsed.path.split('/')[-1]
-        ext = name.split('.')[-1].lower()
-
-        if title == '' or title == None:
-            bm.title = url_candidate
-        else:
-            bm.title = title
-
-        if url_parsed.netloc == 'www.youtube.com':
-            video = query["v"][0]
-            bm.url = 'http://www.youtube.com/watch?v=%s' % video
-            bm.comment = """<embed
-            width="640" height="360"
-            src="http://www.youtube.com/v/%s"
-            type="application/x-shockwave-flash">
-            </embed>""" % video
-
-        elif url_parsed.netloc == 'vimeo.com':
-            video = name
-            bm.url = 'http://vimeo.com/%s' % video
-            bm.comment = '''<iframe src="http://player.vimeo.com/video/%s?color=ffffff"
-            width="640" height="360" frameborder="0" webkitAllowFullScreen mozallowfullscreen
-            allowFullScreen></iframe>''' % video
-
-        elif ext in ['jpg', 'png', 'jpeg', 'gif']:
-            bm.url = url_candidate
-            blob_key = upload_to_blobstore(url_candidate, ext)
-            bm.blob_key = blob_key
-            bm.comment = '<img src="%s" />' % images.get_serving_url(blob_key, size=1600)
-        else:
-            bm.comment = comment
-            bm.url = url_candidate
-
-        bm.domain = url_parsed.netloc
-        bm.user = user
-        bm.feed = feed
-        bm.put()
-        bm.index_bm()
-
-        copie = Bookmarks.query(Bookmarks.url == url_candidate,
-                                Bookmarks.user == user)
-        if copie.count() >= 2:
-            copie.remove(bm)
-            for cp in copie:
-                cp.archived = False
-                cp.trashed = False
-                cp.put()
-
-        ui_f = UserInfo.query(UserInfo.user == user).get()
-        if feed == None and ui_f.mys:
-            deferred.defer(util.send_bm, bm.key, _queue='user')
-        elif feed != None and feed.get().notify == 'email':
-            deferred.defer(util.send_bm, bm.key)
-    except:
+    result = urlfetch.fetch(url=url, follow_redirects=True, allow_truncated=True, deadline=60)
+    if result.status_code == 200 and result.final_url:
+        a = result.final_url
+    elif result.status_code == 500:
         pass
+    else:
+        a = url
+
+    url_candidate = a.lstrip().rstrip().split('?utm_source')[0].split('&feature')[0]
+
+    copie = Bookmarks.query(Bookmarks.url == url_candidate,
+                            Bookmarks.user == user)
+    if copie.get():
+        for cp in copie:
+            cp.archived = False
+            cp.trashed = False
+            cp.put()
+
+    url_parsed = urlparse(url_candidate)
+    query = parse_qs(url_parsed.query)
+    name = url_parsed.path.split('/')[-1]
+    ext = name.split('.')[-1].lower()
+
+    bm.title = url_candidate if title == '' or None else title
+
+    # if title == '' or title == None:
+    #     bm.title = url_candidate
+    # else:
+    #     bm.title = title
+
+    if url_parsed.netloc == 'www.youtube.com':
+        bm.url = 'http://www.youtube.com/watch?v=%s' % query["v"][0]
+        bm.comment = """<embed
+        width="640" height="360"
+        src="http://www.youtube.com/v/%s"
+        type="application/x-shockwave-flash">
+        </embed>""" % query["v"][0]
+
+    elif url_parsed.netloc == 'vimeo.com':
+        bm.url = 'http://vimeo.com/%s' % name
+        bm.comment = '''<iframe src="http://player.vimeo.com/video/%s?color=ffffff"
+        width="640" height="360" frameborder="0" webkitAllowFullScreen mozallowfullscreen
+        allowFullScreen></iframe>''' % name
+
+    elif ext in ['jpg', 'png', 'jpeg', 'gif']:
+        bm.url = url_candidate
+        blob_key = upload_to_blobstore(url_candidate, ext)
+        # bm.blob_key = blob_key
+        bm.comment = '<img src="%s" />' % images.get_serving_url(blob_key, size=1600)
+    else:
+        bm.comment = comment
+        bm.url = url_candidate
+
+    bm.domain = url_parsed.netloc
+    bm.user = user
+    bm.feed = feed
+    bm.put()
+    Bookmarks.index_bm(bm.key)
+    # deferred.defer(util.send_bm, bm.key, _queue="user")
+
+    ui = UserInfo.get_or_insert(str(user.user_id()), user=user)
+    if feed == None and ui.mys == True:
+        deferred.defer(util.send_bm, bm.key, _queue="user")
+    elif feed != None and feed.get().notify == 'email':
+        deferred.defer(util.send_bm, bm.key)
 
 
 def upload_to_blobstore(url_candidate, ext):
