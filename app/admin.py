@@ -63,7 +63,7 @@ class SendActivity(webapp2.RequestHandler):
 
 class cron_trash(webapp2.RequestHandler):
     def get(self):
-        delta = datetime.timedelta(days=30)
+        delta = datetime.timedelta(days=7)
         now = datetime.datetime.now()
         period = now - delta
         bmq = Bookmarks.query(Bookmarks.trashed == True,

@@ -42,7 +42,7 @@ def pop_feed(feedk):
     e = 0
     try:
         entry = d['items'][e]
-        while u'%s' % feed.last_id != u'%s' % d.entries[0].id:
+        while str(feed.last_id) != str(entry.id):
             u = feed.user
             t = entry['title']
             o = entry['link']
@@ -55,7 +55,7 @@ def pop_feed(feedk):
             entry = d['items'][e]
     except IndexError:
         pass
-    feed.last_id = u'%s' % d.entries[0].id
+    feed.last_id = str(d.entries[0].id)
     feed.put()
 
 
