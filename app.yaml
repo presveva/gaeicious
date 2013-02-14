@@ -52,6 +52,8 @@ libraries:
   version: latest
 - name: webapp2
   version: latest
+- name: markupsafe
+  version: latest
 
 builtins:
 - deferred: on
