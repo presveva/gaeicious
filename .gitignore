@@ -166,3 +166,4 @@ mapreduce/
 config.py
 bat/
 todo.todo
+mapreduce.yaml
