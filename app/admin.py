@@ -49,9 +49,9 @@ class CheckFeeds(webapp2.RequestHandler):
 
 class SendDigest(webapp2.RequestHandler):
     def get(self):
-        for feedk in Feeds.query().fetch(keys_only=True):
+        for feed in Feeds.query():
             if feed.notify == 'digest':
-                deferred.defer(util.feed_digest, feedk)
+                deferred.defer(util.feed_digest, feed.key)
 
 
 class SendActivity(webapp2.RequestHandler):
