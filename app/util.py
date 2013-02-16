@@ -46,7 +46,7 @@ def feed_digest(feedk):
                           Bookmarks.feed == feed.key,
                           Bookmarks.trashed == False,
                           Bookmarks.data > period).order(-Bookmarks.data)
-    title = '[%s] Daily digest for %s' % (app_identity.get_application_id(), feed.link)
+    title = '[%s] Daily digest for %s' % (app_identity.get_application_id(), feed.title)
     template = jinja_environment.get_template('digest.html')
     values = {'bmq': bmq, 'title': title}
     html = template.render(values)
@@ -55,7 +55,7 @@ def feed_digest(feedk):
         queue = []
         for bm in bmq:
             bm.trashed = True
-            queue.append(bm.key)
+            queue.append(bm)
         ndb.put_multi(queue)
 
 

@@ -1,0 +1,17 @@
+CACHE MANIFEST
+# version: 1
+
+CACHE:
+/favicon.ico
+/static/base.js
+/static/setting.js
+/static/style.css
+http://cdn.dinoia.eu/css/bs.css
+http://cdn.dinoia.eu/css/bs.re.css
+http://cdn.dinoia.eu/css/style.css
+http://cdn.dinoia.eu/js/jquery.js
+http://cdn.dinoia.eu/js/jquery.cookie.js
+http://cdn.dinoia.eu/js/bootstrap.js
+
+NETWORK:
+*

@@ -20,27 +20,6 @@ class AdminPage(BaseHandler):
             self.redirect('/')
 
 
-class ReceiveMail(webapp2.RequestHandler):
-    def post(self):
-        message = mail.InboundEmailMessage(self.request.body)
-        texts = message.bodies('text/plain')
-        for text in texts:
-            txtmsg = ""
-            txtmsg = text[1].decode()
-        submit_bm(feed=None,
-                  user=users.User(utils.parseaddr(message.sender)[1]),
-                  url=txtmsg.encode('utf8'),
-                  title=self.get_subject(txtmsg.encode('utf8'), message),
-                  comment='Sent via email')
-
-    def get_subject(self, o, message):
-        from email import header
-        try:
-            return header.decode_header(message.subject)[0][0]
-        except:
-            return o
-
-
 class CheckFeeds(webapp2.RequestHandler):
     def get(self):
         for feedk in Feeds.query().fetch(keys_only=True):
@@ -72,7 +51,6 @@ class cron_trash(webapp2.RequestHandler):
 
 
 app = ndb.toplevel(webapp2.WSGIApplication([
-    webapp2.Route('/_ah/mail/post@.*', ReceiveMail),
     routes.RedirectRoute('/admin/', AdminPage, name='Admin', strict_slash=True),
     routes.PathPrefixRoute('/admin', [
         webapp2.Route('/digest', SendDigest),

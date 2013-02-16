@@ -4,7 +4,7 @@ import util
 import submit
 import webapp2
 from webapp2_extras import json
-from google.appengine.api import users, app_identity, search
+from google.appengine.api import users, app_identity, search, mail
 from google.appengine.ext import ndb, blobstore, deferred
 from models import *
 
@@ -262,6 +262,28 @@ class SetNotify(webapp2.RequestHandler):
         feed.put()
 
 
+class ReceiveMail(webapp2.RequestHandler):
+    def post(self):
+        from email import utils
+        message = mail.InboundEmailMessage(self.request.body)
+        texts = message.bodies('text/plain')
+        for text in texts:
+            txtmsg = ""
+            txtmsg = text[1].decode().strip()
+        submit.submit_bm(feed=None,
+                  user=users.User(utils.parseaddr(message.sender)[1]),
+                  url=txtmsg.encode('utf8'),
+                  title=self.get_subject(txtmsg.encode('utf8'), message),
+                  comment='Sent via email')
+
+    def get_subject(self, o, message):
+        from email import header
+        try:
+            return header.decode_header(message.subject)[0][0]
+        except:
+            return o
+
+
 app = webapp2.WSGIApplication([
     ('/', HomePage),
     ('/search', cerca),
@@ -284,6 +306,7 @@ app = webapp2.WSGIApplication([
     ('/getcomment', GetComment),
     ('/getedit', GetEdit),
     (r'/bm/(.*)', ItemPage),
+    ('/_ah/mail/post@.*', ReceiveMail),
 ], debug=util.debug, config=util.config)
 
 if __name__ == "__main__":
