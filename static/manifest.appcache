@@ -5,7 +5,6 @@ CACHE:
 /favicon.ico
 /static/base.js
 /static/setting.js
-/static/style.css
 http://cdn.dinoia.eu/css/bs.css
 http://cdn.dinoia.eu/css/bs.re.css
 http://cdn.dinoia.eu/css/style.css
