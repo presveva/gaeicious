@@ -10,6 +10,7 @@ from models import *
 
 
 class BaseHandler(webapp2.RequestHandler):
+
     @property
     def ui(self):
         user = users.get_current_user()
@@ -42,6 +43,7 @@ class BaseHandler(webapp2.RequestHandler):
 
 
 class HomePage(BaseHandler):
+
     def get(self):
         if users.get_current_user():
             self.generate('home.html', {})
@@ -51,6 +53,7 @@ class HomePage(BaseHandler):
 
 
 class Main_Frame(BaseHandler):
+
     def get(self, page):
         if users.get_current_user():
             bmq = self.bmq(page)
@@ -60,7 +63,8 @@ class Main_Frame(BaseHandler):
             self.redirect('/')
 
     def bmq(self, page):
-        q1 = Bookmarks.query(Bookmarks.user == users.get_current_user()).order(-Bookmarks.data)
+        q1 = Bookmarks.query(
+            Bookmarks.user == users.get_current_user()).order(-Bookmarks.data)
         q2 = q1.filter(Bookmarks.trashed == False)
 
         if page == 'archived':
@@ -93,15 +97,17 @@ class Main_Frame(BaseHandler):
 
 
 class ItemPage(BaseHandler):
+
     def get(self, id):
         bm = Bookmarks.get_by_id(int(id))
-        if bm.shared == True:
+        if bm.shared:
             self.generate('item.html', {'bm': bm})
         else:
             self.redirect('/')
 
 
 class SettingPage(BaseHandler):
+
     def get(self):
         ui = self.ui
         upload_url = blobstore.create_upload_url('/upload')
@@ -120,6 +126,7 @@ javascript:location.href=
 
 
 class FeedsPage(BaseHandler):
+
     def get(self):
         feed_list = Feeds.query(Feeds.user == users.get_current_user())
         feed_list = feed_list.order(-Feeds.data)
@@ -128,6 +135,7 @@ class FeedsPage(BaseHandler):
 
 
 class EditBM(webapp2.RequestHandler):
+
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         if users.get_current_user() == bm.user:
@@ -139,6 +147,7 @@ class EditBM(webapp2.RequestHandler):
 
 
 class ArchiveBM(BaseHandler):
+
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         if users.get_current_user() == bm.user:
@@ -153,10 +162,11 @@ class ArchiveBM(BaseHandler):
 
 
 class TrashBM(BaseHandler):
+
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         if users.get_current_user() == bm.user:
-            if bm.trashed == False:
+            if bm.trashed is False:
                 bm.archived = False
                 bm.trashed = True
                 bm.put()
@@ -165,10 +175,11 @@ class TrashBM(BaseHandler):
 
 
 class StarBM(webapp2.RequestHandler):
+
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         if users.get_current_user() == bm.user:
-            if bm.starred == False:
+            if bm.starred is False:
                 bm.starred = True
                 html = '<i class="icon-star"></i>'
             else:
@@ -179,10 +190,11 @@ class StarBM(webapp2.RequestHandler):
 
 
 class ShareBM(webapp2.RequestHandler):
+
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('id')))
         if users.get_current_user() == bm.user:
-            if bm.shared == False:
+            if bm.shared is False:
                 bm.shared = True
                 eye = '<i class="icon-eye-open"></i>'
             else:
@@ -193,11 +205,13 @@ class ShareBM(webapp2.RequestHandler):
 
 
 class cerca(BaseHandler):
+
     def post(self):
         user = users.get_current_user()
         query_string = self.request.get('query_string')
         try:
-            results = search.Index(name='%s' % user.user_id()).search(query_string)
+            results = search.Index(
+                name='%s' % user.user_id()).search(query_string)
             bms_ids = [int(doc.doc_id) for doc in results]
             keys = [ndb.Key(Bookmarks, id) for id in bms_ids]
             bms = ndb.get_multi(keys)
@@ -208,31 +222,35 @@ class cerca(BaseHandler):
 
 
 class GetComment(webapp2.RequestHandler):
+
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         self.response.write(bm.comment)
 
 
 class GetEdit(webapp2.RequestHandler):
+
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
         self.render('edit.html', {'bm': bm})
 
 
 class CheckFeed(webapp2.RequestHandler):
+
     def get(self):
         feed = Feeds.get_by_id(int(self.request.get('feed')))
         deferred.defer(submit.pop_feed, feed.key)
 
-###################################################
-## Setting page
-###################################################
+#
+# Setting page
+#
 
 
 class SetMys(webapp2.RequestHandler):
+
     def get(self):
         ui = UserInfo.query(UserInfo.user == users.get_current_user()).get()
-        if ui.mys == False:
+        if ui.mys is False:
             ui.mys = True
             html = '<i class="icon-thumbs-up"></i> <b>Enabled </b>'
         else:
@@ -243,9 +261,10 @@ class SetMys(webapp2.RequestHandler):
 
 
 class SetDaily(webapp2.RequestHandler):
+
     def get(self):
         ui = UserInfo.query(UserInfo.user == users.get_current_user()).get()
-        if ui.daily == False:
+        if ui.daily is False:
             ui.daily = True
             html = '<i class="icon-thumbs-up"></i> <b>Enabled </b>'
         else:
@@ -256,6 +275,7 @@ class SetDaily(webapp2.RequestHandler):
 
 
 class SetNotify(webapp2.RequestHandler):
+
     def get(self):
         feed = Feeds.get_by_id(int(self.request.get('feed')))
         feed.notify = self.request.get('notify')
@@ -263,6 +283,7 @@ class SetNotify(webapp2.RequestHandler):
 
 
 class ReceiveMail(webapp2.RequestHandler):
+
     def post(self):
         from email import utils
         message = mail.InboundEmailMessage(self.request.body)
@@ -271,10 +292,11 @@ class ReceiveMail(webapp2.RequestHandler):
             txtmsg = ""
             txtmsg = text[1].decode().strip()
         submit.submit_bm(feed=None,
-                  user=users.User(utils.parseaddr(message.sender)[1]),
-                  url=txtmsg.encode('utf8'),
-                  title=self.get_subject(txtmsg.encode('utf8'), message),
-                  comment='Sent via email')
+                         user=users.User(utils.parseaddr(message.sender)[1]),
+                         url=txtmsg.encode('utf8'),
+                         title=self.get_subject(
+                             txtmsg.encode('utf8'), message),
+                         comment='Sent via email')
 
     def get_subject(self, o, message):
         from email import header

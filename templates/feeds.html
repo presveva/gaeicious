@@ -14,39 +14,35 @@
     </div>
   </div>
 </form>
-<dd><b>Starred in Google Reader</b>: http://www.google.com/reader/public/atom/user/<b>[user-id]</b>/state/com.google/starred
-<dd><b>Favorite tweet in Twitter</b>: http://twitter.com/favorites/<b>[username]</b>.rss
-<dd><b>Youtube user upload</b>: http://gdata.youtube.com/feeds/base/users/<b>[username]</b>/uploads?alt=rss
 </div>
 </div>
 
+<table class="table table-condensed"> <tbody>
 {% for feed in feeds %}
-<div class="well well-small" id="row-{{ feed.id }}" >
-  <dt>
-    <a href="{{ feed.link }}" ><b> {{ feed.title }}</b></a>
-  <dd>{{ feed.feed }}
-  <dd>
-  <div class="btn-toolbar">
-    <div class="btn-group">
-      <a class="btn btn-mini" href="/feed?id={{ feed.id }}"> <i class="icon-remove"></i> delete </a>
-      <a class="btn btn-mini" onclick="sync_feed({{ feed.id }})">  <i class="icon-refresh"></i> sync </a>
-    </div>
-    <div class="btn-group" data-toggle="buttons-radio">
-      <button type="button" class="btn btn-mini" onclick="setnotify({{ feed.id }},'web')" id="n-w-{{ feed.id }}">web</button>
-      <button type="button" class="btn btn-mini" onclick="setnotify({{ feed.id }},'email')" id="n-e-{{ feed.id }}">email</button>
-      <button type="button" class="btn btn-mini" onclick="setnotify({{ feed.id }},'digest')" id="n-d-{{ feed.id }}">digest</button>
-    </div>
-  </div>
-
-  <dd id="comment-{{ feed.id }}" class="">
-</div>
+  <tr id="row-{{ feed.id }}">
+    <td><a href="{{ feed.link }}" ><b>{{ feed.title|truncate(50, true) }}</b></a></td>
+    <td>
+      <div class="btn-group">
+        <a class="btn btn-mini" href="/feed?id={{ feed.id }}"> <i class="icon-remove"></i> delete</a>
+        <a class="btn btn-mini" onclick="sync_feed({{ feed.id }})"> <i class="icon-refresh"></i> sync</a>
+      </div>
+    </td>
+    <td>
+      <div class="btn-group" data-toggle="buttons-radio">
+        <button type="button" class="btn btn-mini" onclick="setnotify({{ feed.id }},'web')" id="n-w-{{ feed.id }}">web</button>
+        <button type="button" class="btn btn-mini" onclick="setnotify({{ feed.id }},'email')" id="n-e-{{ feed.id }}">email</button>
+        <button type="button" class="btn btn-mini" onclick="setnotify({{ feed.id }},'digest')" id="n-d-{{ feed.id }}">digest</button>
+      </div>
+    </td>
+    <td><a href="{{ feed.feed }}" ><b>feed</b></a></td>
+  </tr>
   {% if feed.notify == 'digest' %}
   <script>$("#n-d-{{ feed.id }}").button('toggle')</script>
   {% elif feed.notify == 'email' %}
   <script>$("#n-e-{{ feed.id }}").button('toggle')</script>
-  {% else  %}
+  {% else %}
   <script>$("#n-w-{{ feed.id }}").button('toggle')</script>
   {% endif %}
 {% endfor %}
-  </div>
+</tbody> </table>
 {% endblock %}

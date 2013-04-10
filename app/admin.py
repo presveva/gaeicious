@@ -57,8 +57,8 @@ app = ndb.toplevel(webapp2.WSGIApplication([
         webapp2.Route('/activity', SendActivity),
         webapp2.Route('/check', CheckFeeds),
         webapp2.Route('/cron_trash', cron_trash),
-        ])
-    ], debug=util.debug, config=util.config))
+    ])
+], debug=util.debug, config=util.config))
 
 if __name__ == "__main__":
     app.run()

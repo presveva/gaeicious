@@ -10,7 +10,7 @@ def remove_bm(db_key):
     ndb_key = ndb.Key.from_old_key(db_key)
     bm = ndb_key.get()
     try:
-        if bm.user == users.User("goometria@gmail.com"):
+        if bm.user == users.User("bla@gmail.com"):
             bm.key.delete()
             yield op.counters.Increment("eliminati")
         else:

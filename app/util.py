@@ -29,7 +29,8 @@ def daily_digest(uik):
     bmq = Bookmarks.query(Bookmarks.user == ui.user,
                           Bookmarks.trashed == False,
                           Bookmarks.data > period).order(-Bookmarks.data)
-    title = '[%s] Daily digest for your activity: %s' % (app_identity.get_application_id(), dtf(now))
+    title = '[%s] Daily digest for your activity: %s' % (
+        app_identity.get_application_id(), dtf(now))
     template = jinja_environment.get_template('digest.html')
     values = {'bmq': bmq, 'title': title}
     html = template.render(values)
@@ -50,7 +51,7 @@ def feed_digest(feedk):
     template = jinja_environment.get_template('digest.html')
     values = {'bmq': bmq, 'title': title}
     html = template.render(values)
-    if bmq.get() != None:
+    if bmq.get() is not None:
         deferred.defer(send_digest, feed.user.email(), html, title)
         queue = []
         for bm in bmq:
@@ -89,7 +90,7 @@ def send_digest(email, html, title):
 
 def mys_off(user):
     ui = UserInfo.get_by_id(str(user.user_id()))
-    if ui.mys == True:
+    if ui.mys is True:
         ui.mys = False
         ui.put()
         return 'was_true'
@@ -97,6 +98,6 @@ def mys_off(user):
 
 def mys_on(user):
     ui = UserInfo.get_by_id(str(user.user_id()))
-    if ui.mys == False:
+    if ui.mys is False:
         ui.mys = True
         ui.put()
