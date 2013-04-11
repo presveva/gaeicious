@@ -16,7 +16,7 @@ class UserInfo(ndb.Expando):
 class Feeds(ndb.Expando):
     user = ndb.UserProperty()
     feed = ndb.StringProperty()
-    title = ndb.StringProperty(indexed=False)
+    title = ndb.StringProperty()
     link = ndb.StringProperty(indexed=False)
     data = ndb.DateTimeProperty(auto_now=True)
     notify = ndb.StringProperty(choices=['web', 'email', 'digest'], default="web")

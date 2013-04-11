@@ -71,5 +71,4 @@ indexes:
 - kind: Feeds
   properties:
   - name: user
-  - name: data
-    direction: desc
+  - name: title

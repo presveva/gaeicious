@@ -23,7 +23,7 @@ class AdminPage(BaseHandler):
 class CheckFeeds(webapp2.RequestHandler):
     def get(self):
         for feedk in Feeds.query().fetch(keys_only=True):
-            deferred.defer(submit.pop_feed, feedk)
+            deferred.defer(submit.pop_feed, feedk, _queue="user")
 
 
 class SendDigest(webapp2.RequestHandler):

@@ -20,7 +20,7 @@
 <table class="table table-condensed"> <tbody>
 {% for feed in feeds %}
   <tr id="row-{{ feed.id }}">
-    <td><a href="{{ feed.link }}" ><b>{{ feed.title|truncate(50, true) }}</b></a></td>
+    <td><a href="{{ feed.link }}" target="_blank"><b>{{ feed.title|truncate(50, true) }}</b></a></td>
     <td>
       <div class="btn-group">
         <a class="btn btn-mini" href="/feed?id={{ feed.id }}"> <i class="icon-remove"></i> delete</a>
@@ -34,7 +34,7 @@
         <button type="button" class="btn btn-mini" onclick="setnotify({{ feed.id }},'digest')" id="n-d-{{ feed.id }}">digest</button>
       </div>
     </td>
-    <td><a href="{{ feed.feed }}" ><b>feed</b></a></td>
+    <td><a href="{{ feed.feed }}" target="_blank"><b>feed</b></a></td>
   </tr>
   {% if feed.notify == 'digest' %}
   <script>$("#n-d-{{ feed.id }}").button('toggle')</script>

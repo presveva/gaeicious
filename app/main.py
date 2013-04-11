@@ -128,8 +128,7 @@ javascript:location.href=
 class FeedsPage(BaseHandler):
 
     def get(self):
-        feed_list = Feeds.query(Feeds.user == users.get_current_user())
-        feed_list = feed_list.order(-Feeds.data)
+        feed_list = Feeds.query(Feeds.user == users.get_current_user()).order(Feeds.title)
         self.response.set_cookie('active-tab', 'feeds')
         self.generate('feeds.html', {'feeds': feed_list})
 
@@ -239,7 +238,7 @@ class CheckFeed(webapp2.RequestHandler):
 
     def get(self):
         feed = Feeds.get_by_id(int(self.request.get('feed')))
-        deferred.defer(submit.pop_feed, feed.key)
+        deferred.defer(submit.pop_feed, feed.key, _queue="user")
 
 #
 # Setting page

@@ -22,7 +22,7 @@ class AddFeed(RequestHandler):
         user = users.get_current_user()
         feed = self.request.get('url')
         q = Feeds.query(Feeds.user == user, Feeds.feed == feed)
-        if user and q.get() == None:
+        if user and q.get() is None:
             d = parse(str(feed))
             feed_k = Feeds(feed=feed,
                            title=d['channel']['title'],
@@ -47,9 +47,12 @@ def pop_feed(feedk):
             t = entry['title']
             o = entry['link']
             try:
-                c = entry['description']
+                c = entry['content']
             except KeyError:
-                c = 'no comment'
+                try:
+                    c = entry['description']
+                except KeyError:
+                    c = 'no comment'
             deferred.defer(submit_bm, feedk, u, t, o, c)
             e += 1
             entry = d['items'][e]
@@ -137,9 +140,9 @@ def submit_bm(feed, user, title, url, comment):
     Bookmarks.index_bm(bm.key)
 
     ui = UserInfo.get_or_insert(str(user.user_id()), user=user)
-    if feed == None and ui.mys == True:
+    if feed is None and ui.mys is True:
         deferred.defer(util.send_bm, bm.key, _queue="user")
-    elif feed != None and feed.get().notify == 'email':
+    elif feed is not None and feed.get().notify == 'email':
         deferred.defer(util.send_bm, bm.key)
 
 
