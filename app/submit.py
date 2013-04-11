@@ -28,7 +28,7 @@ class AddFeed(RequestHandler):
                            title=d['channel']['title'],
                            link=d['channel']['link'],
                            user=user,
-                           last_id=d['items'][0].id).put()
+                           last_id=d['items'][2].id).put()
             deferred.defer(pop_feed, feed_k, _queue="user")
             self.redirect('/feeds')
         else:
@@ -47,7 +47,7 @@ def pop_feed(feedk):
             t = entry['title']
             o = entry['link']
             try:
-                c = entry['content']
+                c = entry['content'][0].value
             except KeyError:
                 try:
                     c = entry['description']
