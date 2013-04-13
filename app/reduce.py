@@ -30,23 +30,24 @@ def Attributi(db_key):
         yield op.counters.Increment("errori")
 
 
-def delete_all_in_index(db_key):
+def reset_index(db_key):
     ndb_key = ndb.Key.from_old_key(db_key)
     ui = ndb_key.get()
     """Delete all the docs in the given index."""
-    doc_index = search.Index(name=ui.user_id)
+    doc_index = search.Index(name=ui.user.user_id())
 
     while True:
         # Get a list of documents populating only the doc_id field and extract the ids.
         document_ids = [document.doc_id
-                        for document in doc_index.list_documents(ids_only=True)]
+                        for document in doc_index.get_range(ids_only=True)]
         if not document_ids:
             break
         # Remove the documents for the given ids from the Index.
-        doc_index.remove(document_ids)
+        doc_index.delete(document_ids)
+    # doc_index.deleteSchema()
 
 
-def re_index_all(db_key):
+def reindex_all(db_key):
     ndb_key = ndb.Key.from_old_key(db_key)
     bm = ndb_key.get()
     index = search.Index(name=bm.user.user_id())

@@ -48,7 +48,7 @@ class Bookmarks(ndb.Expando):
     def _pre_delete_hook(cls, key):
         bm = key.get()
         index = search.Index(name=bm.user.user_id())
-        index.remove(str(bm.id))
+        index.delete(str(bm.id))
 
     @classmethod
     def index_bm(cls, key):

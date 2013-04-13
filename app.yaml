@@ -49,8 +49,8 @@ handlers:
   script: app.main.app
   login: required
 
-# - url: /mapreduce(/.*)?
-#   script: mapreduce.reduce.app
+- url: /mapreduce(/.*)?
+  script: mapreduce.reduce.app
 
 libraries:
 - name: jinja2
@@ -68,5 +68,5 @@ builtins:
 inbound_services:
 - mail
 
-# includes:
-# - mapreduce/include.yaml
+includes:
+- mapreduce/include.yaml

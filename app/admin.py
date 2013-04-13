@@ -40,6 +40,19 @@ class SendActivity(webapp2.RequestHandler):
                 deferred.defer(util.daily_digest, ui.key)
 
 
+class script(webapp2.RequestHandler):
+    def get(self):
+        """Delete all the docs in the given index."""
+        doc_index = search.Index(name='None')
+        while True:
+            document_ids = [document.doc_id
+                            for document in doc_index.get_range(ids_only=True)]
+            if not document_ids:
+                break
+            doc_index.delete(document_ids)
+        # doc_index.deleteSchema()
+
+
 class cron_trash(webapp2.RequestHandler):
     def get(self):
         delta = datetime.timedelta(days=7)
@@ -57,6 +70,7 @@ app = ndb.toplevel(webapp2.WSGIApplication([
         webapp2.Route('/activity', SendActivity),
         webapp2.Route('/check', CheckFeeds),
         webapp2.Route('/cron_trash', cron_trash),
+        webapp2.Route('/script', script),
     ])
 ], debug=util.debug, config=util.config))
 
