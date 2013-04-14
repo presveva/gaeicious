@@ -39,7 +39,8 @@ Open source libraries used in gaeicious
 - Twitter Bootstrap [github](https://github.com/twitter/bootstrap)
 - jquery [github](https://github.com/jquery/jquery)
 - jquery cookie [github](https://github.com/carhartl/jquery-cookie)
-- Universal feed parser: [docs](http://packages.python.org/feedparser)
+- Universal feed parser: [docs](http://pythonhosted.org/feedparser/)
+- Tweepy: [github](https://github.com/tweepy/tweepy)
 
 
 Copyright and license
