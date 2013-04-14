@@ -1,0 +1,78 @@
+﻿{% extends "base.html" %}
+{% block title %}{{ brand }}: twitter{% endblock %}
+{% block navbar %} {% include "navbar.html" %} {% endblock %}
+
+{% block content %}
+<div class="container-narrow">
+<div class="row-fluid">
+
+{% if redirect_url %}
+<div class="alert alert-block">
+  <button type="button" class="close" data-dismiss="alert">×</button>
+  <a class="btn" data-toggle="button" href='{{redirect_url}}'>Twitter login</a>
+</div>
+{% else %}
+
+<form id="twittami" class="form-inline" action="/twitter/tweet">
+  <div class="control-group" id="input_tweet">
+    <textarea name="text_tweet" id="text_tweet" class="span9" placeholder="140 caratteri"></textarea>
+    <button class="btn btn-large " type="submit" >tweet</button>
+  </div>
+  <script type="text/javascript">
+  $('#text_tweet').keyup(function() {
+
+    var len = this.value.length;
+    if (len >= 140) {
+      $('#input_tweet').removeClass('success');
+      $('#input_tweet').addClass('error');
+    } else {
+      $('#input_tweet').addClass('success');
+    }
+  });
+  </script>
+</form>
+<div class="well">
+  <table class="table">
+  <tbody>
+    {% for tweet in tweets %}
+    <tr>
+      <td><img title="{{tweet.user.screen_name }}" src="{{tweet.user.profile_image_url }}"></td>
+      <td>{{tweet.user.screen_name }}</td>
+      <td id="tweet">{{tweet.text|urlize}}</td>
+      <td>
+        <div class="btn-group">
+          <a class="btn btn-mini" id="rt-{{ tweet.id_str }}" > <i class="icon-retweet"></i></a>
+        </div>
+      </td>
+    <script type="text/javascript">
+    $('#tweet a').attr('target', '_blank');
+    $("#rt-{{ tweet.id_str }}").click(function() {
+      $.get("/twitter/retweet", {id_str: '{{ tweet.id_str }}'})
+    })
+    </script>
+    </tr>
+    {% for media in tweet.entities.media %}
+    <tr>
+      <td></td>
+      <td colspan="2"> <img src="{{media.media_url}}"> </td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+  </tbody>
+  </table>
+</div>
+
+<div class="alert alert-info">
+  {% for fl in ui.new_foll() %}
+  <dd> hai un nuovo follower: <a href='http://twitter.com/{{fl.screen_name}}'>{{fl.screen_name}}</a>
+  {% endfor %}
+  {% for fl in ui.lost_foll() %}
+  <dd> hai perso un follower: <a href='http://twitter.com/{{fl.screen_name}}'>{{fl.screen_name}}</a>
+  {% endfor %}
+  <dd><a class="btn" data-toggle="button" href='/twitter/check'>Check Followers</a>
+</div>
+
+</div>
+</div>
+{% endif %}
+{% endblock %}

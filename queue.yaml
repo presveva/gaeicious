@@ -5,7 +5,7 @@ queue:
 - name: default
   rate: 40/s
   bucket_size: 100
-  # target: worker
+  target: worker
 
 - name: user
   rate: 40/s

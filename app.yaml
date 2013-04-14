@@ -45,6 +45,9 @@ handlers:
 - url: /bm/.*
   script: app.main.app
 
+- url: /twitter.*
+  script: app.twitter.app
+
 - url: /.*
   script: app.main.app
   login: required
