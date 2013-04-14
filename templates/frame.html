@@ -75,6 +75,10 @@
         </script>
       </form>
     <dd class="comments comment-{{ bm.id }}">{{bm.comment}}
+    <script type="text/javascript">
+      $('.comment-{{ bm.id }} a').attr('target', '_blank');
+    </script>
+
     <dd class="hide edit-{{ bm.id }}">{% include 'edit.html'%}
   </dt>
 </div><!-- btn-toolbar -->
