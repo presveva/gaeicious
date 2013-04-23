@@ -2,7 +2,7 @@
 <div class="{%if bm.trashed%}alert alert-error{%else%}well well-small{%endif%} row-{{ bm.id }} success">
   <dt > <i class="icon-bookmark"></i>
     <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(90) }}</a>
-    <dt>
+    <dd>
       <div class="btn-toolbar">
         <div class="btn-group hidden-phone">
           <button class="btn btn-small" onclick="comment({{ bm.id }})">
@@ -55,7 +55,7 @@
           <a class="btn btn-link btn-mini " onclick="getbms('domain','','{{ bm.domain }}')"><em>{{ bm.domain }}</em> </a>
         </div>
       </div><!-- btn-toolbar -->
-    </dt>
+    <!-- </dt> -->
     <dd class="hide tweet-{{ bm.id }}">
       <form class="form-inline" action="/twitter/tweet">
         <div class="control-group" id="input_tweet-{{ bm.id }}">
@@ -74,10 +74,13 @@
         });
         </script>
       </form>
-    <dd class="comments comment-{{ bm.id }}">{{bm.comment}}
-    <script type="text/javascript">
-      $('.comment-{{ bm.id }} a').attr('target', '_blank');
-    </script>
+    <dd class="comments comment-{{ bm.id }}">
+      <div>
+        {{bm.comment}}
+        <script type="text/javascript">
+          $('.comment-{{ bm.id }} a').attr('target', '_blank');
+        </script>
+      </div>
 
     <dd class="hide edit-{{ bm.id }}">{% include 'edit.html'%}
   </dt>

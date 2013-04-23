@@ -42,7 +42,7 @@ def pop_feed(feedk):
     e = 0
     try:
         entry = d['items'][e]
-        while str(feed.last_id) != str(entry.id):
+        while unicode(feed.last_id) != unicode(entry.id):
             u = feed.user
             t = entry['title']
             o = entry['link']
@@ -56,16 +56,16 @@ def pop_feed(feedk):
             deferred.defer(submit_bm, feedk, u, t, o, c)
             e += 1
             entry = d['items'][e]
+        feed.last_id = unicode(d['items'][0].id)
+        feed.put()
     except IndexError:
         pass
-    feed.last_id = str(d.entries[0].id)
-    feed.put()
 
 
 class AddBM(RequestHandler):
     def get(self):
         submit_bm(feed=None,
-                  user=users.User("%s" % self.request.get('user')),
+                  user=users.User(str(self.request.get('user'))),
                   title=self.request.get('title'),
                   url=self.request.get('url'),
                   comment=self.request.get('comment'))
