@@ -4,7 +4,7 @@ from __future__ import with_statement
 import util
 from webapp2 import RequestHandler
 from google.appengine.api import users, urlfetch, files, images
-from google.appengine.ext import deferred, blobstore
+from google.appengine.ext import deferred, blobstore, ndb
 from google.appengine.ext.webapp import blobstore_handlers
 from models import Feeds, Bookmarks, UserInfo
 from urlparse import urlparse, parse_qs
@@ -29,7 +29,7 @@ class AddFeed(RequestHandler):
                            link=d['channel']['link'],
                            user=user,
                            last_id=d['items'][2].id).put()
-            deferred.defer(pop_feed, feed_k, _queue="user")
+            deferred.defer(pop_feed, feed_k)
             self.redirect('/feeds')
         else:
             self.redirect('/')
@@ -42,7 +42,7 @@ def pop_feed(feedk):
     e = 0
     try:
         entry = d['items'][e]
-        while unicode(feed.last_id) != unicode(entry.id):
+        while feed.last_id.encode('utf-8') != entry.id.encode('utf-8'):
             u = feed.user
             t = entry['title']
             o = entry['link']
@@ -53,10 +53,10 @@ def pop_feed(feedk):
                     c = entry['description']
                 except KeyError:
                     c = 'no comment'
-            deferred.defer(submit_bm, feedk, u, t, o, c)
+            deferred.defer(submit_bm, feedk, u, t, o, c, _queue='bookmark')
             e += 1
             entry = d['items'][e]
-        feed.last_id = unicode(d['items'][0].id)
+        feed.last_id = d['items'][0].id.encode('utf-8')
         feed.put()
     except IndexError:
         pass
@@ -96,14 +96,6 @@ def submit_bm(feed, user, title, url, comment):
 
     url_candidate = a.lstrip().rstrip().split('?utm_source')[0].split('&feature')[0]
 
-    copie = Bookmarks.query(Bookmarks.url == url_candidate,
-                            Bookmarks.user == user,
-                            Bookmarks.trashed == False)
-    if copie.get():
-        for cp in copie:
-            cp.archived = False
-            cp.put()
-
     url_parsed = urlparse(url_candidate)
     query = parse_qs(url_parsed.query)
     name = url_parsed.path.split('/')[-1]
@@ -139,11 +131,17 @@ def submit_bm(feed, user, title, url, comment):
     bm.put()
     Bookmarks.index_bm(bm.key)
 
+    copie = Bookmarks.query(Bookmarks.url == bm.url,
+                            Bookmarks.user == user)
+
+    if copie.get():
+        ndb.delete_multi([cp.key for cp in copie])
+
     ui = UserInfo.get_or_insert(str(user.user_id()), user=user)
     if feed is None and ui.mys is True:
-        deferred.defer(util.send_bm, bm.key, _queue="user")
+        deferred.defer(util.send_bm, bm.key, _queue="email")
     elif feed is not None and feed.get().notify == 'email':
-        deferred.defer(util.send_bm, bm.key)
+        deferred.defer(util.send_bm, bm.key, _queue="email")
 
 
 def upload_to_blobstore(url_candidate, ext):

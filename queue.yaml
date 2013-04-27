@@ -5,11 +5,21 @@ queue:
 - name: default
   rate: 40/s
   bucket_size: 100
-  target: worker
 
-- name: user
+- name: email
   rate: 40/s
   bucket_size: 100
+  target: worker
+
+- name: feed
+  rate: 40/s
+  bucket_size: 100
+  target: feed
+
+- name: bookmark
+  rate: 40/s
+  bucket_size: 100
+  target: worker
 
 - name: delicious
   rate: 20/s

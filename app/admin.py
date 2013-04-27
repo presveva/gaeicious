@@ -23,21 +23,21 @@ class AdminPage(BaseHandler):
 class CheckFeeds(webapp2.RequestHandler):
     def get(self):
         for feedk in Feeds.query().fetch(keys_only=True):
-            deferred.defer(submit.pop_feed, feedk, _queue="user")
+            deferred.defer(submit.pop_feed, feedk, _queue='feed')
 
 
 class SendDigest(webapp2.RequestHandler):
     def get(self):
         for feed in Feeds.query():
             if feed.notify == 'digest':
-                deferred.defer(util.feed_digest, feed.key)
+                deferred.defer(util.feed_digest, feed.key, _queue='email')
 
 
 class SendActivity(webapp2.RequestHandler):
     def get(self):
         for ui in UserInfo.query():
             if ui.daily:
-                deferred.defer(util.daily_digest, ui.key)
+                deferred.defer(util.daily_digest, ui.key, _queue='email')
 
 
 class script(webapp2.RequestHandler):

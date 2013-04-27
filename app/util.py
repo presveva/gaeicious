@@ -34,8 +34,8 @@ def daily_digest(uik):
     template = jinja_environment.get_template('digest.html')
     values = {'bmq': bmq, 'title': title}
     html = template.render(values)
-    if bmq.get() != None:
-        deferred.defer(send_digest, ui.email, html, title)
+    if bmq.get() is not None:
+        deferred.defer(send_digest, ui.email, html, title, _queue='email')
 
 
 def feed_digest(feedk):
@@ -52,7 +52,7 @@ def feed_digest(feedk):
     values = {'bmq': bmq, 'title': title}
     html = template.render(values)
     if bmq.get() is not None:
-        deferred.defer(send_digest, feed.user.email(), html, title)
+        deferred.defer(send_digest, feed.user.email(), html, title, _queue='email')
         queue = []
         for bm in bmq:
             bm.trashed = True

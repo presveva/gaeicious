@@ -238,7 +238,7 @@ class CheckFeed(webapp2.RequestHandler):
 
     def get(self):
         feed = Feeds.get_by_id(int(self.request.get('feed')))
-        deferred.defer(submit.pop_feed, feed.key, _queue="user")
+        deferred.defer(submit.pop_feed, feed.key)
 
 #
 # Setting page
