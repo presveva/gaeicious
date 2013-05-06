@@ -2,7 +2,3 @@ backends:
 - name: worker
   class: B1
   options: dynamic, public
-
-- name: feed
-  class: B1
-  options: dynamic, public

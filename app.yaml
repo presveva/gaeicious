@@ -35,7 +35,7 @@ handlers:
 - url: /_ah/mail/post@.*
   script: app.main.app
 
-- url: /admin.*
+- url: /admin/.*
   script: app.admin.app
   login: admin
 
@@ -50,7 +50,7 @@ handlers:
 
 - url: /.*
   script: app.main.app
-  login: required
+  # login: required
 
 - url: /mapreduce(/.*)?
   script: mapreduce.reduce.app
@@ -67,6 +67,7 @@ builtins:
 - deferred: on
 - remote_api: off
 - appstats: off
+- admin_redirect: on
 
 inbound_services:
 - mail

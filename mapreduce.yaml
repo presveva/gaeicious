@@ -1,8 +1,16 @@
 mapreduce:
-- name: remove_bm
+- name: del_attributi
   mapper:
     input_reader: mapreduce.input_readers.DatastoreKeyInputReader
-    handler: app.reduce.remove_bm
+    handler: app.reduce.del_attributi
+    params:
+    - name: entity_kind
+      default: models.Bookmarks
+
+- name: add_email
+  mapper:
+    input_reader: mapreduce.input_readers.DatastoreKeyInputReader
+    handler: app.reduce.add_email
     params:
     - name: entity_kind
       default: models.Bookmarks

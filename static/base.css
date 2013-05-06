@@ -1,18 +1,73 @@
-body {
-  padding-top: 20px;
-  padding-bottom: 40px;
-}
-.container-narrow {
-  margin: 0 auto;
-  max-width: 767px;
-}
-.jumbotron {
-  text-align: center;
+html {
+  overflow: -moz-scrollbars-vertical;
+  overflow-y: scroll;
 }
 
-.marketing {
-  margin: 60px 0;
+body {
+  padding-top: 50px;
 }
-.marketing p + h4 {
-  margin-top: 28px;
+
+@media (max-width: 979px) {
+  body { padding-top: 0; }
+}
+
+.container-narrow {
+margin: 0 auto;
+max-width: 767px;
+}
+
+.jumbotron {
+  margin: 80px 0;
+  text-align: center;
+}
+.jumbotron h1 {
+  font-size: 100px;
+  line-height: 1;
+}
+
+.masthead .navbar .navbar-inner {
+  padding: 0;
+}
+.masthead .navbar .nav {
+  margin: 0;
+  display: table;
+  width: 100%;
+}
+.masthead .navbar .nav li {
+  display: table-cell;
+  width: 0;
+  float: none;
+}
+.masthead .navbar .nav li a {
+  font-weight: bold;
+  text-align: center;
+  border-left: 1px solid rgba(255,255,255,.75);
+  border-right: 1px solid rgba(0,0,0,.1);
+}
+.masthead .navbar .nav li:first-child a {
+  border-left: 0;
+  border-radius: 3px 0 0 3px;
+}
+.masthead .navbar .nav li:last-child a {
+  border-right: 0;
+  border-radius: 0 3px 3px 0;
+}
+
+.control-group {margin-bottom: 0;}
+.clic {-webkit-user-select:none; -moz-user-select:none; cursor:pointer;}
+.nonclic {-webkit-user-select:none; -moz-user-select:none; cursor:default;}
+
+td.text-right {text-align:right;}
+th.text-right {text-align:right;}
+td.text-center {text-align:center;}
+th.text-center {text-align:center;}
+
+body,
+input,
+button,
+select,
+code,
+pre,
+textarea {
+  font-family: Antic Slab, Arial, serif; font-weight: 400;
 }

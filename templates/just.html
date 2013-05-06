@@ -4,12 +4,15 @@
     <meta charset="utf-8">
     <title>{{brand}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Gianni Di Noia">
     <meta name="description" content="a bookmarking service">
-    <meta name="author" content="presveva">
-    <link rel="shortcut icon" href="static/favicon.ico">
-    <link href="http://cdn.dinoia.eu/css/bs.css" rel="stylesheet">
-    <link href="http://cdn.dinoia.eu/css/bs.re.css" rel="stylesheet">
-    <link href="static/base.css" rel="stylesheet" type="text/css">
+    <link  href="/static/vendor/bootstrap.min.css" rel="stylesheet">
+    <link  href="/static/vendor/bootstrap.re.css" rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Antic+Slab' rel='stylesheet' type='text/css'>
+    <script src="/static/vendor/jquery.js"></script>
+    <script src="/static/vendor/bootstrap.js"></script>
+    <link  href="/static/base.css" type="text/css" rel="stylesheet" >
+    <link  href="/static/favicon.ico" rel="shortcut icon">
   </head>
 
   <body>
@@ -17,24 +20,40 @@
     <div class="container-narrow">
 
       <div class="masthead">
-        <ul class="nav nav-pills pull-right">
-          <li class="active"><a href="/">Home</a></li>
-          <li><a href="https://github.com/presveva/gaeicious">Code</a></li>
-        </ul>
-        <h2 class="muted">{{brand}}</h2>
+        <h3 class="muted">{{brand}}</h3>
+        <div class="navbar">
+          <div class="navbar-inner">
+            <div class="container">
+              <ul class="nav">
+                <li class="active"><a href="/">Home</a></li>
+                <!-- <li><a href="" id="tour">Tour</a></li> -->
+                <script type="text/javascript">
+                // $('#tour').click( function () {
+                // $.get('/static/tour.html', function(data) {
+                //   $('#masterbody').html(data);
+                // }); })
+
+                </script>
+                <li><a href="https://github.com/presveva/gaeicious">code</a></li>
+              </ul>
+            </div>
+          </div>
+        </div><!-- /.navbar -->
+      </div>
+
+      <!-- Jumbotron -->
+      <div id="masterbody">
+        <div class="jumbotron">
+          <h2>{{brand}}</h2>
+          <p class="lead">A bookmarking service</p>
+          <a href="{{ redirect_url }}" ><img src="/static/twitter.png"></a>
+        </div>
       </div>
 
       <hr>
 
-      <div class="jumbotron">
-        <h3>{{brand}}</h3>
-        <p class="lead">A bookmarking service</p>
-        <a href="{{ redirect_url }}" ><img src="/static/twitter.png"></a>
-      </div>
-
-      <hr>
-
-      <div class="row-fluid marketing">
+      <!-- Example row of columns -->
+      <div class="row-fluid">
         <div class="span6">
           <h4>Goodies</h4>
           <dl>
@@ -56,7 +75,6 @@
             <dd>and styled by <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap</a>
           </dl>
         </div>
-
         <div class="span6">
           <h4>How to post</h4>
           <dl>
@@ -85,7 +103,6 @@
         <p>&copy; {{brand}} 2013</p>
       </div>
 
-    </div>
-
+    </div> <!-- /container -->
   </body>
 </html>

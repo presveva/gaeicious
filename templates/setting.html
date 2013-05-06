@@ -18,12 +18,14 @@
 <hr>
 <!-- Bookmark via email -->
 <label><b>Bookmark via email</b></label>
-<dl class="dl-horizontal">
-  <dt>From:<dd> the email used in {{brand}}
-  <dt>To:<dd> post@{{brand}}.appspotmail.com
-  <dt>Subject:<dd> the bookmark's <em>title</em>
-  <dt>Body:<dd> the bookmark's <em>link</em>
-</dl>
+<table>
+  <tbody class="">
+    <tr> <td><b>From:</b>   </td> <td>the email used in {{brand}}   </td> </tr>
+    <tr> <td><b>To:</b>     </td> <td>post@{{brand}}.appspotmail.com</td> </tr>
+    <tr> <td><b>Subject:</b></td> <td>the bookmark's <em>title</em> </td> </tr>
+    <tr> <td><b>Body:</b>   </td> <td>the bookmark's <em>link</em>  </td> </tr>
+  </tbody>
+</table>
 <hr>
 <form action="{{upload_url}}" method="POST" enctype="multipart/form-data">
 <label><b>Import from delicious file (delicious.html)</b></label>
@@ -43,6 +45,13 @@
 <div class="span6">
   <legend>Setting</legend>
   <!-- mail yourself -->
+  <form class="form-inline" action="/save_email" method="post">
+    <label><b>Email</b></label>
+      <input type="text" name="email" placeholder="{{ui.email}}">
+      <button type="submit" class="btn" >Save email</button>
+  </form>
+  <hr>
+  {% if ui.email != None %}
   <form>
     <label><b>Mail yourself</b></label>
     <span class="help-block">If enabled you will receive an email for each new bookmark.</span>
@@ -58,6 +67,14 @@
       <input type="checkbox" id="daily-check"><p id="daily-text"></p>
     </label>
   </form>
+  <hr>
+  {% endif %}
+  <!-- empty trash -->
+  <label><b>Empty trash</b></label>
+  <!-- <span class="help-block">If enabled you will receive a daily digest of your activity.</span> <label class="checkbox"> -->
+  <a class="btn btn-block" href="/empty_trash">Empty trash</a>
+    <!-- <input type="checkbox" id="daily-check"><p id="daily-text"></p> -->
+  </label>
   <hr>
 </div>
 </div>

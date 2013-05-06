@@ -6,20 +6,45 @@ from google.appengine.api import search
 
 
 class UserInfo(ndb.Expando):
-    user = ndb.UserProperty()
-    email = ndb.ComputedProperty(lambda self: self.user.email())
+    access_k = ndb.StringProperty()
+    access_s = ndb.StringProperty()
+    email = ndb.StringProperty()
+    last_id = ndb.StringProperty()
+    data = ndb.DateTimeProperty(auto_now=True)
     mys = ndb.BooleanProperty(default=False)
     daily = ndb.BooleanProperty(default=False)
     delicious = ndb.BlobKeyProperty()
 
+    def followers_ids(self):
+        followers = Followers.query(Followers.ui == self.key).fetch()
+        return [follower.user_id for follower in followers]
+
+    def new_foll(self):
+        return Followers.query(Followers.ui == self.key,
+                               Followers.new == True).fetch(keys_only=True)
+
+    def lost_foll(self):
+        return Followers.query(Followers.ui == self.key,
+                               Followers.lost == True).fetch(keys_only=True)
+
+
+class Followers(ndb.Model):
+    ui = ndb.KeyProperty(kind=UserInfo)
+    user_id = ndb.IntegerProperty()
+    screen_name = ndb.StringProperty()
+    data = ndb.DateTimeProperty(auto_now=True)
+    new = ndb.BooleanProperty(default=False)
+    lost = ndb.BooleanProperty(default=False)
+
 
 class Feeds(ndb.Expando):
-    user = ndb.UserProperty()
+    ui = ndb.KeyProperty(kind=UserInfo)
     feed = ndb.StringProperty()
     title = ndb.StringProperty()
     link = ndb.StringProperty(indexed=False)
     data = ndb.DateTimeProperty(auto_now=True)
-    notify = ndb.StringProperty(choices=['web', 'email', 'digest'], default="web")
+    notify = ndb.StringProperty(choices=[
+                                'web', 'email', 'digest'], default="web")
     last_id = ndb.StringProperty()
 
     @property
@@ -28,7 +53,7 @@ class Feeds(ndb.Expando):
 
 
 class Bookmarks(ndb.Expando):
-    user = ndb.UserProperty(required=True)
+    ui = ndb.KeyProperty(kind=UserInfo)
     url = ndb.StringProperty(required=True)
     title = ndb.StringProperty(indexed=False)
     comment = ndb.TextProperty(indexed=False)
@@ -47,18 +72,19 @@ class Bookmarks(ndb.Expando):
     @classmethod
     def _pre_delete_hook(cls, key):
         bm = key.get()
-        index = search.Index(name=bm.user.user_id())
+        index = search.Index(name=bm.ui.id())
         index.delete(str(bm.id))
 
     @classmethod
     def index_bm(cls, key):
         bm = key.get()
-        index = search.Index(name=str(bm.user.user_id()))
+        index = search.Index(name=str(bm.ui.id()))
         doc = search.Document(doc_id=str(bm.id),
                               fields=[
                               search.TextField(name='url', value=bm.url),
                               search.TextField(name='title', value=bm.title),
-                              search.HtmlField(name='comment', value=bm.comment)
+                              search.HtmlField(
+                                  name='comment', value=bm.comment)
                               ])
         try:
             index.put(doc)

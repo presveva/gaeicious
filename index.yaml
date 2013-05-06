@@ -14,22 +14,7 @@ indexes:
   properties:
   - name: archived
   - name: trashed
-  - name: user
-  - name: data
-    direction: desc
-
-- kind: Bookmarks
-  properties:
-  - name: domain
-  - name: user
-  - name: data
-    direction: desc
-
-- kind: Bookmarks
-  properties:
-  - name: feed
-  - name: trashed
-  - name: user
+  - name: ui
   - name: data
     direction: desc
 
@@ -44,7 +29,7 @@ indexes:
   properties:
   - name: shared
   - name: trashed
-  - name: user
+  - name: ui
   - name: data
     direction: desc
 
@@ -52,23 +37,18 @@ indexes:
   properties:
   - name: starred
   - name: trashed
-  - name: user
+  - name: ui
   - name: data
     direction: desc
 
 - kind: Bookmarks
   properties:
   - name: trashed
-  - name: data
-
-- kind: Bookmarks
-  properties:
-  - name: trashed
-  - name: user
+  - name: ui
   - name: data
     direction: desc
 
 - kind: Feeds
   properties:
-  - name: user
+  - name: ui
   - name: title

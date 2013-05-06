@@ -1,21 +1,31 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 import util
-import submit
+import tweepy
+import secret
 import webapp2
 from webapp2_extras import json
-from google.appengine.api import users, app_identity, search, mail
+from google.appengine.api import app_identity, search, mail
 from google.appengine.ext import ndb, blobstore, deferred
 from models import *
+
+auth = tweepy.OAuthHandler(secret.consumer_token,
+                           secret.consumer_secret)
 
 
 class BaseHandler(webapp2.RequestHandler):
 
     @property
+    def admin(self):
+        screen_name = self.request.cookies.get('screen_name')
+        if screen_name:
+            return True if screen_name in secret.admins else False
+
+    @property
     def ui(self):
-        user = users.get_current_user()
-        if user:
-            return UserInfo.get_or_insert(str(user.user_id()), user=user)
+        screen_name = self.request.cookies.get('screen_name')
+        if screen_name:
+            return UserInfo.get_by_id(screen_name)
 
     def render(self, _template, _values):
         template = util.jinja_environment.get_template(_template)
@@ -26,16 +36,9 @@ class BaseHandler(webapp2.RequestHandler):
         self.response.write(json.encode(_values))
 
     def generate(self, template_name, template_values={}):
-        if users.get_current_user():
-            url = users.create_logout_url('/')
-            urltext = 'Logout'
-        else:
-            url = users.create_login_url('/')
-            urltext = 'Login'
         values = {
-            'url': url, 'urltext': urltext, 'ui': self.ui,
             'brand': app_identity.get_application_id(),
-            'admin': users.is_current_user_admin()
+            'admin': self.admin
         }
         values.update(template_values)
         template = util.jinja_environment.get_template(template_name)
@@ -45,26 +48,36 @@ class BaseHandler(webapp2.RequestHandler):
 class HomePage(BaseHandler):
 
     def get(self):
-        if users.get_current_user():
-            self.generate('home.html', {})
+        oauth_verifier = self.request.get("oauth_verifier")
+        if oauth_verifier:
+            auth.get_access_token(oauth_verifier)
+            api = tweepy.API(auth)
+            screen_name = api.me().screen_name
+            UserInfo(id=str(screen_name),
+                     access_k=auth.access_token.key,
+                     access_s=auth.access_token.secret).put()
+            self.response.set_cookie('screen_name', screen_name)
+            self.redirect('/')
+        elif self.ui is not None:
+            auth.set_access_token(self.ui.access_k, self.ui.access_s)
+            api = tweepy.API(auth)
+            self.generate('home.html', {'ui': self.ui})
         else:
-            self.response.set_cookie('active-tab', 'hero')
-            self.generate('hero.html', {})
+            redirect_url = auth.get_authorization_url()
+            self.generate('just.html', {'redirect_url': redirect_url})
 
 
 class Main_Frame(BaseHandler):
 
+    @util.login_required
     def get(self, page):
-        if users.get_current_user():
-            bmq = self.bmq(page)
-            cursor = ndb.Cursor(urlsafe=self.request.get('cursor'))
-            self.build(page, bmq, cursor)
-        else:
-            self.redirect('/')
+        bmq = self.bmq(page)
+        cursor = ndb.Cursor(urlsafe=self.request.get('cursor'))
+        self.build(page, bmq, cursor)
 
     def bmq(self, page):
         q1 = Bookmarks.query(
-            Bookmarks.user == users.get_current_user()).order(-Bookmarks.data)
+            Bookmarks.ui == self.ui.key).order(-Bookmarks.data)
         q2 = q1.filter(Bookmarks.trashed == False)
 
         if page == 'archived':
@@ -106,38 +119,47 @@ class ItemPage(BaseHandler):
             self.redirect('/')
 
 
+class AdminPage(BaseHandler):
+    def get(self):
+        if self.admin:
+            self.response.set_cookie('active-tab', 'admin')
+            self.generate('admin.html')
+        else:
+            self.redirect('/')
+
+
 class SettingPage(BaseHandler):
 
+    @util.login_required
     def get(self):
-        ui = self.ui
         upload_url = blobstore.create_upload_url('/upload')
         brand = app_identity.get_application_id()
-        bookmarklet = """
-javascript:location.href=
-'%s/submit?url='+encodeURIComponent(location.href)+
-'&title='+encodeURIComponent(document.title)+
-'&user='+'%s'+'&comment='+document.getSelection().toString()
-""" % (self.request.host_url, ui.email)
-        self.response.set_cookie('mys', '%s' % ui.mys)
-        self.response.set_cookie('daily', '%s' % ui.daily)
+        bookmarklet = """javascript:location.href='%s/submit?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+ '&user='+'%s'+'&comment='+document.getSelection().toString()""" % (
+            self.request.host_url, str(self.ui.key.id()))
+        self.response.set_cookie('mys', '%s' % self.ui.mys)
+        self.response.set_cookie('daily', '%s' % self.ui.daily)
         self.response.set_cookie('active-tab', 'setting')
-        self.generate('setting.html', {'bookmarklet': bookmarklet,
-                      'upload_url': upload_url, 'brand': brand, })
+        self.generate(
+            'setting.html', {'bookmarklet': bookmarklet, 'ui': self.ui,
+                             'upload_url': upload_url, 'brand': brand, })
 
 
 class FeedsPage(BaseHandler):
 
+    @util.login_required
     def get(self):
-        feed_list = Feeds.query(Feeds.user == users.get_current_user()).order(Feeds.title)
+        feed_list = Feeds.query(
+            Feeds.ui == self.ui.key).order(Feeds.title)
         self.response.set_cookie('active-tab', 'feeds')
         self.generate('feeds.html', {'feeds': feed_list})
 
 
-class EditBM(webapp2.RequestHandler):
+class EditBM(BaseHandler):
 
+    @util.login_required
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
-        if users.get_current_user() == bm.user:
+        if self.ui.key == bm.ui:
             bm.url = self.request.get('url').encode('utf8')
             bm.title = self.request.get('title').encode('utf8')
             bm.comment = self.request.get('comment').encode('utf8')
@@ -147,9 +169,10 @@ class EditBM(webapp2.RequestHandler):
 
 class ArchiveBM(BaseHandler):
 
+    @util.login_required
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
-        if users.get_current_user() == bm.user:
+        if self.ui.key == bm.ui:
             if bm.trashed:
                 bm.archived = False
                 bm.trashed = False
@@ -162,9 +185,10 @@ class ArchiveBM(BaseHandler):
 
 class TrashBM(BaseHandler):
 
+    @util.login_required
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
-        if users.get_current_user() == bm.user:
+        if self.ui.key == bm.ui:
             if bm.trashed is False:
                 bm.archived = False
                 bm.trashed = True
@@ -173,12 +197,25 @@ class TrashBM(BaseHandler):
                 bm.key.delete()
 
 
-class StarBM(webapp2.RequestHandler):
+class empty_trash(BaseHandler):
 
+    @util.login_required
+    def get(self):
+        bmq = Bookmarks.query(Bookmarks.ui == self.ui.key,
+                              Bookmarks.trashed == True).order(-Bookmarks.data)
+        bms = bmq.fetch(50, keys_only=True)
+        ndb.delete_multi(bms)
+        self.redirect(self.request.referer)
+
+
+class StarBM(BaseHandler):
+
+    @util.login_required
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('bm')))
-        if users.get_current_user() == bm.user:
+        if self.ui.key == bm.ui:
             if bm.starred is False:
+                bm.archived = True
                 bm.starred = True
                 html = '<i class="icon-star"></i>'
             else:
@@ -188,11 +225,12 @@ class StarBM(webapp2.RequestHandler):
         self.response.write(html)
 
 
-class ShareBM(webapp2.RequestHandler):
+class ShareBM(BaseHandler):
 
+    @util.login_required
     def get(self):
         bm = Bookmarks.get_by_id(int(self.request.get('id')))
-        if users.get_current_user() == bm.user:
+        if self.ui.key == bm.ui:
             if bm.shared is False:
                 bm.shared = True
                 eye = '<i class="icon-eye-open"></i>'
@@ -205,12 +243,12 @@ class ShareBM(webapp2.RequestHandler):
 
 class cerca(BaseHandler):
 
+    @util.login_required
     def post(self):
-        user = users.get_current_user()
         query_string = self.request.get('query_string')
         try:
             results = search.Index(
-                name='%s' % user.user_id()).search(query_string)
+                name=self.ui.key.id()).search(query_string)
             bms_ids = [int(doc.doc_id) for doc in results]
             keys = [ndb.Key(Bookmarks, id) for id in bms_ids]
             bms = ndb.get_multi(keys)
@@ -218,6 +256,30 @@ class cerca(BaseHandler):
             self.response.write(html)
         except search.Error:
             pass
+
+
+class AddFeed(BaseHandler):
+
+    @util.login_required
+    def get(self):
+        feed = Feeds.get_by_id(int(self.request.get('id')))
+        feed.key.delete()
+        self.redirect(self.request.referer)
+
+    @util.login_required
+    def post(self):
+        from libs.feedparser import parse
+        feed = self.request.get('url')
+        q = Feeds.query(Feeds.ui == self.ui.key, Feeds.feed == feed)
+        if q.get() is None:
+            d = parse(str(feed))
+            feed_k = Feeds(feed=feed,
+                           title=d['channel']['title'],
+                           link=d['channel']['link'],
+                           ui=self.ui.key,
+                           last_id=d['items'][2].id).put()
+            deferred.defer(util.pop_feed, feed_k)
+        self.redirect('/feeds')
 
 
 class GetComment(webapp2.RequestHandler):
@@ -236,19 +298,17 @@ class GetEdit(webapp2.RequestHandler):
 
 class CheckFeed(webapp2.RequestHandler):
 
+    @util.login_required
     def get(self):
         feed = Feeds.get_by_id(int(self.request.get('feed')))
-        deferred.defer(submit.pop_feed, feed.key)
-
-#
-# Setting page
-#
+        deferred.defer(util.pop_feed, feed.key)
 
 
-class SetMys(webapp2.RequestHandler):
+class SetMys(BaseHandler):
 
+    @util.login_required
     def get(self):
-        ui = UserInfo.query(UserInfo.user == users.get_current_user()).get()
+        ui = self.ui
         if ui.mys is False:
             ui.mys = True
             html = '<i class="icon-thumbs-up"></i> <b>Enabled </b>'
@@ -259,10 +319,11 @@ class SetMys(webapp2.RequestHandler):
         self.response.write(html)
 
 
-class SetDaily(webapp2.RequestHandler):
+class SetDaily(BaseHandler):
 
+    @util.login_required
     def get(self):
-        ui = UserInfo.query(UserInfo.user == users.get_current_user()).get()
+        ui = self.ui
         if ui.daily is False:
             ui.daily = True
             html = '<i class="icon-thumbs-up"></i> <b>Enabled </b>'
@@ -275,10 +336,42 @@ class SetDaily(webapp2.RequestHandler):
 
 class SetNotify(webapp2.RequestHandler):
 
+    @util.login_required
     def get(self):
         feed = Feeds.get_by_id(int(self.request.get('feed')))
         feed.notify = self.request.get('notify')
         feed.put()
+
+
+class SaveEmail(BaseHandler):
+
+    @util.login_required
+    def post(self):
+        ui = self.ui
+        ui.email = self.request.get('email')
+        ui.put()
+        self.redirect(self.request.referer)
+
+
+class AddBM(BaseHandler):
+
+    @util.login_required
+    def get(self):
+        util.submit_bm(feedk=None,
+                       uik=self.ui.key,
+                       title=self.request.get('title'),
+                       url=self.request.get('url'),
+                       comment=self.request.get('comment'))
+        self.redirect('/')
+
+
+class CopyBM(BaseHandler):
+
+    @util.login_required
+    def get(self):
+        old = Bookmarks.get_by_id(int(self.request.get('bm')))
+        deferred.defer(util.submit_bm, feed=None, ui=self.ui.key,
+                       title=old.title, url=old.url, comment=old.comment)
 
 
 class ReceiveMail(webapp2.RequestHandler):
@@ -290,12 +383,14 @@ class ReceiveMail(webapp2.RequestHandler):
         for text in texts:
             txtmsg = ""
             txtmsg = text[1].decode().strip()
-        submit.submit_bm(feed=None,
-                         user=users.User(utils.parseaddr(message.sender)[1]),
-                         url=txtmsg.encode('utf8'),
-                         title=self.get_subject(
-                             txtmsg.encode('utf8'), message),
-                         comment='Sent via email')
+        email = utils.parseaddr(message.sender)[1]
+        ui = UserInfo.query(UserInfo.email == email).get()
+        util.submit_bm(feedk=None,
+                       uik=ui.key,
+                       url=txtmsg.encode('utf8'),
+                       title=self.get_subject(
+                       txtmsg.encode('utf8'), message),
+                       comment='Sent via email')
 
     def get_subject(self, o, message):
         from email import header
@@ -304,19 +399,19 @@ class ReceiveMail(webapp2.RequestHandler):
         except:
             return o
 
-
 app = webapp2.WSGIApplication([
     ('/', HomePage),
+    ('/admin', AdminPage),
     ('/search', cerca),
     (r'/bms/(.*)', Main_Frame),
-    ('/submit', submit.AddBM),
-    ('/copy', submit.CopyBM),
-    ('/upload', submit.UploadDelicious),
-    ('/feed', submit.AddFeed),
+    ('/submit', AddBM),
+    ('/copy', CopyBM),
+    ('/feed', AddFeed),
     ('/edit', EditBM),
     ('/checkfeed', CheckFeed),
     ('/archive', ArchiveBM),
     ('/trash', TrashBM),
+    ('/empty_trash', empty_trash),
     ('/setting', SettingPage),
     ('/feeds', FeedsPage),
     ('/setmys', SetMys),
@@ -324,9 +419,11 @@ app = webapp2.WSGIApplication([
     ('/setnotify', SetNotify),
     ('/star', StarBM),
     ('/share', ShareBM),
+    ('/save_email', SaveEmail),
     ('/getcomment', GetComment),
     ('/getedit', GetEdit),
     (r'/bm/(.*)', ItemPage),
+    ('/upload', util.UploadDelicious),
     ('/_ah/mail/post@.*', ReceiveMail),
 ], debug=util.debug, config=util.config)
 

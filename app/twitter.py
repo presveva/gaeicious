@@ -1,103 +1,53 @@
-# import util
+import util
 import webapp2
 import tweepy
 import secret
 from main import BaseHandler
 from google.appengine.ext import ndb
 from webapp2_extras import routes
+from models import Followers
 
-# callback_url = 'http://dev.box.dinoia.eu/twitter/'
+# callback_url = 'http://box.dinoia.eu/twitter/'
 auth = tweepy.OAuthHandler(secret.consumer_token,
                            secret.consumer_secret)
 
 
-class Twittero(ndb.Model):
-    screen_name = ndb.StringProperty()
-    email = ndb.StringProperty()
-    access_k = ndb.StringProperty()
-    access_s = ndb.StringProperty()
-    last_id = ndb.StringProperty()
-    data = ndb.DateTimeProperty(auto_now=True)
-
-    def followers_ids(self):
-        followers = Followers.query(Followers.ui == self.key).fetch()
-        return [follower.user_id for follower in followers]
-
-    def new_foll(self):
-        return Followers.query(Followers.ui == self.key,
-                               Followers.new == True)
-
-    def lost_foll(self):
-        return Followers.query(Followers.ui == self.key,
-                               Followers.lost == True)
-
-
-class Followers(ndb.Model):
-    ui = ndb.KeyProperty(kind=Twittero)
-    user_id = ndb.IntegerProperty()
-    screen_name = ndb.StringProperty()
-    data = ndb.DateTimeProperty(auto_now=True)
-    new = ndb.BooleanProperty(default=False)
-    lost = ndb.BooleanProperty(default=False)
-
-
 class TwitterPage(BaseHandler):
+
+    @util.login_required
     def get(self):
-        oauth_verifier = self.request.get("oauth_verifier")
-        screen_name = self.request.cookies.get('screen_name')
-        if oauth_verifier:
-            auth.get_access_token(oauth_verifier)
-            api = tweepy.API(auth)
-            screen_name = api.me().screen_name
-            old_ui = Twittero.query(Twittero.screen_name == screen_name)
-            if old_ui.get():
-                ui = old_ui.get()
-            else:
-                ui = Twittero()
-            ui.screen_name = screen_name
-            ui.access_k = auth.access_token.key
-            ui.access_s = auth.access_token.secret
-            ui.put()
-            self.response.set_cookie('screen_name', screen_name)
-            self.redirect('/twitter/')
-        elif screen_name is not None:
-            ui = Twittero.query(Twittero.screen_name == screen_name).get()
-            auth.set_access_token(ui.access_k, ui.access_s)
-            api = tweepy.API(auth)
-            new_tweets = api.home_timeline()
-            ntw_ids = [tw.id_str for tw in new_tweets]
-            tw_ids = []
-            n = 0
-            while ntw_ids[n] != ui.last_id and n < (len(ntw_ids) - 1):
-                tw_ids.append(ntw_ids[n])
-                n += 1
-            tweets = [api.get_status(tw_id) for tw_id in tw_ids]
-            ui.last_id = new_tweets[0].id_str
-            ui.put()
-            # template = util.jinja_environment.get_template('twitter.html')
-            # self.response.write(template.render({'tweets': tweets, 'ui': ui}))
-            self.generate('twitter.html', {'tweets': tweets, 'ui': ui})
-        else:
-            redirect_url = auth.get_authorization_url()
-            # template = util.jinja_environment.get_template('twitter.html')
-            # self.response.write(template.render({'redirect_url': redirect_url}))
-            self.generate('twitter.html', {'redirect_url': redirect_url})
+        ui = self.ui
+        auth.set_access_token(ui.access_k, ui.access_s)
+        api = tweepy.API(auth)
+        new_tweets = api.home_timeline()
+        ntw_ids = [tw.id_str for tw in new_tweets]
+        tw_ids = []
+        n = 0
+        while ntw_ids[n] != ui.last_id and n < (len(ntw_ids) - 1):
+            tw_ids.append(ntw_ids[n])
+            n += 1
+        tweets = [api.get_status(tw_id) for tw_id in tw_ids]
+        ui.last_id = new_tweets[0].id_str
+        ui.put()
+        self.generate('twitter.html', {'tweets': tweets, 'ui': ui})
 
 
-class Retweet(webapp2.RequestHandler):
+class Retweet(BaseHandler):
+
+    @util.login_required
     def get(self):
-        screen_name = self.request.cookies.get('screen_name')
-        ui = Twittero.query(Twittero.screen_name == screen_name).get()
+        ui = self.ui
         auth.set_access_token(ui.access_k, ui.access_s)
         api = tweepy.API(auth)
         id_str = self.request.get('id_str')
         api.retweet(id_str)
 
 
-class Tweet(webapp2.RequestHandler):
+class Tweet(BaseHandler):
+
+    @util.login_required
     def get(self):
-        screen_name = self.request.cookies.get('screen_name')
-        ui = Twittero.query(Twittero.screen_name == screen_name).get()
+        ui = self.ui
         auth.set_access_token(ui.access_k, ui.access_s)
         api = tweepy.API(auth)
         text = self.request.get('text_tweet')
@@ -105,11 +55,12 @@ class Tweet(webapp2.RequestHandler):
         self.redirect(self.request.referer)
 
 
-class check(webapp2.RequestHandler):
+class check(BaseHandler):
+
+    @util.login_required
     def get(self):
-        screen_name = self.request.cookies.get('screen_name')
-        ui = Twittero.query(Twittero.screen_name == screen_name).get()
-        ndb.delete_multi([f.key for f in ui.lost_foll()])
+        ui = self.ui
+        ndb.delete_multi(ui.lost_foll())
         auth.set_access_token(ui.access_k, ui.access_s)
         api = tweepy.API(auth)
         old_list = ui.followers_ids()
@@ -137,7 +88,8 @@ class check(webapp2.RequestHandler):
         self.redirect('/twitter/')
 
 app = webapp2.WSGIApplication([
-    routes.RedirectRoute('/twitter/', TwitterPage, name='Twitter', strict_slash=True),
+    routes.RedirectRoute(
+        '/twitter/', TwitterPage, name='Twitter', strict_slash=True),
     routes.PathPrefixRoute('/twitter', [
                            webapp2.Route('/check', check),
                            webapp2.Route('/retweet', Retweet),
