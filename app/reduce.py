@@ -19,6 +19,18 @@ def remove_bm(db_key):
         yield op.counters.Increment("errori")
 
 
+def add_ui_to_feed(db_key):
+    ndb_key = ndb.Key.from_old_key(db_key)
+    feed = ndb_key.get()
+    try:
+        ui = UserInfo.get_by_id('presveva')
+        feed.ui = ui.key
+        feed.put()
+        yield op.counters.Increment("processati")
+    except:
+        yield op.counters.Increment("errori")
+
+
 def add_ui(db_key):
     ndb_key = ndb.Key.from_old_key(db_key)
     bm = ndb_key.get()

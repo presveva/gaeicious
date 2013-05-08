@@ -20,6 +20,13 @@ indexes:
 
 - kind: Bookmarks
   properties:
+  - name: domain
+  - name: ui
+  - name: data
+    direction: desc
+
+- kind: Bookmarks
+  properties:
   - name: shared
   - name: trashed
   - name: data

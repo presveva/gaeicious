@@ -86,3 +86,8 @@
   </dt>
 </div><!-- btn-toolbar -->
 {% endfor %}
+{% if cursor %}
+<div class="well well-small">
+<a href="#" class="btn btn-block" onclick="getbms(active(),'{{cursor}}')">more</a>
+</div>
+{% endif %}

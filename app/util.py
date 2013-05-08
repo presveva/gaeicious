@@ -77,8 +77,6 @@ def submit_bm(feedk, uik, title, url, comment):
         bm.put()
         Bookmarks.index_bm(bm.key)
 
-        # ui = UserInfo.get_by_id(str(email))
-
         if feedk is None and uik.get().mys is True:
             deferred.defer(send_bm, bm.key, _queue="email")
         elif feedk is not None and feedk.get().notify == 'email':

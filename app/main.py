@@ -103,10 +103,17 @@ class Main_Frame(BaseHandler):
         if page == 'stream':
             html = self.render('stream.html', {'bms': bms})
         else:
-            html = self.render('frame.html', {'bms': bms})
+            html = self.render('frame.html', {'bms': bms, 'cursor': next_c})
         more = self.render('more.html', {'cursor': next_c})
         self.response.set_cookie('active-tab', page)
         self.send_json({"html": html, "more": more})
+
+
+class Logout(BaseHandler):
+
+    def get(self):
+        self.response.set_cookie('screen_name', '')
+        self.redirect('/')
 
 
 class ItemPage(BaseHandler):
@@ -120,6 +127,7 @@ class ItemPage(BaseHandler):
 
 
 class AdminPage(BaseHandler):
+
     def get(self):
         if self.admin:
             self.response.set_cookie('active-tab', 'admin')
@@ -134,7 +142,10 @@ class SettingPage(BaseHandler):
     def get(self):
         upload_url = blobstore.create_upload_url('/upload')
         brand = app_identity.get_application_id()
-        bookmarklet = """javascript:location.href='%s/submit?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+ '&user='+'%s'+'&comment='+document.getSelection().toString()""" % (
+        bookmarklet = """javascript:location.href='%s/submit?
+        url='+encodeURIComponent(location.href)+'&
+        title='+encodeURIComponent(document.title)+ '&
+        user='+'%s'+'&comment='+document.getSelection().toString()""" % (
             self.request.host_url, str(self.ui.key.id()))
         self.response.set_cookie('mys', '%s' % self.ui.mys)
         self.response.set_cookie('daily', '%s' % self.ui.daily)
@@ -402,6 +413,7 @@ class ReceiveMail(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([
     ('/', HomePage),
     ('/admin', AdminPage),
+    ('/logout', Logout),
     ('/search', cerca),
     (r'/bms/(.*)', Main_Frame),
     ('/submit', AddBM),

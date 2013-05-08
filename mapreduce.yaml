@@ -7,6 +7,14 @@ mapreduce:
     - name: entity_kind
       default: models.Bookmarks
 
+- name: add_ui_to_feed
+  mapper:
+    input_reader: mapreduce.input_readers.DatastoreKeyInputReader
+    handler: app.reduce.add_ui_to_feed
+    params:
+    - name: entity_kind
+      default: models.Feeds
+
 - name: add_email
   mapper:
     input_reader: mapreduce.input_readers.DatastoreKeyInputReader
