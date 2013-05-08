@@ -38,7 +38,7 @@ class BaseHandler(webapp2.RequestHandler):
     def generate(self, template_name, template_values={}):
         values = {
             'brand': app_identity.get_application_id(),
-            'admin': self.admin
+            'admin': self.admin,
             'ui': self.ui
         }
         values.update(template_values)
