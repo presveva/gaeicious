@@ -39,6 +39,7 @@ class BaseHandler(webapp2.RequestHandler):
         values = {
             'brand': app_identity.get_application_id(),
             'admin': self.admin
+            'ui': self.ui
         }
         values.update(template_values)
         template = util.jinja_environment.get_template(template_name)
@@ -61,7 +62,7 @@ class HomePage(BaseHandler):
         elif self.ui is not None:
             auth.set_access_token(self.ui.access_k, self.ui.access_s)
             api = tweepy.API(auth)
-            self.generate('home.html', {'ui': self.ui})
+            self.generate('home.html', {})
         else:
             redirect_url = auth.get_authorization_url()
             self.generate('just.html', {'redirect_url': redirect_url})
@@ -151,7 +152,7 @@ class SettingPage(BaseHandler):
         self.response.set_cookie('daily', '%s' % self.ui.daily)
         self.response.set_cookie('active-tab', 'setting')
         self.generate(
-            'setting.html', {'bookmarklet': bookmarklet, 'ui': self.ui,
+            'setting.html', {'bookmarklet': bookmarklet,
                              'upload_url': upload_url, 'brand': brand, })
 
 
@@ -381,7 +382,7 @@ class CopyBM(BaseHandler):
     @util.login_required
     def get(self):
         old = Bookmarks.get_by_id(int(self.request.get('bm')))
-        deferred.defer(util.submit_bm, feed=None, ui=self.ui.key,
+        deferred.defer(util.submit_bm, feedk=None, uik=self.ui.key,
                        title=old.title, url=old.url, comment=old.comment)
 
 
