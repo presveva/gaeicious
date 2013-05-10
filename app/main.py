@@ -50,19 +50,21 @@ class HomePage(BaseHandler):
 
     def get(self):
         oauth_verifier = self.request.get("oauth_verifier")
-        if oauth_verifier:
-            auth.get_access_token(oauth_verifier)
-            api = tweepy.API(auth)
-            screen_name = api.me().screen_name
-            UserInfo(id=str(screen_name),
-                     access_k=auth.access_token.key,
-                     access_s=auth.access_token.secret).put()
-            self.response.set_cookie('screen_name', screen_name)
-            self.redirect('/')
-        elif self.ui is not None:
+        if self.ui is not None:
             auth.set_access_token(self.ui.access_k, self.ui.access_s)
             api = tweepy.API(auth)
             self.generate('home.html', {})
+        elif oauth_verifier:
+            auth.get_access_token(oauth_verifier)
+            api = tweepy.API(auth)
+            screen_name = api.me().screen_name
+
+            ui = UserInfo.get_or_insert(screen_name)
+            ui.access_k = auth.access_token.key
+            ui.access_s = auth.access_token.secret
+            ui.put()
+            self.response.set_cookie('screen_name', screen_name)
+            self.redirect('/')
         else:
             redirect_url = auth.get_authorization_url()
             self.generate('just.html', {'redirect_url': redirect_url})
