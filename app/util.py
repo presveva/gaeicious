@@ -13,7 +13,7 @@ from HTMLParser import HTMLParser
 from libs.feedparser import parse
 
 debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
-dtf = lambda value: value.strftime('%d/%m/%Y - %H:%M UTC')
+dtf = lambda value: value.strftime('%d/%m/%Y %H:%M')
 jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(['templates']))
 jinja_environment.filters['dtf'] = dtf
