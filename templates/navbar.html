@@ -48,6 +48,7 @@
           <li class="divider"></li>
           {% if admin %}
           <li><a href="/admin">Admin</a></li>
+          <li><a href="/_ah/admin" target="_blank">AppEngine</a></li>
           {% endif %}
           <li><a href="/logout">Logout</a></li>
         </ul>
@@ -65,13 +66,13 @@
       <li><a href="#" onclick="getbms('stream','{{c}}')">Stream</a></li>
       <li><a href="#" onclick="getbms('trashed','{{c}}')">Trash</a></li>
       <li class="divider"></li>
-      <li><a href="/feeds"><i class="icon-fire"></i> Feeds</a></li>
-      <li><a href="/setting"><i class="icon-cog"></i> Setting</a></li>
+      <li><a href="/feeds"> Feeds</a></li>
+      <li><a href="/setting"> Setting</a></li>
       <li class="divider"></li>
       {% if admin %}
-      <li ><a href="/admin"><i class="icon-lock"></i> Admin </a></li>
+      <li ><a href="/admin"> Admin </a></li>
       {% endif %}
-      <li><a href="{{ url }}"><i class="icon-off"></i> Logout</a></li>
+      <li><a href="/logout"> Logout</a></li>
     </ul>
   </div>
 </div>

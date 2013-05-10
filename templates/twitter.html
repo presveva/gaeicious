@@ -12,6 +12,62 @@
   <a class="btn" data-toggle="button" href='{{redirect_url}}'>Twitter login</a>
 </div>
 {% else %}
+<div class="well">
+  <table class="table">
+  <tbody class="visible-desktop">
+    {% for tweet in tweets %}
+    <tr>
+      <td><img title="{{tweet.user.screen_name }}" src="{{tweet.user.profile_image_url }}"></td>
+      <td>{{tweet.user.screen_name }}</td>
+      <td class="tweet">{{tweet.text|urlize}}</td>
+      <td>
+        <div class="btn-group">
+          <a class="btn btn-mini rt-{{ tweet.id_str }}" > <i class="icon-retweet"></i></a>
+        </div>
+      </td>
+    <script type="text/javascript">
+    $('#tweet a').attr('target', '_blank');
+    $("#rt-{{ tweet.id_str }}").click(function() {
+      $.get("/twitter/retweet", {id_str: '{{ tweet.id_str }}'})
+    })
+    </script>
+    </tr>
+    {% for media in tweet.entities.media %}
+    <tr>
+      <td colspan="2"></td>
+      <td colspan="2"> <img src="{{media.media_url}}"> </td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+  </tbody>
+  <tbody class="hidden-desktop">
+    {% for tweet in tweets %}
+    <tr>
+      <td>{{tweet.user.screen_name }}</td>
+      <td>
+        <div class="btn-group">
+          <a class="btn btn-mini rt-{{ tweet.id_str }}" > <i class="icon-retweet"></i></a>
+        </div>
+      </td>
+    <script type="text/javascript">
+    $('.tweet a').attr('target', '_blank');
+    $(".rt-{{ tweet.id_str }}").click(function() {
+      $.get("/twitter/retweet", {id_str: '{{ tweet.id_str }}'})
+    })
+    </script>
+    </tr>
+    <tr colspan="2">
+      <td class="tweet">{{tweet.text|urlize}}</td>
+    </tr>
+    {% for media in tweet.entities.media %}
+    <tr>
+      <td colspan="2"> <img src="{{media.media_url}}"> </td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+  </tbody>
+  </table>
+</div>
 
 <form id="twittami" class="form-inline" action="/twitter/tweet">
   <div class="control-group" id="input_tweet">
@@ -31,36 +87,6 @@
   });
   </script>
 </form>
-<div class="well">
-  <table class="table">
-  <tbody>
-    {% for tweet in tweets %}
-    <tr>
-      <td><img title="{{tweet.user.screen_name }}" src="{{tweet.user.profile_image_url }}"></td>
-      <td>{{tweet.user.screen_name }}</td>
-      <td id="tweet">{{tweet.text|urlize}}</td>
-      <td>
-        <div class="btn-group">
-          <a class="btn btn-mini" id="rt-{{ tweet.id_str }}" > <i class="icon-retweet"></i></a>
-        </div>
-      </td>
-    <script type="text/javascript">
-    $('#tweet a').attr('target', '_blank');
-    $("#rt-{{ tweet.id_str }}").click(function() {
-      $.get("/twitter/retweet", {id_str: '{{ tweet.id_str }}'})
-    })
-    </script>
-    </tr>
-    {% for media in tweet.entities.media %}
-    <tr>
-      <td></td>
-      <td colspan="2"> <img src="{{media.media_url}}"> </td>
-    </tr>
-    {% endfor %}
-    {% endfor %}
-  </tbody>
-  </table>
-</div>
 
 <div class="alert alert-info">
   {% for fl in ui.new_foll() %}
