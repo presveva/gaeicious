@@ -5,16 +5,19 @@ import datetime
 import webapp2
 from webapp2_extras import routes
 from google.appengine.ext import ndb, deferred
+from google.appengine.api import search
 from models import Feeds, Bookmarks, UserInfo
 
 
 class CheckFeeds(webapp2.RequestHandler):
+
     def get(self):
         for feedk in Feeds.query().fetch(keys_only=True):
             deferred.defer(util.pop_feed, feedk, _queue='feed')
 
 
 class SendDigest(webapp2.RequestHandler):
+
     def get(self):
         for feed in Feeds.query():
             if feed.notify == 'digest':
@@ -22,6 +25,7 @@ class SendDigest(webapp2.RequestHandler):
 
 
 class SendActivity(webapp2.RequestHandler):
+
     def get(self):
         for ui in UserInfo.query():
             if ui.daily:
@@ -29,6 +33,7 @@ class SendActivity(webapp2.RequestHandler):
 
 
 class cron_trash(webapp2.RequestHandler):
+
     def get(self):
         delta = datetime.timedelta(days=7)
         now = datetime.datetime.now()
@@ -38,12 +43,60 @@ class cron_trash(webapp2.RequestHandler):
         ndb.delete_multi([bm.key for bm in bmq])
 
 
+class delete_index(webapp2.RequestHandler):
+
+    def post(self):
+        index_name = self.request.get('index_name')
+        self.reset_index(index_name)
+        self.redirect(self.request.referer)
+
+    def reset_index(self, index_name):
+        """Delete all the docs in the given index."""
+        doc_index = search.Index(name=index_name)
+
+        while True:
+            document_ids = [document.doc_id
+                            for document in doc_index.get_range(ids_only=True)]
+            if not document_ids:
+                break
+            doc_index.delete(document_ids)
+        doc_index.delete_schema()
+
+
+class reindex_all(webapp2.RequestHandler):
+
+    def get(self):
+        for bmk in Bookmarks.query().fetch(keys_only=True):
+            Bookmarks.index_bm(bmk)
+
+
+class del_attr(webapp2.RequestHandler):
+
+    """rimuove la proprietà utente"""
+    def post(self):
+        model = str(self.request.get('model'))
+        prop = str(self.request.get('prop'))
+        qry = ndb.gql("SELECT __key__ FROM " + model)
+        for key in qry:
+            deferred.defer(delatt, key, prop, _queue='admin')
+        self.redirect('/admin')
+
+
+def delatt(key, prop):
+    ent = key.get()
+    if hasattr(ent, prop):
+        delattr(ent, prop)
+        ent.put()
+
 app = ndb.toplevel(webapp2.WSGIApplication([
     routes.PathPrefixRoute('/admin', [
         webapp2.Route('/digest', SendDigest),
         webapp2.Route('/activity', SendActivity),
         webapp2.Route('/check', CheckFeeds),
         webapp2.Route('/cron_trash', cron_trash),
+        webapp2.Route('/delete_index', delete_index),
+        webapp2.Route('/del_attr', del_attr),
+        webapp2.Route('/reindex_all', reindex_all),
     ])
 ], debug=util.debug, config=util.config))
 

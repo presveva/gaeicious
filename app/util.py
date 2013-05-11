@@ -42,6 +42,11 @@ def submit_bm(feedk, uik, title, url, comment):
     name = url_parsed.path.split('/')[-1]
     ext = name.split('.')[-1].lower()
 
+    bm.title = url_candidate if title == '' or None else title
+    bm.domain = url_parsed.netloc
+    bm.ui = uik
+    bm.feed = feedk
+
     if url_parsed.netloc == 'www.youtube.com':
         bm.url = 'http://www.youtube.com/watch?v=%s' % query["v"][0]
         bm.comment = """<embed
@@ -62,13 +67,8 @@ def submit_bm(feedk, uik, title, url, comment):
         bm.comment = '<img src="%s" />' % images.get_serving_url(
             blob_key, size=1600)
     else:
-        bm.comment = comment if comment != '' or None else bm.title
+        bm.comment = bm.title if comment == '' or None else comment
         bm.url = url_candidate
-
-    bm.title = url_candidate if title == '' or None else title
-    bm.domain = url_parsed.netloc
-    bm.ui = uik
-    bm.feed = feedk
 
     copie = Bookmarks.query(Bookmarks.url == bm.url,
                             Bookmarks.ui == uik,
