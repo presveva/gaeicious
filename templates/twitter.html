@@ -90,10 +90,14 @@
 
 <div class="alert alert-info">
   {% for fl in ui.new_foll() %}
-  <dd> hai un nuovo follower: <a href='http://twitter.com/{{fl.screen_name}}'>{{fl.screen_name}}</a>
+  <dd> hai un nuovo follower:
+    <a href='http://twitter.com/{{fl.get().screen_name}}'>
+      {{fl.get().screen_name}}</a>
   {% endfor %}
   {% for fl in ui.lost_foll() %}
-  <dd> hai perso un follower: <a href='http://twitter.com/{{fl.screen_name}}'>{{fl.screen_name}}</a>
+  <dd> hai perso un follower:
+    <a href='http://twitter.com/{{fl.get().screen_name}}'>
+      {{fl.get().screen_name}}</a>
   {% endfor %}
   <dd><a class="btn" data-toggle="button" href='/twitter/check'>Check Followers</a>
 </div>

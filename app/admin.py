@@ -72,18 +72,26 @@ class reindex_all(webapp2.RequestHandler):
 
 class del_attr(webapp2.RequestHandler):
 
-    """rimuove la proprietà utente"""
     def post(self):
         model = str(self.request.get('model'))
         prop = str(self.request.get('prop'))
-        qry = ndb.gql("SELECT __key__ FROM " + model)
-        for key in qry:
-            deferred.defer(delatt, key, prop, _queue='admin')
+        deferred.defer(update_schema, model, prop)
         self.redirect('/admin')
+        # for ent in qry:
+        #     deferred.defer(delatt_ent, ent, prop, _queue='admin')
+        # self.redirect('/admin')
 
 
-def delatt(key, prop):
-    ent = key.get()
+def update_schema(model, prop, cursor=None):
+    qry = ndb.gql("SELECT * FROM %s" % model)
+    res, cur, more = qry.fetch_page(100, start_cursor=cursor)
+    for ent in res:
+        deferred.defer(delatt, ent, prop, _queue='admin')
+    if more:
+        deferred.defer(update_schema, model, prop, cur)
+
+
+def delatt(ent, prop):
     if hasattr(ent, prop):
         delattr(ent, prop)
         ent.put()

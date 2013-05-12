@@ -132,11 +132,11 @@ class ItemPage(BaseHandler):
 class AdminPage(BaseHandler):
 
     def get(self):
-        if self.admin:
-            self.response.set_cookie('active-tab', 'admin')
-            self.generate('admin.html')
-        else:
-            self.redirect('/')
+        # if self.admin:
+        self.response.set_cookie('active-tab', 'admin')
+        self.generate('admin.html')
+        # else:
+            # self.redirect('/')
 
 
 class SettingPage(BaseHandler):

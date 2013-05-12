@@ -54,7 +54,7 @@ class Feeds(ndb.Expando):
 
 class Bookmarks(ndb.Expando):
     ui = ndb.KeyProperty(kind=UserInfo)
-    url = ndb.StringProperty(required=True)
+    url = ndb.StringProperty()
     title = ndb.StringProperty(indexed=False)
     comment = ndb.TextProperty(indexed=False)
     archived = ndb.BooleanProperty(default=False)
