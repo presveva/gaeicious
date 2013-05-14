@@ -215,10 +215,7 @@ class empty_trash(BaseHandler):
 
     @util.login_required
     def get(self):
-        bmq = Bookmarks.query(Bookmarks.ui == self.ui.key,
-                              Bookmarks.trashed == True).order(-Bookmarks.data)
-        bms = bmq.fetch(50, keys_only=True)
-        ndb.delete_multi(bms)
+        deferred.defer(util.delete_bms, self.ui.key)
         self.redirect(self.request.referer)
 
 

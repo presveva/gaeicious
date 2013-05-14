@@ -3,8 +3,8 @@
 queue:
 
 - name: default
-  rate: 2/s
-  bucket_size: 10
+  rate: 20/s
+  bucket_size: 100
 
 - name: admin
   rate: 30/s
@@ -16,7 +16,7 @@ queue:
   target: worker
 
 - name: feed
-  rate: 2/s
+  rate: 1/s
   bucket_size: 10
   target: worker
 

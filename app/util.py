@@ -4,7 +4,7 @@ from __future__ import with_statement
 import os
 import jinja2
 import datetime
-from google.appengine.api import urlfetch, files, images, mail, app_identity
+from google.appengine.api import urlfetch, files, images, mail, app_identity, search
 from google.appengine.ext import deferred, blobstore, ndb
 from google.appengine.ext.webapp import blobstore_handlers
 from models import Bookmarks, UserInfo
@@ -67,7 +67,7 @@ def submit_bm(feedk, uik, title, url, comment):
         bm.comment = '<img src="%s" />' % images.get_serving_url(
             blob_key, size=1600)
     else:
-        bm.comment = bm.title if comment == '' or None else comment
+        bm.comment = bm.title + '<hr>' + comment if len(bm.title) > 90 else comment
         bm.url = url_candidate
 
     copie = Bookmarks.query(Bookmarks.url == bm.url,
@@ -75,12 +75,37 @@ def submit_bm(feedk, uik, title, url, comment):
                             Bookmarks.feed == feedk)
     if copie.get() is None:
         bm.put()
-        Bookmarks.index_bm(bm.key)
+        # deferred.defer(index_bm, bm.key)
+        # Bookmarks.index_bm(bm.key)
 
         if feedk is None and uik.get().mys is True:
             deferred.defer(send_bm, bm.key, _queue="email")
         elif feedk is not None and feedk.get().notify == 'email':
             deferred.defer(send_bm, bm.key, _queue="email")
+
+
+def index_bm(key):
+    bm = key.get()
+    index = search.Index(name=str(bm.ui.id()))
+    doc = search.Document(doc_id=str(bm.id),
+                          fields=[
+                          search.TextField(name='url', value=bm.url),
+                          search.TextField(name='title', value=bm.title),
+                          search.HtmlField(name='comment', value=bm.comment)
+                          ])
+    try:
+        index.put(doc)
+    except search.Error:
+        pass
+
+
+def delete_bms(uik, cursor=None):
+    bmq = Bookmarks.query(Bookmarks.ui == uik,
+                          Bookmarks.trashed == True)
+    bms, cur, more = bmq.fetch_page(10, start_cursor=cursor)
+    ndb.delete_multi([bm.key for bm in bms])
+    if more:
+        deferred.defer(delete_bms, uik, cur)
 
 
 def login_required(handler_method):
@@ -257,7 +282,8 @@ def send_bm(bmk):
 
 def send_digest(email, html, title):
     message = mail.EmailMessage()
-    message.sender = 'bm@%s.appspotmail.com' % app_identity.get_application_id()
+    message.sender = 'bm@%s.appspotmail.com' % app_identity.get_application_id(
+    )
     message.to = email
     message.subject = title
     message.html = html
