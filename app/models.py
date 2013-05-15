@@ -1,11 +1,11 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 
-from google.appengine.ext import ndb, deferred
+from google.appengine.ext import ndb
 from google.appengine.api import search
 
 
-class UserInfo(ndb.Expando):
+class UserInfo(ndb.Model):
     access_k = ndb.StringProperty()
     access_s = ndb.StringProperty()
     email = ndb.StringProperty()
@@ -37,7 +37,7 @@ class Followers(ndb.Model):
     lost = ndb.BooleanProperty(default=False)
 
 
-class Feeds(ndb.Expando):
+class Feeds(ndb.Model):
     ui = ndb.KeyProperty(kind=UserInfo)
     feed = ndb.StringProperty()
     title = ndb.StringProperty()
@@ -52,7 +52,7 @@ class Feeds(ndb.Expando):
         return self.key.id()
 
 
-class Bookmarks(ndb.Expando):
+class Bookmarks(ndb.Model):
     ui = ndb.KeyProperty(kind=UserInfo)
     url = ndb.StringProperty()
     title = ndb.StringProperty(indexed=False)
