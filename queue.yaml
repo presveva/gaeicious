@@ -13,17 +13,17 @@ queue:
 - name: email
   rate: 1/s
   bucket_size: 20
-  target: worker
+  # target: worker
 
 - name: feed
-  rate: 1/s
+  rate: 2/s
   bucket_size: 10
-  target: worker
+  # target: worker
 
 - name: bookmark
-  rate: 1/s
+  rate: 2/s
   bucket_size: 10
-  target: worker
+  # target: worker
 
 - name: delicious
   rate: 10/s

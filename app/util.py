@@ -4,10 +4,11 @@ from __future__ import with_statement
 import os
 import jinja2
 import datetime
-from google.appengine.api import urlfetch, files, images, mail, app_identity, search
+from google.appengine.api import urlfetch, files, images
+from google.appengine.api import mail, app_identity, search
 from google.appengine.ext import deferred, blobstore, ndb
 from google.appengine.ext.webapp import blobstore_handlers
-from models import Bookmarks, UserInfo
+from .models import Bookmarks, UserInfo
 from urlparse import urlparse, parse_qs
 from HTMLParser import HTMLParser
 from libs.feedparser import parse
@@ -22,66 +23,80 @@ config['webapp2_extras.sessions'] = {
     'secret_key': 'my-super-secret-key'}
 
 
+def fetch_url(url):
+    try:
+        result = urlfetch.fetch(
+            url=url, follow_redirects=True, allow_truncated=True, deadline=60)
+        if result.status_code == 200 and result.final_url:
+            return result.final_url
+        else:
+            return url
+    except:
+        return url
+
+
 def submit_bm(feedk, uik, title, url, comment):
-    bm = Bookmarks()
-
-    result = urlfetch.fetch(
-        url=url, follow_redirects=True, allow_truncated=True, deadline=60)
-    if result.status_code == 200 and result.final_url:
-        a = result.final_url
-    elif result.status_code == 500:
-        pass
-    else:
-        a = url
-
-    url_candidate = a.lstrip().rstrip().split(
+    url_fetched = fetch_url(url)
+    url_candidate = url_fetched.lstrip().rstrip().split(
         '?utm_source')[0].split('&feature')[0]
-
     url_parsed = urlparse(url_candidate)
-    query = parse_qs(url_parsed.query)
+
     name = url_parsed.path.split('/')[-1]
     ext = name.split('.')[-1].lower()
+    bm_domain = url_parsed.netloc
+    bm_title = url_candidate if title == '' or None else title
 
-    bm.title = url_candidate if title == '' or None else title
-    bm.domain = url_parsed.netloc
-    bm.ui = uik
-    bm.feed = feedk
-
-    if url_parsed.netloc == 'www.youtube.com':
-        bm.url = 'http://www.youtube.com/watch?v=%s' % query["v"][0]
-        bm.comment = """<embed
+    if bm_domain == 'www.youtube.com':
+        query = parse_qs(url_parsed.query)
+        bm_url = 'http://www.youtube.com/watch?v=%s' % query["v"][0]
+        bm_comment = """<embed
         width="640" height="360"
         src="http://www.youtube.com/v/%s"
         type="application/x-shockwave-flash">
         </embed>""" % query["v"][0]
 
-    elif url_parsed.netloc == 'vimeo.com':
-        bm.url = 'http://vimeo.com/%s' % name
-        bm.comment = '''<iframe src="http://player.vimeo.com/video/%s?color=ffffff"
+    elif bm_domain == 'vimeo.com':
+        bm_url = 'http://vimeo.com/%s' % name
+        bm_comment = '''<iframe src="http://player.vimeo.com/video/%s?color=ffffff"
         width="640" height="360" frameborder="0" webkitAllowFullScreen mozallowfullscreen
         allowFullScreen></iframe>''' % name
 
     elif ext in ['jpg', 'png', 'jpeg', 'gif']:
-        bm.url = url_candidate
+        bm_url = url_candidate
         blob_key = upload_to_blobstore(url_candidate, ext)
-        bm.comment = '<img src="%s" />' % images.get_serving_url(
+        bm_comment = '<img src="%s" />' % images.get_serving_url(
             blob_key, size=1600)
-    else:
-        bm.comment = bm.title + '<hr>' + comment if len(bm.title) > 90 else comment
-        bm.url = url_candidate
 
-    copie = Bookmarks.query(Bookmarks.url == bm.url,
+    elif ext in ['mp3', 'flac', 'aac', 'ogg']:
+        bm_url = url_candidate
+        bm_comment = '''<embed type="application/x-shockwave-flash"
+        src="http://www.google.com/reader/ui/3523697345-audio-player.swf"
+        quality="best" flashvars="audioUrl=%s" width="500" height="27">
+        </embed>''' % url_candidate
+
+    else:
+        bm_url = url_candidate
+        if len(bm_title) > 90 and bm_domain != 'twitter.com':
+            bm_comment = '<b>%s</b><hr>' % bm_title + comment
+        else:
+            comment
+
+    copie = Bookmarks.query(Bookmarks.url == bm_url,
                             Bookmarks.ui == uik,
                             Bookmarks.feed == feedk)
+
     if copie.get() is None:
-        bm.put()
-        # deferred.defer(index_bm, bm.key)
-        # Bookmarks.index_bm(bm.key)
+        bmk = Bookmarks(url=bm_url,
+                        title=bm_title,
+                        comment=bm_comment,
+                        domain=bm_domain,
+                        ui=uik,
+                        feed=feedk).put()
 
         if feedk is None and uik.get().mys is True:
-            deferred.defer(send_bm, bm.key, _queue="email")
+            deferred.defer(send_bm, bmk, _queue="email")
         elif feedk is not None and feedk.get().notify == 'email':
-            deferred.defer(send_bm, bm.key, _queue="email")
+            deferred.defer(send_bm, bmk, _queue="email")
 
 
 def index_bm(key):
@@ -101,7 +116,7 @@ def index_bm(key):
 
 def delete_bms(uik, cursor=None):
     bmq = Bookmarks.query(Bookmarks.ui == uik,
-                          Bookmarks.trashed == True)
+                          Bookmarks.trashed)
     bms, cur, more = bmq.fetch_page(10, start_cursor=cursor)
     ndb.delete_multi([bm.key for bm in bms])
     if more:
@@ -141,7 +156,7 @@ def pop_feed(feedk):
             entry = d['items'][e]
         feed.last_id = d['items'][0].id
         feed.put()
-    except IndexError:
+    except:
         pass
 
 
