@@ -49,11 +49,8 @@ def submit_bm(feedk, uik, title, url, comment):
     if bm_domain == 'www.youtube.com':
         query = parse_qs(url_parsed.query)
         bm_url = 'http://www.youtube.com/watch?v=%s' % query["v"][0]
-        bm_comment = """<embed
-        width="640" height="360"
-        src="http://www.youtube.com/v/%s"
-        type="application/x-shockwave-flash">
-        </embed>""" % query["v"][0]
+        bm_comment = """<embed width="640" height="360" src="http://www.youtube.com/v/%s"
+        type="application/x-shockwave-flash"> </embed>""" % query["v"][0]
 
     elif bm_domain == 'vimeo.com':
         bm_url = 'http://vimeo.com/%s' % name
@@ -64,14 +61,13 @@ def submit_bm(feedk, uik, title, url, comment):
     elif ext in ['jpg', 'png', 'jpeg', 'gif']:
         bm_url = url_candidate
         blob_key = upload_to_blobstore(url_candidate, ext)
-        bm_comment = '<img src="%s" />' % images.get_serving_url(
-            blob_key, size=1600)
+        bm_comment = '<img src="%s" />' % images.get_serving_url(blob_key, size=1600)
 
     elif ext in ['mp3', 'flac', 'aac', 'ogg']:
         bm_url = url_candidate
         bm_comment = '''<embed type="application/x-shockwave-flash"
         src="http://www.google.com/reader/ui/3523697345-audio-player.swf"
-        quality="best" flashvars="audioUrl=%s" width="500" height="27">
+        quality="best" flashvars="audioUrl=%s" width="430" height="27">
         </embed>''' % url_candidate
 
     else:
@@ -81,17 +77,13 @@ def submit_bm(feedk, uik, title, url, comment):
         else:
             bm_comment = comment
 
-    copie = Bookmarks.query(Bookmarks.url == bm_url,
-                            Bookmarks.ui == uik,
+    copie = Bookmarks.query(Bookmarks.ui == uik,
+                            Bookmarks.url == bm_url,
                             Bookmarks.feed == feedk)
 
     if copie.get() is None:
-        bmk = Bookmarks(url=bm_url,
-                        title=bm_title,
-                        comment=bm_comment,
-                        domain=bm_domain,
-                        ui=uik,
-                        feed=feedk).put()
+        bmk = Bookmarks(ui=uik, feed=feedk, url=bm_url, title=bm_title,
+                        domain=bm_domain, comment=bm_comment).put()
 
         if feedk is None and uik.get().mys is True:
             deferred.defer(send_bm, bmk, _queue="email")
@@ -102,8 +94,7 @@ def submit_bm(feedk, uik, title, url, comment):
 def index_bm(key):
     bm = key.get()
     index = search.Index(name=str(bm.ui.id()))
-    doc = search.Document(doc_id=str(bm.id),
-                          fields=[
+    doc = search.Document(doc_id=str(bm.id), fields=[
                           search.TextField(name='url', value=bm.url),
                           search.TextField(name='title', value=bm.title),
                           search.HtmlField(name='comment', value=bm.comment)
@@ -116,7 +107,7 @@ def index_bm(key):
 
 def delete_bms(uik, cursor=None):
     bmq = Bookmarks.query(Bookmarks.ui == uik,
-                          Bookmarks.trashed)
+                          Bookmarks.trashed == True)
     bms, cur, more = bmq.fetch_page(10, start_cursor=cursor)
     ndb.delete_multi([bm.key for bm in bms])
     if more:
@@ -299,8 +290,7 @@ def send_bm(bmk):
 
 def send_digest(email, html, title):
     message = mail.EmailMessage()
-    message.sender = 'bm@%s.appspotmail.com' % app_identity.get_application_id(
-    )
+    message.sender = 'bm@%s.appspotmail.com' % app_identity.get_application_id()
     message.to = email
     message.subject = title
     message.html = html

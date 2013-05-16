@@ -1,13 +1,13 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-import util
+from . import util
 import tweepy
-import secret
+from . import secret
 import webapp2
 from webapp2_extras import json
 from google.appengine.api import app_identity, search, mail
 from google.appengine.ext import ndb, blobstore, deferred
-from models import *
+from .models import *
 
 auth = tweepy.OAuthHandler(secret.consumer_token,
                            secret.consumer_secret)
@@ -79,8 +79,8 @@ class Main_Frame(BaseHandler):
         self.build(page, bmq, cursor)
 
     def bmq(self, page):
-        q1 = Bookmarks.query(
-            Bookmarks.ui == self.ui.key).order(-Bookmarks.data)
+        q1 = Bookmarks.query(Bookmarks.ui == self.ui.key
+                             ).order(-Bookmarks.data)
         q2 = q1.filter(Bookmarks.trashed == False)
 
         if page == 'archived':
@@ -95,7 +95,8 @@ class Main_Frame(BaseHandler):
             bmq = q1.filter(Bookmarks.domain == self.request.get('domain'))
         elif page == 'stream':
             bmq = Bookmarks.query(Bookmarks.trashed == False,
-                                  Bookmarks.shared == True).order(-Bookmarks.data)
+                                  Bookmarks.shared == True
+                                  ).order(-Bookmarks.data)
         else:
             bmq = q2.filter(Bookmarks.archived == False)
         return bmq
@@ -132,11 +133,8 @@ class ItemPage(BaseHandler):
 class AdminPage(BaseHandler):
 
     def get(self):
-        # if self.admin:
         self.response.set_cookie('active-tab', 'admin')
         self.generate('admin.html')
-        # else:
-            # self.redirect('/')
 
 
 class SettingPage(BaseHandler):
@@ -163,8 +161,7 @@ class FeedsPage(BaseHandler):
 
     @util.login_required
     def get(self):
-        feed_list = Feeds.query(
-            Feeds.ui == self.ui.key).order(Feeds.title)
+        feed_list = Feeds.query(Feeds.ui == self.ui.key).order(Feeds.title)
         self.response.set_cookie('active-tab', 'feeds')
         self.generate('feeds.html', {'feeds': feed_list})
 
@@ -259,8 +256,7 @@ class cerca(BaseHandler):
     def post(self):
         query_string = self.request.get('query_string')
         try:
-            results = search.Index(
-                name=self.ui.key.id()).search(query_string)
+            results = search.Index(name=self.ui.key.id()).search(query_string)
             bms_ids = [int(doc.doc_id) for doc in results]
             keys = [ndb.Key(Bookmarks, id) for id in bms_ids]
             bms = ndb.get_multi(keys)
@@ -285,10 +281,9 @@ class AddFeed(BaseHandler):
         q = Feeds.query(Feeds.ui == self.ui.key, Feeds.feed == feed)
         if q.get() is None:
             d = parse(str(feed))
-            feed_k = Feeds(feed=feed,
+            feed_k = Feeds(ui=self.ui.key, feed=feed,
                            title=d['channel']['title'],
                            link=d['channel']['link'],
-                           ui=self.ui.key,
                            last_id=d['items'][2].id).put()
             deferred.defer(util.pop_feed, feed_k)
         self.redirect('/feeds')
@@ -400,8 +395,7 @@ class ReceiveMail(webapp2.RequestHandler):
         util.submit_bm(feedk=None,
                        uik=ui.key,
                        url=txtmsg.encode('utf8'),
-                       title=self.get_subject(
-                       txtmsg.encode('utf8'), message),
+                       title=self.get_subject(txtmsg.encode('utf8'), message),
                        comment='Sent via email')
 
     def get_subject(self, o, message):
