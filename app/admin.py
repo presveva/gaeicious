@@ -80,6 +80,7 @@ def reindex(cursor=None):
 
 
 class del_attr(webapp2.RequestHandler):
+
     """Delete property unused after a schema update"""
     def post(self):
         model = str(self.request.get('model'))
