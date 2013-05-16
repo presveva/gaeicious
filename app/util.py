@@ -79,7 +79,7 @@ def submit_bm(feedk, uik, title, url, comment):
         if len(bm_title) > 90 and bm_domain != 'twitter.com':
             bm_comment = '<b>%s</b><hr>' % bm_title + comment
         else:
-            comment
+            bm_comment = comment
 
     copie = Bookmarks.query(Bookmarks.url == bm_url,
                             Bookmarks.ui == uik,
