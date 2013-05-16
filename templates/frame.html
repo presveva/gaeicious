@@ -1,7 +1,7 @@
 {% for bm in bms %}
 <div class="{%if bm.trashed%}alert alert-error{%else%}well well-small{%endif%} row-{{ bm.id }} success">
   <dt > <i class="icon-bookmark"></i>
-    <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(90) }}</a>
+    <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(100) }}</a>
     <dd>
       <div class="btn-toolbar">
         <div class="btn-group hidden-phone">

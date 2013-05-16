@@ -76,7 +76,7 @@ def submit_bm(feedk, uik, title, url, comment):
 
     else:
         bm_url = url_candidate
-        if len(bm_title) > 90 and bm_domain != 'twitter.com':
+        if len(bm_title) > 100 and bm_domain != 'twitter.com':
             bm_comment = '<b>%s</b><hr>' % bm_title + comment
         else:
             bm_comment = comment
@@ -151,7 +151,8 @@ def pop_feed(feedk):
                     c = entry['description']
                 except KeyError:
                     c = 'no comment'
-            deferred.defer(submit_bm, feedk, u, t, o, c, _queue='bookmark')
+            deferred.defer(
+                submit_bm, feedk, u, t, o, c, _queue='worker')
             e += 1
             entry = d['items'][e]
         feed.last_id = d['items'][0].id
@@ -202,7 +203,8 @@ def delicious(uik):
         t = bm['title']
         o = bm['url']
         c = bm['comment']
-        deferred.defer(submit_bm, f, u, t, o, c, _queue="delicious")
+        deferred.defer(
+            submit_bm, f, u, t, o, c, _queue="delicious", _countdown=300)
     if was == 'was_true':
         deferred.defer(mys_on, uik, _queue="delicious")
 

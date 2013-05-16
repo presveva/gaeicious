@@ -4,7 +4,7 @@ queue:
 
 - name: default
   rate: 20/s
-  bucket_size: 100
+  bucket_size: 40
 
 - name: admin
   rate: 30/s
@@ -12,18 +12,12 @@ queue:
 
 - name: email
   rate: 1/s
-  bucket_size: 20
-  # target: worker
+  bucket_size: 10
 
-- name: feed
+- name: worker
   rate: 2/s
   bucket_size: 10
-  # target: worker
-
-- name: bookmark
-  rate: 2/s
-  bucket_size: 10
-  # target: worker
+  target: worker
 
 - name: delicious
   rate: 10/s
