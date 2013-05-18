@@ -19,8 +19,46 @@ jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(['templates']))
 jinja_environment.filters['dtf'] = dtf
 config = {}
-config['webapp2_extras.sessions'] = {
-    'secret_key': 'my-super-secret-key'}
+# config['webapp2_extras.sessions'] = {
+    # 'secret_key': 'my-super-secret-key'}
+
+
+def fetch_feed(feed_feed):
+    try:
+        result = urlfetch.fetch(str(feed_feed), deadline=60)
+        return parse(result.content)
+    except:
+        return False
+
+
+def build_comment(entry):
+    try:
+        return entry['content'][0].value
+    except KeyError:
+        try:
+            return entry['description']
+        except KeyError:
+            return 'no comment'
+
+
+def pop_feed(feedk, e=0):
+    feed = feedk.get()
+    parsed = fetch_feed(feed.feed)
+    if parsed:
+        try:
+            entry = parsed['items'][e]
+            while feed.last_id != entry.id:
+                u = feed.ui
+                t = entry['title']
+                o = entry['link']
+                c = build_comment(entry)
+                deferred.defer(submit_bm, feedk, u, t, o, c, _queue='worker')
+                e += 1
+                entry = parsed['items'][e]
+            feed.last_id = parsed['items'][0].id
+            feed.put()
+        except:
+            pass
 
 
 def fetch_url(url):
@@ -122,41 +160,6 @@ def login_required(handler_method):
         else:
             handler_method(self, *args, **kwargs)
     return check_login
-
-
-def fetch_feed(feedk):
-    feed = feedk.get()
-    try:
-        result = urlfetch.fetch(str(feed.feed), deadline=60)
-        parsed = parse(result.content)
-        deferred.defer(pop_feed, feed, parsed, _queue='worker')
-    except:
-        pass
-
-
-def pop_feed(feed, parsed):
-    e = 0
-    try:
-        entry = parsed['items'][e]
-        while feed.last_id != entry.id:
-            u = feed.ui
-            t = entry['title']
-            o = entry['link']
-            try:
-                c = entry['content'][0].value
-            except KeyError:
-                try:
-                    c = entry['description']
-                except KeyError:
-                    c = 'no comment'
-            deferred.defer(
-                submit_bm, feedk, u, t, o, c, _queue='worker')
-            e += 1
-            entry = parsed['items'][e]
-        feed.last_id = parsed['items'][0].id
-        feed.put()
-    except:
-        pass
 
 
 def upload_to_blobstore(url_candidate, ext):
@@ -266,12 +269,12 @@ def feed_digest(feedk):
     template = jinja_environment.get_template('digest.html')
     values = {'bmq': bmq, 'title': title}
     html = template.render(values)
-    if bmq.get() is not None:
-        deferred.defer(
-            send_digest, feed.ui.get().email, html, title, _queue='email')
+    email = feed.ui.get().email
+    if bmq.get() is not None and email is not None:
+        deferred.defer(send_digest, email, html, title, _queue='email')
         queue = []
         for bm in bmq:
-            bm.archived = True
+            bm.trashed = True
             queue.append(bm)
         ndb.put_multi(queue)
 

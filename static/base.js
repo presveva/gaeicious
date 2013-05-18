@@ -6,7 +6,7 @@ function getbms(page, c, domain) {
   $.get("/bms/" + page, {
     cursor: c,
     domain: domain
-  }, function (data) {
+  }, function(data) {
     $(".main_frame").html(data.html);
     $("#more").html(data.more);
     $(window).scrollTop(0);
@@ -15,7 +15,7 @@ function getbms(page, c, domain) {
 
 function search() {
   event.preventDefault();
-  $.post('/search', $('#search').serialize(), function (html) {
+  $.post('/search', $('#search').serialize(), function(html) {
     $(".main_frame").html(html);
     $(window).scrollTop(0);
     $("#more").html('');
@@ -37,7 +37,7 @@ function show_all() {
 function archive(id) {
   $.get('/archive', {
     bm: id
-  }, function () {
+  }, function() {
     $(".row-" + id).hide();
   });
 }
@@ -45,7 +45,7 @@ function archive(id) {
 function trash(id) {
   $.get('/trash', {
     bm: id
-  }, function () {
+  }, function() {
     $(".row-" + id).hide();
   });
 }
@@ -53,7 +53,7 @@ function trash(id) {
 function star(id) {
   $.get('/star', {
     bm: id
-  }, function (data) {
+  }, function(data) {
     $(".star-" + id).html(data);
   });
 }
@@ -61,7 +61,7 @@ function star(id) {
 function share(id) {
   $.get("/share", {
     id: id
-  }, function (eye) {
+  }, function(eye) {
     $(".share-" + id).html(eye);
     if (eye == ('<i class="icon-eye-close"></i>')) {
       $(".link-" + id).html('');

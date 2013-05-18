@@ -5,7 +5,7 @@ cron:
 
 - description: send daily digest
   url: /admin/activity
-  schedule: every day 16:30
+  schedule: every day 16:05
 
 - description: send feed digests
   url: /admin/digest
@@ -13,4 +13,4 @@ cron:
 
 - description: remove old bookmarks
   url: /admin/cron_trash
-  schedule: every day 06:30
+  schedule: every day 06:05
