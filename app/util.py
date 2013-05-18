@@ -124,13 +124,20 @@ def login_required(handler_method):
     return check_login
 
 
-def pop_feed(feedk):
+def fetch_feed(feedk):
     feed = feedk.get()
-    result = urlfetch.fetch(str(feed.feed), deadline=60)
-    d = parse(result.content)
+    try:
+        result = urlfetch.fetch(str(feed.feed), deadline=60)
+        parsed = parse(result.content)
+        deferred.defer(pop_feed, feed, parsed, _queue='worker')
+    except:
+        pass
+
+
+def pop_feed(feed, parsed):
     e = 0
     try:
-        entry = d['items'][e]
+        entry = parsed['items'][e]
         while feed.last_id != entry.id:
             u = feed.ui
             t = entry['title']
@@ -145,8 +152,8 @@ def pop_feed(feedk):
             deferred.defer(
                 submit_bm, feedk, u, t, o, c, _queue='worker')
             e += 1
-            entry = d['items'][e]
-        feed.last_id = d['items'][0].id
+            entry = parsed['items'][e]
+        feed.last_id = parsed['items'][0].id
         feed.put()
     except:
         pass

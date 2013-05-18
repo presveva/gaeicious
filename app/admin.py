@@ -13,7 +13,7 @@ class CheckFeeds(webapp2.RequestHandler):
 
     def get(self):
         for feedk in Feeds.query().fetch(keys_only=True):
-            deferred.defer(util.pop_feed, feedk, _queue='worker')
+            deferred.defer(util.fetch_feed, feedk, _queue='worker')
 
 
 class SendDigest(webapp2.RequestHandler):
