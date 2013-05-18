@@ -4,7 +4,7 @@
     <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(100) }}</a>
     <dd>
       <div class="btn-toolbar">
-        <div class="btn-group hidden-phone">
+        <div class="btn-group">
           <button class="btn btn-small" onclick="comment({{ bm.id }})">
             <i class="icon-comment"></i><span class="hidden-phone"> comment</span></button>
 
@@ -14,16 +14,16 @@
         <div class="btn-group" >
           <button class="btn btn-small" onclick="archive({{ bm.id }})">
             {% if bm.archived or bm.trashed %}
-            <i class="icon-inbox"></i><span class="hidden-phone">inbox</span>
+            <i class="icon-inbox"></i><span>inbox</span>
             {% else %}
-            <i class="icon-folder-close"></i><span class="hidden-phone"> archive</span>
+            <i class="icon-folder-close"></i><span> archive</span>
             {% endif %}
           </button>
           <button class="btn btn-small" onclick="trash({{ bm.id }})">
             {% if bm.trashed %}
-            <i class="icon-remove"></i><span class="hidden-phone"> delete</span>
+            <i class="icon-remove"></i><span> delete</span>
             {% else %}
-            <i class="icon-trash"></i><span class="hidden-phone"> trash</span>
+            <i class="icon-trash"></i><span> trash</span>
             {% endif %}
           </button>
         </div>
@@ -54,7 +54,7 @@
           <a class="btn btn-small btn-link " href="/bm/{{ bm.id }}" target="_blank">link</a>
           {% endif %}
         </div>
-        <div class="btn-group">
+        <div class="btn-group hidden-phone">
           <a class="btn btn-link btn-mini " onclick="getbms('domain','','{{ bm.domain }}')"><em>{{ bm.domain }}</em> </a>
         </div>
       </div><!-- btn-toolbar -->
