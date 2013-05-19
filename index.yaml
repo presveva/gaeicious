@@ -65,6 +65,14 @@ indexes:
   - name: data
     direction: desc
 
+- kind: Bookmarks
+  properties:
+  - name: feed
+  - name: trashed
+  - name: ui
+  - name: data
+    direction: desc
+
 - kind: Feeds
   properties:
   - name: ui

@@ -277,7 +277,11 @@ class AddFeed(BaseHandler):
     @util.login_required
     def post(self):
         from libs.feedparser import parse
-        feed = self.request.get('url')
+        if self.request.get('url'):
+            feed = self.request.get('url')
+        elif self.request.get('username'):
+            string = "https://api.twitter.com/1/statuses/user_timeline.rss?screen_name="
+            feed = str(string + self.request.get('username'))
         q = Feeds.query(Feeds.ui == self.ui.key, Feeds.feed == feed)
         if q.get() is None:
             d = parse(str(feed))
