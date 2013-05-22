@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<head>
+<html lang="it">
 
-<table>
-  <tbody>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+
+<body> <div> <table> <tbody>
     {% for bm in bmq %}
-    <tr> <td><b>{{ bm.title }}</b></td> </tr>
-    <tr> <td>{{ bm.url }}</td> </tr>
-    <tr> <td>{{ bm.comment }}</td> </tr>
+    <tr> <td> <b>{{ bm.title }}</b> </td> </tr>
+    <tr> <td> {{ bm.url }} </td> </tr>
+    <tr> <td> {{ bm.comment }} </td> </tr>
     <hr>
     {% endfor %}
-  </tbody>
-</table>
+</tbody> </table> </div> </body>
+
 </html>

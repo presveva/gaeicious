@@ -1,12 +1,12 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-from . import util
+import logging
 import tweepy
-from . import secret
 import webapp2
 from webapp2_extras import json
 from google.appengine.api import app_identity, search, mail
 from google.appengine.ext import ndb, blobstore, deferred
+from . import util, secret
 from .models import *
 
 auth = tweepy.OAuthHandler(secret.consumer_token,
@@ -409,6 +409,14 @@ class ReceiveMail(webapp2.RequestHandler):
         except:
             return o
 
+
+class BounceHandler(webapp2.RequestHandler):
+
+    def post(self):
+        bounce = BounceNotification(self.request.POST)
+        logging.info('Bounce original: %s' + str(bounce.original))
+        logging.info('Bounce notification: %s' + str(bounce.notification))
+
 app = webapp2.WSGIApplication([
     ('/', HomePage),
     ('/admin', AdminPage),
@@ -436,6 +444,7 @@ app = webapp2.WSGIApplication([
     (r'/bm/(.*)', ItemPage),
     ('/upload', util.UploadDelicious),
     ('/_ah/mail/post@.*', ReceiveMail),
+    ('/_ah/bounce', BounceHandler),
 ], debug=util.debug, config=util.config)
 
 if __name__ == "__main__":

@@ -3,7 +3,6 @@
 from __future__ import with_statement
 import os
 import jinja2
-import datetime
 from google.appengine.api import urlfetch, files, images
 from google.appengine.api import mail, app_identity, search
 from google.appengine.ext import deferred, blobstore, ndb
@@ -15,30 +14,11 @@ from libs.feedparser import parse
 
 debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 dtf = lambda value: value.strftime('%d/%m/%Y %H:%M')
+appid = app_identity.get_application_id()
 jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(['templates']))
 jinja_environment.filters['dtf'] = dtf
 config = {}
-# config['webapp2_extras.sessions'] = {
-    # 'secret_key': 'my-super-secret-key'}
-
-
-def fetch_feed(feed_feed):
-    try:
-        result = urlfetch.fetch(str(feed_feed), deadline=60)
-        return parse(result.content)
-    except:
-        return False
-
-
-def build_comment(entry):
-    try:
-        return entry['content'][0].value
-    except KeyError:
-        try:
-            return entry['description']
-        except KeyError:
-            return 'no comment'
 
 
 def pop_feed(feedk, e=0):
@@ -59,18 +39,6 @@ def pop_feed(feedk, e=0):
             feed.put()
         except:
             pass
-
-
-def fetch_url(url):
-    try:
-        result = urlfetch.fetch(
-            url=url, follow_redirects=True, allow_truncated=True, deadline=60)
-        if result.status_code == 200 and result.final_url:
-            return result.final_url
-        else:
-            return url
-    except:
-        return url
 
 
 def submit_bm(feedk, uik, title, url, comment):
@@ -105,12 +73,12 @@ def submit_bm(feedk, uik, title, url, comment):
         bm_url = url_candidate
         bm_comment = '''<embed type="application/x-shockwave-flash"
         src="http://www.google.com/reader/ui/3523697345-audio-player.swf"
-        quality="best" flashvars="audioUrl=%s" width="430" height="27">
+        quality="best" flashvars="audioUrl=%s" width="433" height="27">
         </embed>''' % url_candidate
 
     else:
         bm_url = url_candidate
-        if len(bm_title) > 100 and bm_domain != 'twitter.com':
+        if len(bm_title) > 70 and bm_domain != 'twitter.com':
             bm_comment = '<b>%s</b><hr>' % bm_title + comment
         else:
             bm_comment = comment
@@ -127,6 +95,36 @@ def submit_bm(feedk, uik, title, url, comment):
             deferred.defer(send_bm, bmk, _queue="email")
         elif feedk is not None and feedk.get().notify == 'email':
             deferred.defer(send_bm, bmk, _queue="email")
+
+
+def build_comment(entry):
+    try:
+        return entry['content'][0].value
+    except KeyError:
+        try:
+            return entry['description']
+        except KeyError:
+            return 'no comment'
+
+
+def fetch_feed(feed_feed):
+    try:
+        result = urlfetch.fetch(str(feed_feed), deadline=60)
+        return parse(result.content)
+    except:
+        return False
+
+
+def fetch_url(url):
+    try:
+        result = urlfetch.fetch(
+            url=url, follow_redirects=True, allow_truncated=True, deadline=60)
+        if result.status_code == 200 and result.final_url:
+            return result.final_url
+        else:
+            return url
+    except:
+        return url
 
 
 def index_bm(key):
@@ -238,51 +236,10 @@ class BookmarkParser(HTMLParser):
             self.last_bookmark['comment'] = str(data)
 
 
-def daily_digest(uik):
-    delta = datetime.timedelta(days=1)
-    now = datetime.datetime.now()
-    period = now - delta
-    bmq = Bookmarks.query(Bookmarks.ui == uik,
-                          Bookmarks.trashed == False,
-                          Bookmarks.data > period).order(-Bookmarks.data)
-    title = '[%s] Daily digest for your activity: %s' % (
-        app_identity.get_application_id(), dtf(now))
-    template = jinja_environment.get_template('digest.html')
-    values = {'bmq': bmq, 'title': title}
-    html = template.render(values)
-    if bmq.get() is not None:
-        deferred.defer(
-            send_digest, uik.get().email, html, title, _queue='email')
-
-
-def feed_digest(feedk):
-    delta = datetime.timedelta(days=1)
-    now = datetime.datetime.now()
-    period = now - delta
-    feed = feedk.get()
-    bmq = Bookmarks.query(Bookmarks.ui == feed.ui,
-                          Bookmarks.feed == feed.key,
-                          Bookmarks.trashed == False,
-                          Bookmarks.data > period).order(-Bookmarks.data)
-    title = '[%s] Daily digest for %s' % (
-        app_identity.get_application_id(), feed.title)
-    template = jinja_environment.get_template('digest.html')
-    values = {'bmq': bmq, 'title': title}
-    html = template.render(values)
-    email = feed.ui.get().email
-    if bmq.get() is not None and email is not None:
-        deferred.defer(send_digest, email, html, title, _queue='email')
-        queue = []
-        for bm in bmq:
-            bm.trashed = True
-            queue.append(bm)
-        ndb.put_multi(queue)
-
-
 def send_bm(bmk):
     bm = bmk.get()
-    sender = 'bm@%s.appspotmail.com' % app_identity.get_application_id()
-    subject = "[%s] %s" % (app_identity.get_application_id(), bm.title)
+    sender = 'bm@%s.appspotmail.com' % appid
+    subject = "[%s] %s" % (appid, bm.title)
     html = """
 <html> <table> <tbody>
     <tr> <td><b>%s</b> (%s)</td> </tr>
@@ -291,20 +248,8 @@ def send_bm(bmk):
     <tr> <td>%s</td> </tr>
 </tbody> </table> </html>
 """ % (bm.title, dtf(bm.data), bm.url, bm.comment)
-    mail.send_mail(sender=sender,
-                   to=bm.ui.get().email,
-                   subject=subject,
-                   body=html,
-                   html=html)
-
-
-def send_digest(email, html, title):
-    message = mail.EmailMessage()
-    message.sender = 'bm@%s.appspotmail.com' % app_identity.get_application_id()
-    message.to = email
-    message.subject = title
-    message.html = html
-    message.send()
+    mail.send_mail(sender=sender, to=bm.ui.get().email,
+                   subject=subject, body=html, html=html)
 
 
 def mys_off(uik):

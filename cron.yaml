@@ -5,11 +5,11 @@ cron:
 
 - description: send daily digest
   url: /admin/activity
-  schedule: every day 16:05
+  schedule: every 12 hours synchronized
 
 - description: send feed digests
   url: /admin/digest
-  schedule: every 8 hours synchronized
+  schedule: every 1 hours from 00:10 to 00:09
 
 - description: remove old bookmarks
   url: /admin/cron_trash

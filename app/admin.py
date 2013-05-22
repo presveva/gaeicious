@@ -1,11 +1,11 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-from . import util
 import datetime
 import webapp2
 from webapp2_extras import routes
 from google.appengine.ext import ndb, deferred
-from google.appengine.api import search
+from google.appengine.api import search, mail
+from . import util
 from .models import Feeds, Bookmarks, UserInfo
 
 
@@ -19,17 +19,51 @@ class CheckFeeds(webapp2.RequestHandler):
 class SendDigest(webapp2.RequestHandler):
 
     def get(self):
-        for feed in Feeds.query():
-            if feed.notify == 'digest':
-                deferred.defer(util.feed_digest, feed.key, _queue='email')
+        for feedk in Feeds.query(Feeds.notify == 'digest').fetch(keys_only=True):
+            deferred.defer(feed_digest, feedk, _queue='email')
+
+
+def feed_digest(feedk):
+    bmq = Bookmarks.query(Bookmarks.feed == feedk,
+                          Bookmarks.archived == False,
+                          Bookmarks.trashed == False)
+    feed = feedk.get()
+    email = feed.ui.get().email
+    if bmq.count() > 4 and email is not None:
+        # title = 'bla'
+        title = '[%s] Digest for %s' % (util.appid, feed.title)
+        template = util.jinja_environment.get_template('digest.html')
+        html = template.render({'bmq': bmq, 'title': title})
+        sender = 'bm@%s.appspotmail.com' % util.appid
+        mail.send_mail(sender=sender, to=email, subject=title, body=html, html=html)
+        queue = []
+        for bm in bmq:
+            bm.trashed = True
+            queue.append(bm)
+        ndb.put_multi(queue)
 
 
 class SendActivity(webapp2.RequestHandler):
 
     def get(self):
-        for ui in UserInfo.query():
-            if ui.daily:
-                deferred.defer(util.daily_digest, ui.key, _queue='email')
+        for uik in UserInfo.query(UserInfo.daily == True).fetch(keys_only=True):
+            deferred.defer(activity_digest, uik, _queue='email')
+
+
+def activity_digest(uik):
+    delta = datetime.timedelta(days=1)
+    now = datetime.datetime.now()
+    period = now - delta
+    bmq = Bookmarks.query(Bookmarks.ui == uik,
+                          Bookmarks.trashed == False,
+                          Bookmarks.data > period).order(-Bookmarks.data)
+    email = uik.get().email
+    if bmq.get() is not None and email is not None:
+        title = '[%s] Daily digest for your activity: %s' % (util.appid, util.dtf(now))
+        template = util.jinja_environment.get_template('digest.html')
+        html = template.render({'bmq': bmq, 'title': title})
+        sender = 'bm@%s.appspotmail.com' % util.appid
+        mail.send_mail(sender=sender, to=email, subject=title, body=html, html=html)
 
 
 class cron_trash(webapp2.RequestHandler):
@@ -138,8 +172,4 @@ app = ndb.toplevel(webapp2.WSGIApplication([
         webapp2.Route('/del_attr', del_attr),
         webapp2.Route('/reindex_all', reindex_all),
         webapp2.Route('/iterator', Iterator),
-    ])
-], debug=util.debug, config=util.config))
-
-if __name__ == "__main__":
-    app.run()
+    ])], debug=util.debug, config=util.config))

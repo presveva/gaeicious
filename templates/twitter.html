@@ -49,15 +49,15 @@
           <a class="btn btn-mini rt-{{ tweet.id_str }}" > <i class="icon-retweet"></i></a>
         </div>
       </td>
-    <script type="text/javascript">
-    $('.tweet a').attr('target', '_blank');
-    $(".rt-{{ tweet.id_str }}").click(function() {
-      $.get("/twitter/retweet", {id_str: '{{ tweet.id_str }}'})
-    })
-    </script>
+      <script type="text/javascript">
+      $('.tweet a').attr('target', '_blank');
+      $(".rt-{{ tweet.id_str }}").click(function() {
+        $.get("/twitter/retweet", {id_str: '{{ tweet.id_str }}'})
+      })
+      </script>
     </tr>
-    <tr colspan="2">
-      <td class="tweet">{{tweet.text|urlize}}</td>
+    <tr>
+      <td colspan="2" class="tweet text-right">{{tweet.text|urlize}}</td>
     </tr>
     {% for media in tweet.entities.media %}
     <tr>
