@@ -32,7 +32,7 @@ def pop_feed(feedk, e=0):
                 t = entry['title']
                 o = entry['link']
                 c = build_comment(entry)
-                deferred.defer(submit_bm, feedk, u, t, o, c, _queue='worker')
+                deferred.defer(submit_bm, feedk, u, t, o, c, _queue='admin')
                 e += 1
                 entry = parsed['items'][e]
             feed.last_id = parsed['items'][0].id
@@ -78,8 +78,8 @@ def submit_bm(feedk, uik, title, url, comment):
 
     else:
         bm_url = url_candidate
-        if len(bm_title) > 70 and bm_domain != 'twitter.com':
-            bm_comment = '<b>%s</b><hr>' % bm_title + comment
+        if len(bm_title) > 80 and bm_domain != 'twitter.com':
+            bm_comment = '<b>%s</b><br>' % bm_title + comment
         else:
             bm_comment = comment
 

@@ -10,15 +10,10 @@ queue:
   rate: 30/s
   bucket_size: 60
 
-- name: email
-  rate: 1/s
-  bucket_size: 10
-  # target: worker
-
 - name: worker
   rate: 10/s
   bucket_size: 20
-  # target: worker
+  target: worker
 
 - name: delicious
   rate: 10/s

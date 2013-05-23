@@ -108,7 +108,8 @@ class Main_Frame(BaseHandler):
             html = self.render('stream.html', {'bms': bms})
         else:
             html = self.render('frame.html', {'bms': bms, 'cursor': next_c})
-        more = self.render('more.html', {'cursor': next_c})
+        count = bmq.count(start_cursor=cursor)
+        more = self.render('more.html', {'cursor': next_c, 'count': count})
         self.response.set_cookie('active-tab', page)
         self.send_json({"html": html, "more": more})
 

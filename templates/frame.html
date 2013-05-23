@@ -7,7 +7,7 @@
 <div class="well well-small row-{{ bm.id }}">
 {%endif%}
   <dt > <i class="icon-bookmark hidden-phone"></i>
-    <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(70) }}</a>
+    <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(80) }}</a>
     <div class="btn-group hidden-phone">
       <a class="btn btn-link btn-mini" onclick="getbms('domain','','{{ bm.domain }}')"><em>[{{ bm.domain }}]</em></a>
     </div>

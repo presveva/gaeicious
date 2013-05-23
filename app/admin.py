@@ -13,14 +13,14 @@ class CheckFeeds(webapp2.RequestHandler):
 
     def get(self):
         for feedk in Feeds.query().fetch(keys_only=True):
-            deferred.defer(util.pop_feed, feedk, _queue='worker')
+            deferred.defer(util.pop_feed, feedk, _queue='admin')
 
 
 class SendDigest(webapp2.RequestHandler):
 
     def get(self):
         for feedk in Feeds.query(Feeds.notify == 'digest').fetch(keys_only=True):
-            deferred.defer(feed_digest, feedk, _queue='email')
+            deferred.defer(feed_digest, feedk, _queue='worker')
 
 
 def feed_digest(feedk):
@@ -47,15 +47,14 @@ class SendActivity(webapp2.RequestHandler):
 
     def get(self):
         for uik in UserInfo.query(UserInfo.daily == True).fetch(keys_only=True):
-            deferred.defer(activity_digest, uik, _queue='email')
+            deferred.defer(activity_digest, uik, _queue='worker')
 
 
 def activity_digest(uik):
     delta = datetime.timedelta(days=1)
     now = datetime.datetime.now()
     period = now - delta
-    bmq = Bookmarks.query(Bookmarks.ui == uik,
-                          Bookmarks.trashed == False,
+    bmq = Bookmarks.query(Bookmarks.ui == uik, Bookmarks.trashed == False,
                           Bookmarks.data > period).order(-Bookmarks.data)
     email = uik.get().email
     if bmq.get() is not None and email is not None:
