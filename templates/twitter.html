@@ -13,7 +13,7 @@
 </div>
 {% else %}
 <div class="well">
-  <table class="table">
+  <table class="table table-condensed">
   <tbody class="visible-desktop">
     {% for tweet in tweets %}
     <tr>
@@ -57,7 +57,7 @@
       </script>
     </tr>
     <tr>
-      <td colspan="2" class="tweet text-right">{{tweet.text|urlize}}</td>
+      <td colspan="2" class="tweet">{{tweet.text|urlize}}</td>
     </tr>
     {% for media in tweet.entities.media %}
     <tr>
