@@ -280,9 +280,13 @@ class AddFeed(BaseHandler):
         from libs.feedparser import parse
         if self.request.get('url'):
             feed = self.request.get('url')
-        elif self.request.get('username'):
+        elif self.request.get('twitter'):
             string = "https://api.twitter.com/1/statuses/user_timeline.rss?screen_name="
-            feed = str(string + self.request.get('username'))
+            feed = str(string + self.request.get('twitter'))
+        elif self.request.get('youtube'):
+            feed = "http://gdata.youtube.com/feeds/base/users/" \
+                + self.request.get('youtube') + \
+                "/uploads?alt=rss&v=2&orderby=published&client=ytapi-youtube-profile"
         q = Feeds.query(Feeds.ui == self.ui.key, Feeds.feed == feed)
         if q.get() is None:
             d = parse(str(feed))

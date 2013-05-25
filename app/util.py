@@ -92,9 +92,9 @@ def submit_bm(feedk, uik, title, url, comment):
                         domain=bm_domain, comment=bm_comment).put()
 
         if feedk is None and uik.get().mys is True:
-            deferred.defer(send_bm, bmk, _queue="email")
+            deferred.defer(send_bm, bmk, _queue="admin")
         elif feedk is not None and feedk.get().notify == 'email':
-            deferred.defer(send_bm, bmk, _queue="email")
+            deferred.defer(send_bm, bmk, _queue="admin")
 
 
 def build_comment(entry):

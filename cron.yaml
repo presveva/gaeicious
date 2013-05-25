@@ -9,7 +9,7 @@ cron:
 
 - description: send feed digests
   url: /admin/digest
-  schedule: every 1 hours from 00:10 to 00:09
+  schedule: every 2 hours from 00:10 to 00:09
 
 - description: remove old bookmarks
   url: /admin/cron_trash
