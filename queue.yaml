@@ -13,7 +13,7 @@ queue:
 - name: worker
   rate: 10/s
   bucket_size: 20
-  target: worker
+  # target: worker
 
 - name: delicious
   rate: 10/s

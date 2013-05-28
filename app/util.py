@@ -64,6 +64,11 @@ def submit_bm(feedk, uik, title, url, comment):
         width="640" height="360" frameborder="0" webkitAllowFullScreen mozallowfullscreen
         allowFullScreen></iframe>''' % name
 
+    elif bm_domain == 'avaxhome.bz':
+        bm_url = url_candidate.replace('.bz/', '.ws/', 1)
+        bm_domain = 'avaxhome.ws'
+        bm_comment = comment
+
     elif ext in ['jpg', 'png', 'jpeg', 'gif']:
         bm_url = url_candidate
         blob_key = upload_to_blobstore(url_candidate, ext)

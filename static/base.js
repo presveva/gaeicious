@@ -55,6 +55,7 @@ function star(id) {
     bm: id
   }, function(data) {
     $(".star-" + id).html(data);
+    $(".row-" + id).hide();
   });
 }
 

@@ -51,7 +51,7 @@ class SendActivity(webapp2.RequestHandler):
 
 
 def activity_digest(uik):
-    delta = datetime.timedelta(days=1)
+    delta = datetime.timedelta(hours=12)
     now = datetime.datetime.now()
     period = now - delta
     bmq = Bookmarks.query(Bookmarks.ui == uik, Bookmarks.trashed == False,
@@ -59,7 +59,7 @@ def activity_digest(uik):
     email = uik.get().email
     if bmq.get() is not None and email is not None:
         title = '[%s] Daily digest for your activity: %s' % (util.appid, util.dtf(now))
-        template = util.jinja_environment.get_template('digest.html')
+        template = util.jinja_environment.get_template('activity.html')
         html = template.render({'bmq': bmq, 'title': title})
         sender = 'bm@%s.appspotmail.com' % util.appid
         mail.send_mail(sender=sender, to=email, subject=title, body=html, html=html)
