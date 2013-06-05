@@ -65,8 +65,11 @@ body,
 input,
 button,
 select,
-code,
-pre,
 textarea {
   font-family: Antic Slab, Arial, serif; font-weight: 400;
 }
+
+/*code,
+pre{
+  font-family: Antic Slab, Arial, serif; font-weight: 400;
+}*/

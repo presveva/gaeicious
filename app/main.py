@@ -63,7 +63,7 @@ class HomePage(BaseHandler):
             ui.access_k = auth.access_token.key
             ui.access_s = auth.access_token.secret
             ui.put()
-            self.response.set_cookie('screen_name', screen_name)
+            self.response.set_cookie('screen_name', screen_name, max_age=604800)
             self.redirect('/')
         else:
             redirect_url = auth.get_authorization_url()

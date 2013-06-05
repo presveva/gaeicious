@@ -36,7 +36,7 @@
 <table class="table table-condensed"> <tbody>
 {% for feed in feeds %}
   <tr id="row-{{ feed.id }}">
-    <td><a href="{{ feed.link }}" target="_blank"><b>{{ feed.title|truncate(40, true) }}</b></a></td>
+    <td><a href="{{ feed.link }}" target="_blank"><b>{{ feed.title|truncate(36, true) }}</b></a></td>
     <td>
       <div class="btn-group">
         <a class="btn btn-mini" href="/feed?id={{ feed.id }}"> <i class="icon-remove"></i> delete</a>

@@ -1,15 +1,15 @@
 cron:
 - description: check new posts
   url: /admin/check
-  schedule: every 1 hours synchronized
+  schedule: every 1 hours from 00:55 to 00:54
+
+- description: send feed digests
+  url: /admin/digest
+  schedule: every 2 hours from 00:59 to 00:58
 
 - description: send daily digest
   url: /admin/activity
   schedule: every 12 hours synchronized
-
-- description: send feed digests
-  url: /admin/digest
-  schedule: every 2 hours from 00:05 to 00:04
 
 - description: remove old bookmarks
   url: /admin/cron_trash

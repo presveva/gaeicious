@@ -19,13 +19,20 @@
 <div class="row-fluid">
 <div class="well well-small" id="row-{{ bm.id }}">
   <dt> <i class="icon-bookmark"></i>
-    <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(110) }}</a>
-    <a class="btn btn-link btn-mini " onclick="getbms('domain','','{{ bm.domain }}')"><em>{{ bm.domain }}</em> </a>
+    <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(80) }}</a>
+    <a class="btn btn-link btn-mini " onclick="getbms('domain','','{{ bm.domain }}')">
+      <em>{{ bm.domain }}</em>
+    </a>
     <div class="btn-group pull-right">
       <button class="btn btn-mini" onclick="copy_bm({{ bm.id }})"><i class="icon-retweet"></i> copy</button>
     </div>
-    <dd><i class="icon-user"></i> {{bm.ui.id()}}
-    <dd>{{ bm.comment }}
+    <dd class="text-right"><i class="icon-user"></i> shared by {{bm.ui.id()}}</dd>
+    <dd class="comment-{{ bm.id }} ">
+      {{bm.comment}}
+      <script type="text/javascript">
+        $('.comment-{{ bm.id }} a').attr('target', '_blank');
+      </script>
+    </dd>
 </div>
 </div>
 </div>
