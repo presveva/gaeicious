@@ -70,8 +70,8 @@ function share(id) {
     if (eye == ('<i class="icon-eye-close"></i>')) {
       $(".link-" + id).html('');
     } else {
-      $(".link-" + id).html('<button class="btn btn-small btn-link " href="/bm/' +
-        id + '" target="_blank">link</button>');
+      $(".link-" + id).html('<a class="btn btn-small btn-link " href="/bm/' +
+        id + '" target="_blank">link</a>');
     }
   });
 }
