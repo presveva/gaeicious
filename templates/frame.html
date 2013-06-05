@@ -1,6 +1,6 @@
 {% for bm in bms %}
 <div class="row-{{ bm.id }}">
-  <table class="table table-condensed"> <tbody>
+  <table class="table table-condensed table-striped"> <tbody>
     <tr class="{%if bm.trashed%}error{%elif bm.starred%}success{%endif%}"> <td>
       <i class="icon-bookmark hidden-phone"></i>
       <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(80) }}</a>
@@ -34,6 +34,12 @@
       {% endif %}
       </div>
     </td> </tr>
+    <tr class="comments comment-{{ bm.id }} "> <td>
+      {{bm.comment}}
+      <script type="text/javascript">
+        $('.comment-{{ bm.id }} a').attr('target', '_blank');
+      </script>
+    </td> </tr>
     <tr class="hide tweet-{{ bm.id }}"> <td>
       <form class="form-inline" action="/twitter/tweet">
         <div class="control-group" id="input_tweet-{{ bm.id }}">
@@ -52,12 +58,6 @@
         });
         </script>
       </form>
-    </td> </tr>
-    <tr class="comments comment-{{ bm.id }} "> <td>
-      {{bm.comment}}
-      <script type="text/javascript">
-        $('.comment-{{ bm.id }} a').attr('target', '_blank');
-      </script>
     </td> </tr>
     <tr class="hide edit-{{ bm.id }}"> <td>
       {% include 'edit.html'%}
