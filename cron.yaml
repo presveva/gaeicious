@@ -5,7 +5,7 @@ cron:
 
 - description: send feed digests
   url: /admin/digest
-  schedule: every 2 hours from 00:59 to 00:58
+  schedule: every 1 hours from 00:59 to 00:58
 
 - description: send daily digest
   url: /admin/activity

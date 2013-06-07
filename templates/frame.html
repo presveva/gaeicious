@@ -4,8 +4,8 @@
     <tr class="{%if bm.trashed%}error{%elif bm.starred%}success{%endif%}"> <td>
       <i class="icon-bookmark hidden-phone"></i>
       <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(80) }}</a>
-      <a class="btn btn-link btn-mini hidden-phone" onclick="getbms('domain','','{{ bm.domain }}')">
-        <em>[{{ bm.domain }}]</em>
+      <a class="btn btn-link btn-mini hidden-phone pull-right" onclick="getbms('domain','','{{ bm.domain }}')">
+        <em>{{ bm.domain }}</em>
       </a>
     </td> </tr>
     <tr> <td>
@@ -34,12 +34,6 @@
       {% endif %}
       </div>
     </td> </tr>
-    <tr class="comments comment-{{ bm.id }} "> <td>
-      {{bm.comment}}
-      <script type="text/javascript">
-        $('.comment-{{ bm.id }} a').attr('target', '_blank');
-      </script>
-    </td> </tr>
     <tr class="hide tweet-{{ bm.id }}"> <td>
       <form class="form-inline" action="/twitter/tweet">
         <div class="control-group" id="input_tweet-{{ bm.id }}">
@@ -61,6 +55,12 @@
     </td> </tr>
     <tr class="hide edit-{{ bm.id }}"> <td>
       {% include 'edit.html'%}
+    </td> </tr>
+    <tr class="comments comment-{{ bm.id }} "> <td>
+      {{bm.comment}}
+      <script type="text/javascript">
+        $('.comment-{{ bm.id }} a').attr('target', '_blank');
+      </script>
     </td> </tr>
   </tbody> </table>
 </div>
