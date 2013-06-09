@@ -13,14 +13,14 @@ class CheckFeeds(webapp2.RequestHandler):
 
     def get(self):
         for feedk in Feeds.query().fetch(keys_only=True):
-            deferred.defer(util.pop_feed, feedk, _queue='admin')
+            deferred.defer(util.check_feed, feedk, _queue='check')
 
 
 class SendDigest(webapp2.RequestHandler):
 
     def get(self):
         for feedk in Feeds.query(Feeds.notify == 'digest').fetch(keys_only=True):
-            deferred.defer(feed_digest, feedk, _queue='worker')
+            deferred.defer(feed_digest, feedk, _queue='email')
 
 
 def feed_digest(feedk):
@@ -47,7 +47,7 @@ class SendActivity(webapp2.RequestHandler):
 
     def get(self):
         for uik in UserInfo.query(UserInfo.daily == True).fetch(keys_only=True):
-            deferred.defer(activity_digest, uik, _queue='worker')
+            deferred.defer(activity_digest, uik, _queue='email')
 
 
 def activity_digest(uik):
@@ -99,7 +99,7 @@ class DeleteIndex(webapp2.RequestHandler):
 class reindex_all(webapp2.RequestHandler):
 
     def get(self):
-        deferred.defer(reindex, _queue='admin')
+        deferred.defer(reindex)
         self.redirect('/admin')
 
 
@@ -107,7 +107,7 @@ def reindex(cursor=None):
     bmq = Bookmarks.query()
     bms, cur, more = bmq.fetch_page(10, start_cursor=cursor)
     for bm in bms:
-        deferred.defer(util.index_bm, bm.key, _queue='admin')
+        deferred.defer(util.index_bm, bm.key)
     if more:
         deferred.defer(reindex, cur)
 
@@ -126,7 +126,7 @@ def iter_entity(model, prop, cursor=None):
     qry = ndb.gql("SELECT * FROM %s" % model)
     res, cur, more = qry.fetch_page(100, start_cursor=cursor)
     for ent in res:
-        deferred.defer(delatt, ent, prop, _queue='admin')
+        deferred.defer(delatt, ent, prop)
     if more:
         deferred.defer(iter_entity, model, prop, cur)
 
@@ -142,7 +142,7 @@ class Iterator(webapp2.RequestHandler):
     def post(self):
         model = str(self.request.get('model'))
         prop = UserInfo.get_by_id('presveva').key
-        deferred.defer(itera, model, prop, _queue='admin')
+        deferred.defer(itera, model, prop)
         self.redirect('/admin')
 
 
@@ -150,7 +150,7 @@ def itera(model, prop=None, cursor=None):
     qry = ndb.gql("SELECT * FROM %s" % model)
     res, cur, more = qry.fetch_page(100, start_cursor=cursor)
     for ent in res:
-        deferred.defer(make_some, ent, prop, _queue='admin')
+        deferred.defer(make_some, ent, prop)
     if more:
         deferred.defer(itera, model, prop, cur)
 

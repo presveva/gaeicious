@@ -21,21 +21,22 @@ jinja_environment.filters['dtf'] = dtf
 config = {}
 
 
-def pop_feed(feedk, e=0):
+def check_feed(feedk, e=0):
     feed = feedk.get()
     parsed = fetch_feed(feed.feed)
     if parsed:
         try:
             entry = parsed['items'][e]
-            while feed.last_id != entry.id:
+            while feed.last_id != entry['link']:
+            # while feed.last_id != entry.id:
                 u = feed.ui
                 t = entry['title']
                 o = entry['link']
                 c = build_comment(entry)
-                deferred.defer(submit_bm, feedk, u, t, o, c, _queue='admin')
+                deferred.defer(submit_bm, feedk, u, t, o, c, _queue='submit')
                 e += 1
                 entry = parsed['items'][e]
-            feed.last_id = parsed['items'][0].id
+            feed.last_id = parsed['items'][0]['link']
             feed.put()
         except:
             pass
@@ -83,10 +84,7 @@ def submit_bm(feedk, uik, title, url, comment):
 
     else:
         bm_url = url_candidate
-        if len(bm_title) > 80 and bm_domain != 'twitter.com':
-            bm_comment = '<b>%s</b><br>' % bm_title + comment
-        else:
-            bm_comment = comment
+        bm_comment = comment
 
     copie = Bookmarks.query(Bookmarks.ui == uik,
                             Bookmarks.url == bm_url,
@@ -97,9 +95,9 @@ def submit_bm(feedk, uik, title, url, comment):
                         domain=bm_domain, comment=bm_comment).put()
 
         if feedk is None and uik.get().mys is True:
-            deferred.defer(send_bm, bmk, _queue="admin")
+            deferred.defer(send_bm, bmk, _queue="email")
         elif feedk is not None and feedk.get().notify == 'email':
-            deferred.defer(send_bm, bmk, _queue="admin")
+            deferred.defer(send_bm, bmk, _queue="email")
 
 
 def build_comment(entry):
@@ -116,7 +114,7 @@ def fetch_feed(feed_feed):
     try:
         result = urlfetch.fetch(str(feed_feed), deadline=60)
         return parse(result.content)
-    except:
+    except urlfetch.Error:
         return False
 
 
@@ -124,11 +122,8 @@ def fetch_url(url):
     try:
         result = urlfetch.fetch(
             url=url, follow_redirects=True, allow_truncated=True, deadline=60)
-        if result.status_code == 200 and result.final_url:
-            return result.final_url
-        else:
-            return url
-    except:
+        return result.final_url if result.final_url else url
+    except urlfetch.Error:
         return url
 
 

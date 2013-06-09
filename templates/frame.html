@@ -1,13 +1,6 @@
 {% for bm in bms %}
 <div class="row-{{ bm.id }}">
   <table class="table table-condensed table-striped"> <tbody>
-    <tr class="{%if bm.trashed%}error{%elif bm.starred%}success{%endif%}"> <td>
-      <i class="icon-bookmark hidden-phone"></i>
-      <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(80) }}</a>
-      <a class="btn btn-link btn-mini hidden-phone pull-right" onclick="getbms('domain','','{{ bm.domain }}')">
-        <em>{{ bm.domain }}</em>
-      </a>
-    </td> </tr>
     <tr> <td>
       <button class="btn btn-small" onclick="trash({{ bm.id }})">
         {% if bm.trashed %} <span>delete</span> {% else %} <span>trash</span> {% endif %}
@@ -33,6 +26,13 @@
       <a class="btn btn-small btn-link " href="/bm/{{ bm.id }}" target="_blank">link</a>
       {% endif %}
       </div>
+      <a class="btn btn-link btn-mini hidden-phone pull-right" onclick="getbms('domain','','{{ bm.domain }}')">
+        <em>{{ bm.domain }}</em>
+      </a>
+    </td> </tr>
+    <tr class="{%if bm.trashed%}error{%elif bm.starred%}success{%endif%}"> <td>
+      <i class="icon-bookmark hidden-phone"></i>
+      <a href="{{ bm.url }}" target="_blank">{{ bm.title|e}}</a>
     </td> </tr>
     <tr class="hide tweet-{{ bm.id }}"> <td>
       <form class="form-inline" action="/twitter/tweet">

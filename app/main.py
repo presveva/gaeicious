@@ -293,8 +293,9 @@ class AddFeed(BaseHandler):
             feed_k = Feeds(ui=self.ui.key, feed=feed,
                            title=d['channel']['title'],
                            link=d['channel']['link'],
-                           last_id=d['items'][2].id).put()
-            deferred.defer(util.pop_feed, feed_k)
+                           last_id=d['items'][2]['link']).put()
+                           # last_id=d['items'][2].id).put()
+            deferred.defer(util.check_feed, feed_k, _queue='check')
         self.redirect('/feeds')
 
 
@@ -317,7 +318,7 @@ class CheckFeed(webapp2.RequestHandler):
     @util.login_required
     def get(self):
         feed = Feeds.get_by_id(int(self.request.get('feed')))
-        deferred.defer(util.pop_feed, feed.key)
+        deferred.defer(util.check_feed, feed.key, _queue='check')
 
 
 class SetMys(BaseHandler):

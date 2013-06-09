@@ -6,9 +6,17 @@ queue:
   rate: 20/s
   bucket_size: 40
 
-- name: admin
-  rate: 30/s
-  bucket_size: 60
+- name: check
+  rate: 10/s
+  bucket_size: 20
+
+- name: submit
+  rate: 20/s
+  bucket_size: 40
+
+- name: email
+  rate: 10/s
+  bucket_size: 20
 
 - name: worker
   rate: 10/s

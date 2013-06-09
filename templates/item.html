@@ -16,16 +16,16 @@
 <div class="row-fluid">
   <table class="table table-condensed table-striped"> <tbody>
     <tr> <td>
-      <i class="icon-bookmark hidden-phone"></i>
-      <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(80) }}</a>
+      <button class="btn btn-mini" onclick="copy_bm({{ bm.id }})"><i class="icon-retweet"></i> copy</button>
+      <span class="text-left"><i class="icon-user"></i> shared by {{bm.ui.id()}}</span>
       <a class="btn btn-link btn-mini hidden-phone pull-right" onclick="getbms('domain','','{{ bm.domain }}')">
         <em>{{ bm.domain }}</em>
       </a>
-    </td> </tr>
-    <tr> <td>
-      <span class="text-left"><i class="icon-user"></i> shared by {{bm.ui.id()}}</span>
-      <button class="btn btn-mini pull-right" onclick="copy_bm({{ bm.id }})"><i class="icon-retweet"></i> copy</button>
     </td></tr>
+    <tr> <td>
+      <i class="icon-bookmark hidden-phone"></i>
+      <a href="{{ bm.url }}" target="_blank">{{ bm.title|e }}</a>
+    </td> </tr>
     <tr> <td>
       {{bm.comment}}
       <script type="text/javascript">
