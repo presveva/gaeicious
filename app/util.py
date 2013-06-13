@@ -3,6 +3,7 @@
 from __future__ import with_statement
 import os
 import jinja2
+import logging
 from google.appengine.api import urlfetch, files, images
 from google.appengine.api import mail, app_identity, search
 from google.appengine.ext import deferred, blobstore, ndb
@@ -24,20 +25,18 @@ config = {}
 def check_feed(feedk, e=0):
     feed = feedk.get()
     parsed = fetch_feed(feed.feed)
-    if parsed:
-        try:
+    n = len(parsed['items'])
+    if parsed and n > 0:
+        entry = parsed['items'][e]
+        while feed.last_id != entry['link'] and e < (n - 1):
+            deferred.defer(submit_bm, feedk=feedk, uik=feed.ui,
+                           title=entry['title'], url=entry['link'],
+                           comment=build_comment(entry),
+                           _queue='submit', _countdown=60)
+            e += 1
             entry = parsed['items'][e]
-            while unicode(feed.last_id) != unicode(entry['link']):
-                deferred.defer(submit_bm, feedk=feedk, uik=feed.ui,
-                               title=entry['title'], url=entry['link'],
-                               comment=build_comment(entry),
-                               _queue='submit', _countdown=60)
-                e += 1
-                entry = parsed['items'][e]
-            feed.last_id = parsed['items'][0]['link']
-            feed.put()
-        except:
-            pass
+        feed.last_id = parsed['items'][0]['link']
+        feed.put()
 
 
 def submit_bm(feedk, uik, title, url, comment):

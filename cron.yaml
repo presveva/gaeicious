@@ -1,11 +1,11 @@
 cron:
 - description: check new posts
   url: /admin/check
-  schedule: every 2 hours from 00:55 to 00:54
+  schedule: every 1 hours from 00:55 to 00:54
 
 - description: send feed digests
   url: /admin/digest
-  schedule: every 2 hours from 01:55 to 01:54
+  schedule: every 1 hours from 01:55 to 01:54
 
 - description: send daily digest
   url: /admin/activity

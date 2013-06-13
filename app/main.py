@@ -63,7 +63,8 @@ class HomePage(BaseHandler):
             ui.access_k = auth.access_token.key
             ui.access_s = auth.access_token.secret
             ui.put()
-            self.response.set_cookie('screen_name', screen_name, max_age=604800)
+            self.response.set_cookie(
+                'screen_name', screen_name, max_age=604800)
             self.redirect('/')
         else:
             redirect_url = auth.get_authorization_url()
@@ -109,7 +110,8 @@ class Main_Frame(BaseHandler):
         else:
             html = self.render('frame.html', {'bms': bms, 'cursor': next_c})
         # count = bmq.count(start_cursor=cursor)
-        more = self.render('more.html', {'cursor': next_c})  # , 'count': count})
+        more = self.render('more.html', {
+                           'cursor': next_c})  # , 'count': count})
         self.response.set_cookie('active-tab', page)
         self.send_json({"html": html, "more": more})
 

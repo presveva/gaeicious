@@ -13,6 +13,7 @@ class CheckFeeds(webapp2.RequestHandler):
 
     def get(self):
         for feedk in Feeds.query().fetch(keys_only=True):
+            # util.check_feed(feedk)
             deferred.defer(util.check_feed, feedk, _queue='check')
 
 
@@ -35,7 +36,8 @@ def feed_digest(feedk):
         template = util.jinja_environment.get_template('digest.html')
         html = template.render({'bmq': bmq, 'title': title})
         sender = 'bm@%s.appspotmail.com' % util.appid
-        mail.send_mail(sender=sender, to=email, subject=title, body=html, html=html)
+        mail.send_mail(
+            sender=sender, to=email, subject=title, body=html, html=html)
         queue = []
         for bm in bmq:
             bm.trashed = True
@@ -58,11 +60,13 @@ def activity_digest(uik):
                           Bookmarks.data > period).order(-Bookmarks.data)
     email = uik.get().email
     if bmq.get() is not None and email is not None:
-        title = '[%s] Daily digest for your activity: %s' % (util.appid, util.dtf(now))
+        title = '[%s] Daily digest for your activity: %s' % (
+            util.appid, util.dtf(now))
         template = util.jinja_environment.get_template('activity.html')
         html = template.render({'bmq': bmq, 'title': title})
         sender = 'bm@%s.appspotmail.com' % util.appid
-        mail.send_mail(sender=sender, to=email, subject=title, body=html, html=html)
+        mail.send_mail(
+            sender=sender, to=email, subject=title, body=html, html=html)
 
 
 class cron_trash(webapp2.RequestHandler):
