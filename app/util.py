@@ -27,13 +27,11 @@ def check_feed(feedk, e=0):
     if parsed:
         try:
             entry = parsed['items'][e]
-            while feed.last_id != entry['link']:
-            # while feed.last_id != entry.id:
-                u = feed.ui
-                t = entry['title']
-                o = entry['link']
-                c = build_comment(entry)
-                deferred.defer(submit_bm, feedk, u, t, o, c, _queue='submit')
+            while unicode(feed.last_id) != unicode(entry['link']):
+                deferred.defer(submit_bm, feedk=feedk, uik=feed.ui,
+                               title=entry['title'], url=entry['link'],
+                               comment=build_comment(entry),
+                               _queue='submit', _countdown=60)
                 e += 1
                 entry = parsed['items'][e]
             feed.last_id = parsed['items'][0]['link']
@@ -56,13 +54,13 @@ def submit_bm(feedk, uik, title, url, comment):
     if bm_domain == 'www.youtube.com':
         query = parse_qs(url_parsed.query)
         bm_url = 'http://www.youtube.com/watch?v=%s' % query["v"][0]
-        bm_comment = """<embed width="640" height="360" src="http://www.youtube.com/v/%s"
+        bm_comment = """<embed width="767" height="430" src="http://www.youtube.com/v/%s"
         type="application/x-shockwave-flash"> </embed>""" % query["v"][0]
 
     elif bm_domain == 'vimeo.com':
         bm_url = 'http://vimeo.com/%s' % name
         bm_comment = '''<iframe src="http://player.vimeo.com/video/%s?color=ffffff"
-        width="640" height="360" frameborder="0" webkitAllowFullScreen mozallowfullscreen
+        width="767" height="430" frameborder="0" webkitAllowFullScreen mozallowfullscreen
         allowFullScreen></iframe>''' % name
 
     elif bm_domain == 'avaxhome.bz':
@@ -73,7 +71,8 @@ def submit_bm(feedk, uik, title, url, comment):
     elif ext in ['jpg', 'png', 'jpeg', 'gif']:
         bm_url = url_candidate
         blob_key = upload_to_blobstore(url_candidate, ext)
-        bm_comment = '<img src="%s" />' % images.get_serving_url(blob_key, size=1600)
+        bm_comment = '<img src="%s" />' % images.get_serving_url(
+            blob_key, size=1600)
 
     elif ext in ['mp3', 'flac', 'aac', 'ogg']:
         bm_url = url_candidate

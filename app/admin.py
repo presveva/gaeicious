@@ -72,8 +72,8 @@ class cron_trash(webapp2.RequestHandler):
         now = datetime.datetime.now()
         period = now - delta
         bmq = Bookmarks.query(Bookmarks.trashed == True,
-                              Bookmarks.data < period)
-        ndb.delete_multi([bm.key for bm in bmq])
+                              Bookmarks.data < period).fetch(keys_only=True)
+        ndb.delete_multi(bmq)
 
 
 class DeleteIndex(webapp2.RequestHandler):

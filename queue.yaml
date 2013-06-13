@@ -11,8 +11,8 @@ queue:
   bucket_size: 20
 
 - name: submit
-  rate: 20/s
-  bucket_size: 40
+  rate: 10/s
+  bucket_size: 20
 
 - name: email
   rate: 10/s
