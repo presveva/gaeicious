@@ -41,6 +41,7 @@
           <button class="btn btn-large " type="submit" >tweet</button>
         </div>
         <script type="text/javascript">
+        // $("[id='text_tweet-" + {{ bm.id|e }} + "']").keyup(function() {
         $('#text_tweet-{{ bm.id }}').keyup(function() {
           var len = this.value.length - {{bm.url|length}} + 25;
           if (len >= 140) {

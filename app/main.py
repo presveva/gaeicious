@@ -241,6 +241,7 @@ class ShareBM(BaseHandler):
 
     @util.login_required
     def get(self):
+        # bm = Bookmarks.get_by_id(str(self.request.get('id')))
         bm = Bookmarks.get_by_id(int(self.request.get('id')))
         if self.ui.key == bm.ui:
             if bm.shared is False:

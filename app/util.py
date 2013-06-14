@@ -3,7 +3,7 @@
 from __future__ import with_statement
 import os
 import jinja2
-import logging
+# import logging
 from google.appengine.api import urlfetch, files, images
 from google.appengine.api import mail, app_identity, search
 from google.appengine.ext import deferred, blobstore, ndb
@@ -25,8 +25,8 @@ config = {}
 def check_feed(feedk, e=0):
     feed = feedk.get()
     parsed = fetch_feed(feed.feed)
-    n = len(parsed['items'])
-    if parsed and n > 0:
+    n = len(parsed['items']) if parsed is not False else 0
+    if n > 0:
         entry = parsed['items'][e]
         while feed.last_id != entry['link'] and e < (n - 1):
             deferred.defer(submit_bm, feedk=feedk, uik=feed.ui,
@@ -89,6 +89,9 @@ def submit_bm(feedk, uik, title, url, comment):
                             Bookmarks.feed == feedk)
 
     if copie.get() is None:
+        # bmk = Bookmarks(id=bm_url, parent=uik, ui=uik, url=bm_url, feed=feedk,
+                        # title=bm_title, domain=bm_domain,
+                        # comment=bm_comment).put()
         bmk = Bookmarks(ui=uik, feed=feedk, url=bm_url, title=bm_title,
                         domain=bm_domain, comment=bm_comment).put()
 
@@ -171,6 +174,24 @@ def upload_to_blobstore(url_candidate, ext):
         return blob_key
 
 
+def send_bm(bmk):
+    bm = bmk.get()
+    sender = 'bm@%s.appspotmail.com' % appid
+    subject = "[%s] %s" % (appid, bm.title)
+    html = """
+<html> <table> <tbody>
+    <tr> <td><b>%s</b> (%s)</td> </tr>
+    <tr> <td>%s</td> </tr>
+    <hr>
+    <tr> <td>%s</td> </tr>
+</tbody> </table> </html>
+""" % (bm.title, dtf(bm.data), bm.url, bm.comment)
+    mail.send_mail(sender=sender, to=bm.ui.get().email,
+                   subject=subject, body=html, html=html)
+
+# Delicious import
+
+
 class UploadDelicious(blobstore_handlers.BlobstoreUploadHandler):
 
     def post(self):
@@ -182,8 +203,6 @@ class UploadDelicious(blobstore_handlers.BlobstoreUploadHandler):
         ui.put()
         deferred.defer(delicious, ui.key, _queue="delicious")
         self.redirect('/')
-
-# Delicious import
 
 
 def delicious(uik):
@@ -232,22 +251,6 @@ class BookmarkParser(HTMLParser):
 
         if self.lasttag == 'dd' and self.last_bookmark['comment'] == '':
             self.last_bookmark['comment'] = str(data)
-
-
-def send_bm(bmk):
-    bm = bmk.get()
-    sender = 'bm@%s.appspotmail.com' % appid
-    subject = "[%s] %s" % (appid, bm.title)
-    html = """
-<html> <table> <tbody>
-    <tr> <td><b>%s</b> (%s)</td> </tr>
-    <tr> <td>%s</td> </tr>
-    <hr>
-    <tr> <td>%s</td> </tr>
-</tbody> </table> </html>
-""" % (bm.title, dtf(bm.data), bm.url, bm.comment)
-    mail.send_mail(sender=sender, to=bm.ui.get().email,
-                   subject=subject, body=html, html=html)
 
 
 def mys_off(uik):
