@@ -11,57 +11,23 @@ indexes:
 # your application using appcfg.py.
 
 - kind: Bookmarks
-  properties:
-  - name: archived
-  - name: trashed
-  - name: ui
-  - name: data
-    direction: desc
-
-- kind: Bookmarks
+  ancestor: yes
   properties:
   - name: domain
-  - name: ui
   - name: data
     direction: desc
 
 - kind: Bookmarks
+  ancestor: yes
   properties:
-  - name: shared
-  - name: trashed
+  - name: stato
   - name: data
     direction: desc
 
 - kind: Bookmarks
-  properties:
-  - name: shared
-  - name: trashed
-  - name: ui
-  - name: data
-    direction: desc
-
-- kind: Bookmarks
-  properties:
-  - name: starred
-  - name: trashed
-  - name: ui
-  - name: data
-    direction: desc
-
-- kind: Bookmarks
+  ancestor: yes
   properties:
   - name: trashed
-  - name: ui
-
-- kind: Bookmarks
-  properties:
-  - name: trashed
-  - name: data
-
-- kind: Bookmarks
-  properties:
-  - name: trashed
-  - name: ui
   - name: data
     direction: desc
 

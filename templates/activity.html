@@ -9,7 +9,7 @@
 <body> <div> <table> <tbody>
     {% for bm in bmq %}
     <tr> <td> <b>{{ bm.title }}</b> </td> </tr>
-    <tr> <td> {{ bm.url }} </td> </tr>
+    <tr> <td> {{ bm.key.id() }} </td> </tr>
     <hr>
     {% endfor %}
 </tbody> </table> </div> </body>

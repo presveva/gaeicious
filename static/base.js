@@ -16,6 +16,16 @@ function getbms(page, c, domain) {
   });
 }
 
+function get_shared() {
+  $.get("/shared", function (html) {
+    $(".main_frame").html(html);
+    $(window).scrollTop(0);
+    $('pre code').each(function (i, e) {
+      hljs.highlightBlock(e);
+    });
+  });
+}
+
 function search() {
   event.preventDefault();
   $.post('/search', $('#search').serialize(), function (html) {
@@ -38,41 +48,28 @@ function show_all() {
 }
 
 function archive(id) {
-  $.get('/archive', {
-    bm: id
-  }, function () {
+  $.get('/archive/' + id, function () {
     $(".row-" + id).hide();
   });
 }
 
 function trash(id) {
-  $.get('/trash', {
-    bm: id
-  }, function () {
+  $.get('/trash/' + id, function () {
     $(".row-" + id).hide();
   });
 }
 
-function star(id) {
-  $.get('/star', {
-    bm: id
-  }, function (data) {
-    $(".star-" + id).html(data);
-    $(".row-" + id).hide();
-  });
-}
+// function star(us) {
+//   $.get('/star/' + us, function (data) {
+//     $(".star-" + us).html(data);
+//     // $(".row-" + us).hide();
+//   });
+// }
 
-function share(id) {
-  $.get("/share", {
-    id: id
-  }, function (eye) {
-    $(".share-" + id).html(eye);
-    if (eye == ('<i class="icon-eye-close"></i>')) {
-      $(".link-" + id).html('');
-    } else {
-      $(".link-" + id).html('<a class="btn btn-small btn-link " href="/bm/' +
-        id + '" target="_blank">link</a>');
-    }
+function share(us) {
+  $.get("/share/" + us, function (data) {
+    $(".share-" + us).html(data.eye);
+    $(".link-" + us).html(data.btn);
   });
 }
 
@@ -104,9 +101,7 @@ function sync_feed(id) {
 }
 
 function copy_bm(id) {
-  $.get('/copy', {
-    bm: id
-  });
+  $.get('/copy/' + id);
 }
 
 function caratteri(val) {

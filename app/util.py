@@ -3,7 +3,6 @@
 from __future__ import with_statement
 import os
 import jinja2
-# import logging
 from google.appengine.api import urlfetch, files, images
 from google.appengine.api import mail, app_identity, search
 from google.appengine.ext import deferred, blobstore, ndb
@@ -20,23 +19,6 @@ jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(['templates']))
 jinja_environment.filters['dtf'] = dtf
 config = {}
-
-
-def check_feed(feedk, e=0):
-    feed = feedk.get()
-    parsed = fetch_feed(feed.feed)
-    n = len(parsed['items']) if parsed is not False else 0
-    if n > 0:
-        entry = parsed['items'][e]
-        while feed.last_id != entry['link'] and e < (n - 1):
-            deferred.defer(submit_bm, feedk=feedk, uik=feed.ui,
-                           title=entry['title'], url=entry['link'],
-                           comment=build_comment(entry),
-                           _queue='submit', _countdown=60)
-            e += 1
-            entry = parsed['items'][e]
-        feed.last_id = parsed['items'][0]['link']
-        feed.put()
 
 
 def submit_bm(feedk, uik, title, url, comment):
@@ -84,21 +66,21 @@ def submit_bm(feedk, uik, title, url, comment):
         bm_url = url_candidate
         bm_comment = comment
 
-    copie = Bookmarks.query(Bookmarks.ui == uik,
-                            Bookmarks.url == bm_url,
-                            Bookmarks.feed == feedk)
+    bm = Bookmarks.get_or_insert(bm_url, parent=uik, feed=feedk,
+                                 title=bm_title, domain=bm_domain,
+                                 comment=bm_comment)
 
-    if copie.get() is None:
-        # bmk = Bookmarks(id=bm_url, parent=uik, ui=uik, url=bm_url, feed=feedk,
-                        # title=bm_title, domain=bm_domain,
-                        # comment=bm_comment).put()
-        bmk = Bookmarks(ui=uik, feed=feedk, url=bm_url, title=bm_title,
-                        domain=bm_domain, comment=bm_comment).put()
+    # copie = Bookmarks.get_or_insert(Bookmarks.ui == uik,
+    #                                 Bookmarks.url == bm_url,
+    #                                 Bookmarks.feed == feedk)
+    # if copie.get() is None:
+    #     bmk = Bookmarks(ui=uik, feed=feedk, url=bm_url, title=bm_title,
+    #                     domain=bm_domain, comment=bm_comment).put()
 
-        if feedk is None and uik.get().mys is True:
-            deferred.defer(send_bm, bmk, _queue="email")
-        elif feedk is not None and feedk.get().notify == 'email':
-            deferred.defer(send_bm, bmk, _queue="email")
+    if feedk is None and uik.get().mys is True:
+        deferred.defer(send_bm, bm.key, _queue="email")
+    elif feedk is not None and feedk.get().notify == 'email':
+        deferred.defer(send_bm, bm.key, _queue="email")
 
 
 def build_comment(entry):
@@ -130,9 +112,9 @@ def fetch_url(url):
 
 def index_bm(key):
     bm = key.get()
-    index = search.Index(name=str(bm.ui.id()))
-    doc = search.Document(doc_id=str(bm.id), fields=[
-                          search.TextField(name='url', value=bm.url),
+    index = search.Index(name=str(bm.key.parent().id()))
+    doc = search.Document(doc_id=str(bm.key.urlsafe()), fields=[
+                          search.TextField(name='url', value=bm.key.id()),
                           search.TextField(name='title', value=bm.title),
                           search.HtmlField(name='comment', value=bm.comment)
                           ])
@@ -143,8 +125,7 @@ def index_bm(key):
 
 
 def delete_bms(uik, cursor=None):
-    bmq = Bookmarks.query(Bookmarks.ui == uik,
-                          Bookmarks.trashed == True)
+    bmq = Bookmarks.query(Bookmarks.stato == 'trash', ancestor=uik)
     bms, cur, more = bmq.fetch_page(10, start_cursor=cursor)
     ndb.delete_multi([bm.key for bm in bms])
     if more:
@@ -185,8 +166,8 @@ def send_bm(bmk):
     <hr>
     <tr> <td>%s</td> </tr>
 </tbody> </table> </html>
-""" % (bm.title, dtf(bm.data), bm.url, bm.comment)
-    mail.send_mail(sender=sender, to=bm.ui.get().email,
+""" % (bm.title, dtf(bm.data), bm.key.id(), bm.comment)
+    mail.send_mail(sender=sender, to=bm.key.parent().get().email,
                    subject=subject, body=html, html=html)
 
 # Delicious import

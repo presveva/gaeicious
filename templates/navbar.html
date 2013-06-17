@@ -10,7 +10,7 @@
 
   <div class="nav">
     <ul class="nav">
-      <li><a href="/twitter">Twitter</a></li>
+      <li><a href="/twitter">twitter</a></li>
       <li>
         <form id="search" class="navbar-search hidden-phone" action="/search" onsubmit="search()">
           <input type="text" class="search-query" name="query_string" placeholder="Search">
@@ -37,11 +37,11 @@
           <i class="icon-user"></i> {{ ui.key.id() }} <b class="caret"> </b>
         </a>
         <ul class="dropdown-menu">
-          <li><a href="#" onclick="getbms('starred','{{c}}')">Starred</a></li>
-          <li><a href="#" onclick="getbms('archived','{{c}}')">Archived</a></li>
-          <li><a href="#" onclick="getbms('shared','{{c}}')">Shared</a></li>
-          <li><a href="#" onclick="getbms('stream','{{c}}')">Stream</a></li>
-          <li><a href="#" onclick="getbms('trashed','{{c}}')">Trash</a></li>
+          <!-- <li><a href="#" onclick="getbms('starred','{{c}}')">Starred</a></li> -->
+          <li><a href="#" onclick="getbms('archive','{{c}}')">Archived</a></li>
+          <li><a href="#" onclick="get_shared()">Shared</a></li>
+          <!-- <li><a href="#" onclick="getbms('stream','{{c}}')">Stream</a></li> -->
+          <li><a href="#" onclick="getbms('trash','{{c}}')">Trash</a></li>
           <li class="divider"></li>
           <li><a href="/feeds">Feeds</a></li>
           <li><a href="/setting">Setting</a></li>

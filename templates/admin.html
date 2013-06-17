@@ -9,37 +9,42 @@
 <div class="container-narrow">
 <div class="row-fluid">
   <div>
+    <a class="btn" href="/admin/digest" > digest </a>
+    <a class="btn" href="/admin/activity" > activity </a>
+    <a class="btn" href="/admin/check" > CheckFeeds </a>
+    <a class="btn" href="/admin/import" > Import Delicious </a>
+    <!-- <a class="btn" href="/admin/cron_trash" > Cron_trash </a> -->
+  </div>
+</div>
+<hr>
+<div class="row-fluid">
+  <div class="span7">
     <form action="/admin/del_attr" class="form-inline" method="post">
       <input type="text" placeholder="Model" class="input-medium" name="model">
       <input type="text" placeholder="Property" class="input-medium" name="prop">
       <button type="submit" class="btn">Del Attr</button>
     </form>
   </div>
-  <hr>
-  <div>
-    <form action="/admin/delete_index" class="form-inline" method="post">
-      <input type="text" placeholder="index_name" class="input-medium" name="index_name">
-      <button type="submit" class="btn">Del index</button>
-    </form>
-    <a class="btn" href="/admin/reindex_all" > Reindex All </a>
-  </div>
-  <hr>
-  <div>
+  <div class="span5">
     <form action="/admin/iterator" class="form-inline" method="post">
       <input type="text" placeholder="model" class="input-medium" name="model">
       <button type="submit" class="btn">Iterator</button>
     </form>
   </div>
-  <hr>
-  <div>
-    <a class="btn" href="/admin/digest" > digest </a>
-    <a class="btn" href="/admin/activity" > activity </a>
-    <a class="btn" href="/admin/check" > CheckFeeds </a>
-    <a class="btn" href="/admin/import" > Import Delicious </a>
-    <a class="btn" href="/admin/cron_trash" > Cron_trash </a>
-  </div>
-  <hr>
 </div>
+<hr>
+<div class="row-fluid">
+  <div class="span6">
+    <form action="/admin/delete_index" class="form-inline" method="post">
+      <input type="text" placeholder="index_name" class="input-medium" name="index_name">
+      <button type="submit" class="btn">Del index</button>
+    </form>
+  </div>
+  <div class="span6">
+    <a class="btn" href="/admin/reindex_all" > Reindex All </a>
+  </div>
+</div>
+<hr>
 </div>
 </div>
 {% endblock %}

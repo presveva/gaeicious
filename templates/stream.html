@@ -1,21 +1,21 @@
 {% for bm in bms %}
-<div class="well well-small" id="row-{{ bm.id }}">
+<div class="well well-small" id="row-{{ bm.key.urlsafe() }}">
   <dt> <i class="icon-bookmark"></i>
-    <a href="{{ bm.url }}" target="_blank">{{ bm.title|e|truncate(110) }}</a>
+    <a href="{{ bm.key.id() }}" target="_blank">{{ bm.title|e|truncate(110) }}</a>
     <a class="btn btn-link btn-mini " onclick="getbms('domain','','{{ bm.domain }}')"><em>{{ bm.domain }}</em> </a>
     <div class="btn-group pull-right">
-      <button class="btn btn-mini" id="copy-{{ bm.id }}"><i class="icon-retweet"></i> copy</button>
+      <button class="btn btn-mini" id="copy-{{ bm.key.urlsafe() }}"><i class="icon-retweet"></i> copy</button>
     </div>
-    <dd><i class="icon-user"></i> {{bm.ui.id()}}
+    <dd><i class="icon-user"></i> {{bm.key.parent().id()}}
     <dd>{{ bm.comment }}
 </div>
 <script>
-$("#copy-{{ bm.id }}").click(function() {
+$("#copy-{{ bm.key.urlsafe() }}").click(function() {
   $.ajax({
     url: "/copy",
-    data: { bm: "{{ bm.id }}" },
+    data: { bm: "{{ bm.key.urlsafe() }}" },
     success: function() {
-      $("#copy-{{ bm.id }}").html('<i class="icon-ok"></i> copied');
+      $("#copy-{{ bm.key.urlsafe() }}").html('<i class="icon-ok"></i> copied');
     },
   });
 })

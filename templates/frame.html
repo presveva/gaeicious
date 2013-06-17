@@ -1,71 +1,66 @@
 {% for bm in bms %}
-<div class="row-{{ bm.id }}">
+<div class="row-{{ bm.key.urlsafe() }}">
   <table class="table table-condensed table-striped"> <tbody>
     <tr> <td>
-      <button class="btn btn-small" onclick="trash({{ bm.id }})">
-        {% if bm.trashed %} <span>delete</span> {% else %} <span>trash</span> {% endif %}
+      <button class="btn btn-small" onclick="trash('{{ bm.key.urlsafe() }}')">
+        {% if bm.stato == 'trash' %} <span>delete</span> {% else %} <span>trash</span> {% endif %}
       </button>
-      <button class="btn btn-small" onclick="archive({{ bm.id }})">
-        {% if bm.archived or bm.trashed %} <span>inbox</span> {% else %} <span>archive</span> {% endif %}
+      <button class="btn btn-small" onclick="archive('{{ bm.key.urlsafe() }}')">
+        {% if bm.stato == 'trash' %} <span>archive</span> {% else %} <span>inbox</span> {% endif %}
       </button>
-      <button class="btn btn-small" onclick="comment({{ bm.id }})">
+      <button class="btn btn-small" onclick="comment('{{ bm.key.urlsafe() }}')">
         <span>comment</span>
       </button>
-      <button class="btn btn-small hidden-phone" onclick="edit({{ bm.id }})">
+      <button class="btn btn-small hidden-phone" onclick="edit('{{ bm.key.urlsafe() }}')">
         <span>edit</span>
       </button>
-      <button class="btn hidden-phone btn-small star-{{ bm.id }}" onclick="star({{ bm.id }})">
-        {% if bm.starred %} <i class="icon-star"></i> {% else %} <i class="icon-star-empty"></i> {% endif %}
-      </button>
-      <button class="btn hidden-phone btn-small share-{{ bm.id }}" onclick="share({{ bm.id }})">
+      <button class="btn hidden-phone btn-small share-{{ bm.key.urlsafe() }}" onclick="share('{{ bm.key.urlsafe() }}')">
         {% if bm.shared %} <i class="icon-eye-open"></i> {% else %} <i class="icon-eye-close"></i> {% endif %}
       </button>
-      <button class="btn btn-small" onclick="tweet({{ bm.id }})">tweet</button>
-      <div class="link-{{ bm.id }} btn-group">
-      {% if bm.shared %}
-      <a class="btn btn-small btn-link " href="/bm/{{ bm.id }}" target="_blank">link</a>
+      <button class="btn btn-small" onclick="tweet('{{ bm.key.urlsafe() }}')">tweet</button>
+      <div class="link-{{ bm.key.urlsafe() }} btn-group">
+      {% if bm.share() %}
+      <a class="btn btn-small btn-link " href="/bm/{{ bm.share() }}" target="_blank">link</a>
       {% endif %}
       </div>
       <a class="btn btn-link btn-mini hidden-phone pull-right" onclick="getbms('domain','','{{ bm.domain }}')">
         <em>{{ bm.domain }}</em>
       </a>
     </td> </tr>
-    <tr class="{%if bm.trashed%}error{%elif bm.starred%}success{%endif%}"> <td>
+    <tr class="{%if bm.stato == 'trash' %}error{%endif%}"> <td>
       <i class="icon-bookmark hidden-phone"></i>
-      <a href="{{ bm.url }}" target="_blank">{{ bm.title|e}}</a>
+      <a href="{{ bm.key.id() }}" target="_blank">{{ bm.title|e}}</a>
     </td> </tr>
-    <tr class="hide tweet-{{ bm.id }}"> <td>
+    <tr class="hide tweet-{{ bm.key.urlsafe() }}"> <td>
       <form class="form-inline" action="/twitter/tweet">
-        <div class="control-group" id="input_tweet-{{ bm.id }}">
-          <textarea name="text_tweet" id="text_tweet-{{ bm.id }}" rows="3" class="span10">{{bm.title}} {{bm.url}}</textarea>
+        <div class="control-group" id="input_tweet-{{ bm.key.urlsafe() }}">
+          <textarea name="text_tweet" id="text_tweet-{{ bm.key.urlsafe() }}" rows="3" class="span10">{{bm.title}} {{bm.key.id()}}</textarea>
           <button class="btn btn-large " type="submit" >tweet</button>
         </div>
         <script type="text/javascript">
-        // $("[id='text_tweet-" + {{ bm.id|e }} + "']").keyup(function() {
-        $('#text_tweet-{{ bm.id }}').keyup(function() {
-          var len = this.value.length - {{bm.url|length}} + 25;
+        $('#text_tweet-{{ bm.key.urlsafe() }}').keyup(function() {
+          var len = this.value.length - {{bm.key.id()|length}} + 25;
           if (len >= 140) {
-            $('#input_tweet-{{ bm.id }}').removeClass('success');
-            $('#input_tweet-{{ bm.id }}').addClass('error');
+            $('#input_tweet-{{ bm.key.urlsafe() }}').removeClass('success');
+            $('#input_tweet-{{ bm.key.urlsafe() }}').addClass('error');
           } else {
-            $('#input_tweet-{{ bm.id }}').addClass('success');
+            $('#input_tweet-{{ bm.key.urlsafe() }}').addClass('success');
           }
         });
         </script>
       </form>
     </td> </tr>
-    <tr class="hide edit-{{ bm.id }}"> <td>
+    <tr class="hide edit-{{ bm.key.urlsafe() }}"> <td>
       {% include 'edit.html'%}
     </td> </tr>
-    <tr class="comments comment-{{ bm.id }} "> <td>
+    <tr class="comments comment-{{ bm.key.urlsafe() }} "> <td>
       {{bm.comment}}
       <script type="text/javascript">
-        $('.comment-{{ bm.id }} a').attr('target', '_blank');
+        $('.comment-{{ bm.key.urlsafe() }} a').attr('target', '_blank');
       </script>
     </td> </tr>
   </tbody> </table>
 </div>
-<!-- <hr class="row-{{ bm.id }}"> -->
 {% endfor %}
 {% if cursor %}
 <div class="well well-small">

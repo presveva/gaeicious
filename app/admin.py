@@ -6,15 +6,33 @@ from webapp2_extras import routes
 from google.appengine.ext import ndb, deferred
 from google.appengine.api import search, mail
 from . import util
-from .models import Feeds, Bookmarks, UserInfo
+from .models import *
+
+# CRON TASKS
 
 
 class CheckFeeds(webapp2.RequestHandler):
 
     def get(self):
         for feedk in Feeds.query().fetch(keys_only=True):
-            # util.check_feed(feedk)
-            deferred.defer(util.check_feed, feedk, _queue='check')
+            deferred.defer(check_feed, feedk, _queue='check')
+
+
+def check_feed(feedk, e=0):
+    feed = feedk.get()
+    parsed = util.fetch_feed(feed.feed)
+    n = len(parsed['items']) if parsed is not False else 0
+    if n > 0:
+        entry = parsed['items'][e]
+        while feed.last_id != entry['link'] and e < (n - 1):
+            deferred.defer(util.submit_bm, feedk=feedk, uik=feed.ui,
+                           title=entry['title'], url=entry['link'],
+                           comment=util.build_comment(entry),
+                           _queue='submit', _countdown=60)
+            e += 1
+            entry = parsed['items'][e]
+        feed.last_id = parsed['items'][0]['link']
+        feed.put()
 
 
 class SendDigest(webapp2.RequestHandler):
@@ -31,13 +49,12 @@ def feed_digest(feedk):
     feed = feedk.get()
     email = feed.ui.get().email
     if bmq.count() > 4 and email is not None:
-        # title = 'bla'
         title = '[%s] Digest for %s' % (util.appid, feed.title)
         template = util.jinja_environment.get_template('digest.html')
         html = template.render({'bmq': bmq, 'title': title})
         sender = 'bm@%s.appspotmail.com' % util.appid
-        mail.send_mail(
-            sender=sender, to=email, subject=title, body=html, html=html)
+        mail.send_mail(sender=sender, to=email,
+                       subject=title, body=html, html=html)
         queue = []
         for bm in bmq:
             bm.trashed = True
@@ -45,19 +62,22 @@ def feed_digest(feedk):
         ndb.put_multi(queue)
 
 
-class SendActivity(webapp2.RequestHandler):
+class Activity(webapp2.RequestHandler):
 
     def get(self):
-        for uik in UserInfo.query(UserInfo.daily == True).fetch(keys_only=True):
-            deferred.defer(activity_digest, uik, _queue='email')
+        for ui in UserInfo.query():
+            deferred.defer(cron_trash, ui.key, _queue='worker')
+            if ui.daily is True:
+                deferred.defer(activity_digest, ui.key, _queue='worker')
 
 
 def activity_digest(uik):
     delta = datetime.timedelta(hours=12)
     now = datetime.datetime.now()
     period = now - delta
-    bmq = Bookmarks.query(Bookmarks.ui == uik, Bookmarks.trashed == False,
-                          Bookmarks.data > period).order(-Bookmarks.data)
+    bmq = Bookmarks.query(Bookmarks.trashed == False,
+                          Bookmarks.data > period,
+                          ancestor=uik).order(-Bookmarks.data)
     email = uik.get().email
     if bmq.get() is not None and email is not None:
         title = '[%s] Daily digest for your activity: %s' % (
@@ -65,19 +85,19 @@ def activity_digest(uik):
         template = util.jinja_environment.get_template('activity.html')
         html = template.render({'bmq': bmq, 'title': title})
         sender = 'bm@%s.appspotmail.com' % util.appid
-        mail.send_mail(
-            sender=sender, to=email, subject=title, body=html, html=html)
+        mail.send_mail(sender=sender, to=email,
+                       subject=title, body=html, html=html)
 
 
-class cron_trash(webapp2.RequestHandler):
+def cron_trash(uik):
+    delta = datetime.timedelta(days=7)
+    now = datetime.datetime.now()
+    period = now - delta
+    bmq = Bookmarks.query(Bookmarks.trashed == True,
+                          Bookmarks.data < period, ancestor=uik).fetch(50, keys_only=True)
+    ndb.delete_multi(bmq)
 
-    def get(self):
-        delta = datetime.timedelta(days=7)
-        now = datetime.datetime.now()
-        period = now - delta
-        bmq = Bookmarks.query(Bookmarks.trashed == True,
-                              Bookmarks.data < period).fetch(keys_only=True)
-        ndb.delete_multi(bmq)
+# SEARCH INDEX
 
 
 class DeleteIndex(webapp2.RequestHandler):
@@ -115,6 +135,8 @@ def reindex(cursor=None):
     if more:
         deferred.defer(reindex, cur)
 
+# DELATTR
+
 
 class del_attr(webapp2.RequestHandler):
 
@@ -122,7 +144,7 @@ class del_attr(webapp2.RequestHandler):
     def post(self):
         model = str(self.request.get('model'))
         prop = str(self.request.get('prop'))
-        deferred.defer(iter_entity, model, prop)
+        iter_entity(model, prop)
         self.redirect('/admin')
 
 
@@ -132,7 +154,7 @@ def iter_entity(model, prop, cursor=None):
     for ent in res:
         deferred.defer(delatt, ent, prop)
     if more:
-        deferred.defer(iter_entity, model, prop, cur)
+        deferred.defer(iter_entity, model, prop, cur, _queue='upgrade')
 
 
 def delatt(ent, prop):
@@ -140,37 +162,46 @@ def delatt(ent, prop):
         delattr(ent, prop)
         ent.put()
 
+# ITERATOR
+
 
 class Iterator(webapp2.RequestHandler):
 
     def post(self):
         model = str(self.request.get('model'))
-        prop = UserInfo.get_by_id('presveva').key
-        deferred.defer(itera, model, prop)
+        itera(model)
         self.redirect('/admin')
 
 
-def itera(model, prop=None, cursor=None):
+def itera(model, cursor=None, arg=None):
     qry = ndb.gql("SELECT * FROM %s" % model)
-    res, cur, more = qry.fetch_page(100, start_cursor=cursor)
+    res, cur, more = qry.fetch_page(50, start_cursor=cursor)
     for ent in res:
-        deferred.defer(make_some, ent, prop)
+        deferred.defer(make_some, ent, _queue='upgrade')
     if more:
-        deferred.defer(itera, model, prop, cur)
+        deferred.defer(itera, model, cur, _queue='upgrade')
 
 
-def make_some(ent, prop):
-    if ent.ui != prop:
-        ent.ui = prop
-        ent.put()
+# def make_some(ent, arg=None):
+#     if ent.shared and ent.trashed is False:
+#         Shared(ui=ent.key.parent(), bm=ent.key).put()
+
+
+def make_some(ent, arg=None):
+    if ent.key.string_id() is None and ent.trashed is False:
+        stato = 'archive' if ent.archived else 'inbox'
+        Bookmarks.get_or_insert(ent.url, parent=ent.ui, feed=ent.feed,
+                                title=ent.title, comment=ent.comment,
+                                domain=ent.domain, stato=stato, data=ent.data)
+        ent.key.delete()
 
 
 app = ndb.toplevel(webapp2.WSGIApplication([
     routes.PathPrefixRoute('/admin', [
         webapp2.Route('/digest', SendDigest),
-        webapp2.Route('/activity', SendActivity),
+        webapp2.Route('/activity', Activity),
         webapp2.Route('/check', CheckFeeds),
-        webapp2.Route('/cron_trash', cron_trash),
+        # webapp2.Route('/cron_trash', cron_trash),
         webapp2.Route('/delete_index', DeleteIndex),
         webapp2.Route('/del_attr', del_attr),
         webapp2.Route('/reindex_all', reindex_all),
