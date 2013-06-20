@@ -117,6 +117,8 @@ def itera(model, cursor=None, arg=None):
             ent.key.delete()
         elif ent.key.string_id() is None:
             deferred.defer(make_some, ent, _queue='upgrade')
+        else:
+            deferred.defer(delattrs, ent, _queue='upgrade')
         # if ent.shared and ent.trashed is False:
             # Shared(ui=ent.key.parent(), bm=ent.key).put()
     if more:
@@ -131,9 +133,15 @@ def make_some(ent, arg=None):
     ent.key.delete()
 
 
+def delattrs(ent, arg=None):
+    if hasattr(ent, 'trashed'):
+        delattr(ent, 'trashed')
+    if hasattr(ent, 'archived'):
+        delattr(ent, 'archived')
+    ent.put()
+
+
 # SEARCH INDEX
-
-
 class DeleteIndex(webapp2.RequestHandler):
 
     def post(self):

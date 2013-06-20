@@ -13,17 +13,17 @@
       <li><a href="/twitter"><i class="icon-home"></i></a></li>
       <li><a href="#" onclick="getbms('archive','{{c}}')"> <i class="icon-folder-close"></i></a></li>
       <li><a href="#" onclick="getbms('trash','{{c}}')"><i class="icon-trash"></i></a></li>
+      <li class="nav hidden-phone"><a href="#" onclick="get_shared()"><i class="icon-gift"></i></a></li>
     </ul>
   </div>
 
-  <div class="nav pull-right visible-desktop">
-    <ul class="nav pull-right ">
+  <div class="nav pull-right">
+    <ul class="nav pull-right visible-desktop">
       <li class="dropdown">
         <a href="" class="dropdown-toggle" data-toggle="dropdown">
           <i class="icon-user"></i> {{ ui.key.id() }} <b class="caret"> </b>
         </a>
         <ul class="dropdown-menu">
-          <li><a href="#" onclick="get_shared()">Shared</a></li>
           <li><a href="/feeds">Feeds</a></li>
           <li><a href="/setting">Setting</a></li>
           <li class="divider"></li>
@@ -37,26 +37,30 @@
       </li>
     </ul>
 
-    <ul class="nav ">
+    <ul class="nav hidden-phone">
       <li id="more"> {% include 'more.html' %} </li>
       <li id="collapse_btn"> <a href="#" onclick="hide_all()"> <i class="icon-arrow-up"></i></a> </li>
       <li id="expande_btn" class="hide"> <a href="#" onclick="show_all()"> <i class="icon-arrow-down"></i></a> </li>
+    </ul>
+    <ul class="nav hidden-phone">
       <li class="">
         <form id="search" class="navbar-search" action="/search" onsubmit="search()">
-          <input type="text" class="search-query" name="query_string" placeholder="Search">
+          <input type="text" class="input-medium search-query" name="query_string" placeholder="Search">
         </form>
       </li>
     </ul>
   </div>
 
-  <div class="nav-collapse hidden-desktop">
+  <div class="nav-collapse">
     <ul class="nav pull-right">
-      <li class="">
+      <li class="visible-phone">
         <form id="search" class="navbar-search" action="/search" onsubmit="search()">
           <input type="text" class="search-query" name="query_string" placeholder="Search">
         </form>
       </li>
-      <li><a href="#" onclick="getbms('shared','{{c}}')">Shared</a></li>
+    </ul>
+    <ul class="nav hidden-desktop">
+      <li class=" visible-phone"><a href="#" onclick="getbms('shared','{{c}}')">Shared</a></li>
       <li><a href="/feeds"> Feeds</a></li>
       <li><a href="/setting"> Setting</a></li>
       <li class="divider"></li>

@@ -66,7 +66,7 @@ libraries:
 builtins:
 - deferred: on
 - remote_api: off
-- appstats: on
+- appstats: off
 - admin_redirect: on
 
 inbound_services:

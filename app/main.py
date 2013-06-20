@@ -150,7 +150,6 @@ class SettingPage(BaseHandler):
             self.request.host_url + "/submit?" + \
             "url='+encodeURIComponent(location.href)+'" + \
             "&title='+encodeURIComponent(document.title)+'" + \
-            "&user='+'" + str(self.ui.key.id()) + \
             "'+'&comment='+document.getSelection().toString()"
         self.response.set_cookie('mys', '%s' % self.ui.mys)
         self.response.set_cookie('daily', '%s' % self.ui.daily)

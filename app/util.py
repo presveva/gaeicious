@@ -44,10 +44,10 @@ def submit_bm(feedk, uik, title, url, comment):
         width="767" height="430" frameborder="0" webkitAllowFullScreen mozallowfullscreen
         allowFullScreen></iframe>''' % name
 
-    elif bm_domain == 'avaxhome.bz':
-        bm_url = url_candidate.replace('.bz/', '.ws/', 1)
-        bm_domain = 'avaxhome.ws'
-        bm_comment = comment
+    # elif bm_domain in ['avaxhome.bz', 'avaxho.me']:
+    #     bm_url = url_candidate.replace('.bz/', '.ws/', 1)
+    #     bm_domain = 'avaxhome.ws'
+    #     bm_comment = comment
 
     elif ext in ['jpg', 'png', 'jpeg', 'gif']:
         bm_url = url_candidate
@@ -68,7 +68,7 @@ def submit_bm(feedk, uik, title, url, comment):
 
     bm = Bookmarks.get_or_insert(bm_url, parent=uik, feed=feedk,
                                  title=bm_title, domain=bm_domain,
-                                 comment=bm_comment)
+                                 comment=bm_comment, stato='inbox')
 
     # copie = Bookmarks.get_or_insert(Bookmarks.ui == uik,
     #                                 Bookmarks.url == bm_url,

@@ -53,19 +53,19 @@ class Feeds(ndb.Model):
 
 
 class Bookmarks(ndb.Expando):
-    # ui = ndb.KeyProperty(kind=UserInfo)  # parent()
-    # url = ndb.StringProperty()  # id()
     title = ndb.StringProperty(indexed=False)
     comment = ndb.TextProperty(indexed=False)
     stato = ndb.StringProperty(choices=['inbox', 'trash', 'archive'],
                                default="inbox")
-    archived = ndb.BooleanProperty(default=False)
-    trashed = ndb.BooleanProperty(default=False)
-    # starred = ndb.BooleanProperty(default=False)
-    # shared = ndb.BooleanProperty(default=False)  # todo new model Shared
     data = ndb.DateTimeProperty(auto_now=True)
     feed = ndb.KeyProperty(kind=Feeds)
     domain = ndb.StringProperty()
+    # ui = ndb.KeyProperty(kind=UserInfo)  # parent()
+    # url = ndb.StringProperty()  # id()
+    # archived = ndb.BooleanProperty(default=False)
+    # trashed = ndb.BooleanProperty(default=False)
+    # starred = ndb.BooleanProperty(default=False)
+    # shared = ndb.BooleanProperty(default=False)  # todo new model Shared
 
     # @property
     def share(self):
