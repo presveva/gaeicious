@@ -6,7 +6,7 @@
         {% if bm.stato == 'trash' %} <span>delete</span> {% else %} <span>trash</span> {% endif %}
       </button>
       <button class="btn btn-small" onclick="archive('{{ bm.key.urlsafe() }}')">
-        {% if bm.stato == 'trash' %} <span>archive</span> {% else %} <span>inbox</span> {% endif %}
+        {% if bm.stato == 'inbox' %} <span>archive</span> {% else %} <span>inbox</span> {% endif %}
       </button>
       <button class="btn btn-small" onclick="comment('{{ bm.key.urlsafe() }}')">
         <span>comment</span>

@@ -13,13 +13,6 @@ indexes:
 - kind: Bookmarks
   ancestor: yes
   properties:
-  - name: domain
-  - name: data
-    direction: desc
-
-- kind: Bookmarks
-  ancestor: yes
-  properties:
   - name: stato
   - name: data
     direction: desc
@@ -29,7 +22,6 @@ indexes:
   properties:
   - name: trashed
   - name: data
-    direction: desc
 
 - kind: Feeds
   properties:

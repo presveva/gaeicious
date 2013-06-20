@@ -63,7 +63,7 @@ class Bookmarks(ndb.Expando):
     trashed = ndb.BooleanProperty(default=False)
     # starred = ndb.BooleanProperty(default=False)
     # shared = ndb.BooleanProperty(default=False)  # todo new model Shared
-    data = ndb.DateTimeProperty(auto_now_add=True)
+    data = ndb.DateTimeProperty(auto_now=True)
     feed = ndb.KeyProperty(kind=Feeds)
     domain = ndb.StringProperty()
 

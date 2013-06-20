@@ -13,6 +13,8 @@ function getbms(page, c, domain) {
     $('pre code').each(function (i, e) {
       hljs.highlightBlock(e);
     });
+    $('#expande_btn').hide();
+    $('#collapse_btn').show();
   });
 }
 
@@ -23,6 +25,8 @@ function get_shared() {
     $('pre code').each(function (i, e) {
       hljs.highlightBlock(e);
     });
+    $('#expande_btn').hide();
+    $('#collapse_btn').show();
   });
 }
 

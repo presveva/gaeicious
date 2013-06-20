@@ -10,39 +10,20 @@
 
   <div class="nav">
     <ul class="nav">
-      <li><a href="/twitter">twitter</a></li>
-      <li>
-        <form id="search" class="navbar-search hidden-phone" action="/search" onsubmit="search()">
-          <input type="text" class="search-query" name="query_string" placeholder="Search">
-        </form>
-      </li>
-    </ul>
-    <ul class="nav pull-right hidden-phone ">
-      <li id="more">
-        {% include 'more.html' %}
-      </li>
-      <li id="collapse_btn" >
-        <a href="#" onclick="hide_all()"> <i class="icon-circle-arrow-up"></i></a>
-      </li>
-      <li id="expande_btn" class="hide">
-        <a href="#" onclick="show_all()"> <i class="icon-circle-arrow-down"></i></a>
-      </li>
+      <li><a href="/twitter"><i class="icon-home"></i></a></li>
+      <li><a href="#" onclick="getbms('archive','{{c}}')"> <i class="icon-folder-close"></i></a></li>
+      <li><a href="#" onclick="getbms('trash','{{c}}')"><i class="icon-trash"></i></a></li>
     </ul>
   </div>
 
-  <div class="nav-collapse">
-    <ul class="nav pull-right visible-desktop">
+  <div class="nav pull-right visible-desktop">
+    <ul class="nav pull-right ">
       <li class="dropdown">
         <a href="" class="dropdown-toggle" data-toggle="dropdown">
           <i class="icon-user"></i> {{ ui.key.id() }} <b class="caret"> </b>
         </a>
         <ul class="dropdown-menu">
-          <!-- <li><a href="#" onclick="getbms('starred','{{c}}')">Starred</a></li> -->
-          <li><a href="#" onclick="getbms('archive','{{c}}')">Archived</a></li>
           <li><a href="#" onclick="get_shared()">Shared</a></li>
-          <!-- <li><a href="#" onclick="getbms('stream','{{c}}')">Stream</a></li> -->
-          <li><a href="#" onclick="getbms('trash','{{c}}')">Trash</a></li>
-          <li class="divider"></li>
           <li><a href="/feeds">Feeds</a></li>
           <li><a href="/setting">Setting</a></li>
           <li class="divider"></li>
@@ -55,18 +36,27 @@
         </ul>
       </li>
     </ul>
-    <ul class="nav pull-right hidden-desktop">
-      <li>
-        <form id="search" class="navbar-search hidden-phone" action="/search" onsubmit="search()">
+
+    <ul class="nav ">
+      <li id="more"> {% include 'more.html' %} </li>
+      <li id="collapse_btn"> <a href="#" onclick="hide_all()"> <i class="icon-arrow-up"></i></a> </li>
+      <li id="expande_btn" class="hide"> <a href="#" onclick="show_all()"> <i class="icon-arrow-down"></i></a> </li>
+      <li class="">
+        <form id="search" class="navbar-search" action="/search" onsubmit="search()">
           <input type="text" class="search-query" name="query_string" placeholder="Search">
         </form>
       </li>
-      <li><a href="#" onclick="getbms('starred','{{c}}')">Starred</a></li>
-      <li><a href="#" onclick="getbms('archived','{{c}}')">Archived</a></li>
+    </ul>
+  </div>
+
+  <div class="nav-collapse hidden-desktop">
+    <ul class="nav pull-right">
+      <li class="">
+        <form id="search" class="navbar-search" action="/search" onsubmit="search()">
+          <input type="text" class="search-query" name="query_string" placeholder="Search">
+        </form>
+      </li>
       <li><a href="#" onclick="getbms('shared','{{c}}')">Shared</a></li>
-      <li><a href="#" onclick="getbms('stream','{{c}}')">Stream</a></li>
-      <li><a href="#" onclick="getbms('trashed','{{c}}')">Trash</a></li>
-      <li class="divider"></li>
       <li><a href="/feeds"> Feeds</a></li>
       <li><a href="/setting"> Setting</a></li>
       <li class="divider"></li>

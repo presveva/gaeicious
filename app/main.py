@@ -126,7 +126,18 @@ class AdminPage(BaseHandler):
 
     def get(self):
         self.response.set_cookie('active-tab', 'admin')
-        self.generate('admin.html')
+        self.generate('admin.html', {})
+        # bmq = Bookmarks.query(Bookmarks.trashed == False).fetch(keys_only=True)
+        # integer = 0
+        # strings = 0
+        # trashed = Bookmarks.query(Bookmarks.trashed == True).count()
+        # for bmk in bmq:
+        #     if isinstance(bmk.id(), str):
+        #         strings += 1
+        #     else:
+        #         integer += 1
+        # self.generate('admin.html', {'integer': integer, 'strings': strings,
+        # 'trashed': trashed})
 
 
 class SettingPage(BaseHandler):
@@ -209,8 +220,10 @@ class ArchiveBM(BaseHandler):
     def get(self, us):
         bm = ndb.Key(urlsafe=str(us)).get()
         if self.ui.key == bm.key.parent():
-            stato = 'inbox' if bm.stato == 'archive' else 'archive'
-            bm.stato == stato
+            if bm.stato == 'inbox':
+                bm.stato = 'archive'
+            else:
+                bm.stato = 'inbox'
             bm.put()
 
 
