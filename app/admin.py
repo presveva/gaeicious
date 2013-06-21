@@ -5,12 +5,12 @@ import webapp2
 from webapp2_extras import routes
 from google.appengine.ext import ndb, deferred
 from google.appengine.api import search, mail
+# from google.appengine.runtime.apiproxy_errors import OverQuotaError
 from . import util
 from .models import *
 
-# CRON TASKS
 
-
+# CHECK FEEDS
 class CheckFeeds(webapp2.RequestHandler):
 
     def get(self):
@@ -33,7 +33,7 @@ def check_feed(feedk, e=0):
             entry = parsed['items'][e]
         feed.last_id = parsed['items'][0]['link']
         feed.put()
-        deferred.defer(feed_digest, feedk, _queue='email', _countdown=360)
+        deferred.defer(feed_digest, feedk, _queue='email', _countdown=300)
 
 
 def feed_digest(feedk):
@@ -55,6 +55,7 @@ def feed_digest(feedk):
         ndb.put_multi(queue)
 
 
+# 6 HOURS DIGEST
 class Activity(webapp2.RequestHandler):
 
     def get(self):
@@ -87,9 +88,8 @@ def cron_trash(uik):
         Bookmarks.stato == 'trash', ancestor=uik).fetch(25, keys_only=True)
     ndb.delete_multi(bmq)
 
+
 # ITERATOR
-
-
 class Iterator(webapp2.RequestHandler):
 
     def post(self):
@@ -100,7 +100,7 @@ class Iterator(webapp2.RequestHandler):
 
 def itera(model, cursor=None, arg=None):
     qry = ndb.gql("SELECT * FROM %s" % model)
-    res, cur, more = qry.fetch_page(30, start_cursor=cursor)
+    res, cur, more = qry.fetch_page(40, start_cursor=cursor)
     dadel = []
     for ent in res:
         if ent.trashed is True:
@@ -108,9 +108,8 @@ def itera(model, cursor=None, arg=None):
         elif ent.key.string_id() is None:
             deferred.defer(make_some, ent, _queue='upgrade')
     ndb.delete_multi(dadel)
-
     if more:
-        deferred.defer(itera, model, cur, _queue='upgrade', _countdown=3600)
+        deferred.defer(itera, model, cur, _queue='upgrade', _countdown=1800)
 
 
 def make_some(ent, arg=None):
@@ -121,7 +120,7 @@ def make_some(ent, arg=None):
     ent.key.delete()
 
 
-# SEARCH INDEX
+# DELETE SEARCH INDEX
 class DeleteIndex(webapp2.RequestHandler):
 
     def post(self):
@@ -142,6 +141,7 @@ class DeleteIndex(webapp2.RequestHandler):
         doc_index.delete_schema()
 
 
+# REINDEX ALL BMS
 class reindex_all(webapp2.RequestHandler):
 
     def get(self):
@@ -151,16 +151,14 @@ class reindex_all(webapp2.RequestHandler):
 
 def reindex(cursor=None):
     bmq = Bookmarks.query()
-    bms, cur, more = bmq.fetch_page(10, start_cursor=cursor)
+    bms, cur, more = bmq.fetch_page(100, start_cursor=cursor)
     for bm in bms:
-        deferred.defer(util.index_bm, bm.key, _queue='upgrade')
+        deferred.defer(Bookmarks.index_bm, bm.key, _queue='upgrade')
     if more:
-        deferred.defer(reindex, cur, _queue='upgrade', _countdown=600)
+        deferred.defer(reindex, cur, _queue='upgrade', _countdown=3600)
 
 
 # DELATTR
-
-
 class del_attr(webapp2.RequestHandler):
 
     """Delete property unused after a schema update"""
@@ -177,7 +175,8 @@ def iter_entity(model, prop, cursor=None):
     for ent in res:
         deferred.defer(delatt, ent, prop, _queue='upgrade')
     if more:
-        deferred.defer(iter_entity, model, prop, cur, _queue='upgrade')
+        deferred.defer(iter_entity, model, prop,
+                       cur, _queue='upgrade', _countdown=3600)
 
 
 def delatt(ent, prop):

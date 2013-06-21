@@ -78,6 +78,20 @@ function tweet(id) {
   $(".tweet-" + id).toggle();
 }
 
+function twitter_form() {
+  if ($("#twitter_form").hasClass('hide')) {
+    $("#twitter_form").removeClass('hide');
+  } else {
+    $("#twitter_form").addClass('hide');
+  }
+}
+
+function retweet(id) {
+  $.get("/twitter/retweet", {
+    id_str: id
+  });
+}
+
 function setnotify(id, notify) {
   $.get('/setnotify', {
     feed: id,

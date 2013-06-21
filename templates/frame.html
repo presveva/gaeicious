@@ -7,6 +7,7 @@
 
       <btn class="btn btn-small" onclick="archive('{{ bm.key.urlsafe() }}')">
         {% if bm.stato == 'inbox' %} <span>archive</span> {% else %} <span>inbox</span> {% endif %} </btn>
+
       <btn class="btn btn-small" onclick="comment('{{ bm.key.urlsafe() }}')"> <span>comment</span> </btn>
 
       <btn class="btn btn-small hidden-phone" onclick="edit('{{ bm.key.urlsafe() }}')"> <span>edit</span> </btn>
@@ -39,8 +40,9 @@
       <form class="form-inline" action="/twitter/tweet">
         <div class="control-group" id="input_tweet-{{ bm.key.urlsafe() }}">
           <textarea name="text_tweet" id="text_tweet-{{ bm.key.urlsafe() }}" rows="3" class="span10">{{bm.title}} {{bm.key.id()}}</textarea>
-          <btn class="btn btn-large " type="submit" >tweet</btn>
+          <button class="btn btn-large " type="submit" >tweet</button>
         </div>
+      </form>
         <script type="text/javascript">
         $('#text_tweet-{{ bm.key.urlsafe() }}').keyup(function() {
           var len = this.value.length - {{bm.key.id()|length}} + 25;
@@ -52,16 +54,12 @@
           }
         });
         </script>
-      </form>
     </td> </tr>
     <tr class="hide edit-{{ bm.key.urlsafe() }}"> <td>
       {% include 'edit.html'%}
     </td> </tr>
     <tr class="comments comment-{{ bm.key.urlsafe() }} "> <td>
       {{bm.comment}}
-      <script type="text/javascript">
-        $('.comment-{{ bm.key.urlsafe() }} a').attr('target', '_blank');
-      </script>
     </td> </tr>
   </tbody> </table>
 </div>
@@ -71,3 +69,6 @@
 <a href="#" class="btn btn-block" onclick="getbms(active(),'{{cursor}}')">more</a>
 </div>
 {% endif %}
+<script type="text/javascript">
+  $('.comments a').attr('target', '_blank');
+</script>

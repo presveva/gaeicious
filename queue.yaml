@@ -19,8 +19,8 @@ queue:
   bucket_size: 20
 
 - name: upgrade
-  rate: 10/s
-  bucket_size: 30
+  rate: 1/s
+  bucket_size: 20
   target: worker
 
 - name: worker

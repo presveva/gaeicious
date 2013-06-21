@@ -4,7 +4,7 @@ from __future__ import with_statement
 import os
 import jinja2
 from google.appengine.api import urlfetch, files, images
-from google.appengine.api import mail, app_identity, search
+from google.appengine.api import mail, app_identity
 from google.appengine.ext import deferred, blobstore, ndb
 from google.appengine.ext.webapp import blobstore_handlers
 from .models import Bookmarks, UserInfo
@@ -31,6 +31,7 @@ def submit_bm(feedk, uik, title, url, comment):
     ext = name.split('.')[-1].lower()
     bm_domain = url_parsed.netloc
     bm_title = url_candidate if title == '' or None else title
+    avax = ['avaxho.me', 'avaxhome.bz', 'avaxhome.ws']
 
     if bm_domain == 'www.youtube.com':
         query = parse_qs(url_parsed.query)
@@ -44,16 +45,15 @@ def submit_bm(feedk, uik, title, url, comment):
         width="767" height="430" frameborder="0" webkitAllowFullScreen mozallowfullscreen
         allowFullScreen></iframe>''' % name
 
-    # elif bm_domain in ['avaxhome.bz', 'avaxho.me']:
-    #     bm_url = url_candidate.replace('.bz/', '.ws/', 1)
-    #     bm_domain = 'avaxhome.ws'
-    #     bm_comment = comment
+    elif bm_domain in avax:
+        bm_url = url_candidate.replace(avax[1], avax[0]).replace(avax[2], avax[0])
+        bm_domain = avax[0]
+        bm_comment = comment
 
     elif ext in ['jpg', 'png', 'jpeg', 'gif']:
         bm_url = url_candidate
         blob_key = upload_to_blobstore(url_candidate, ext)
-        bm_comment = '<img src="%s" />' % images.get_serving_url(
-            blob_key, size=1600)
+        bm_comment = '<img src="%s" />' % images.get_serving_url(blob_key, size=1600)
 
     elif ext in ['mp3', 'flac', 'aac', 'ogg']:
         bm_url = url_candidate
@@ -66,16 +66,9 @@ def submit_bm(feedk, uik, title, url, comment):
         bm_url = url_candidate
         bm_comment = comment
 
-    bm = Bookmarks.get_or_insert(bm_url, parent=uik, feed=feedk,
-                                 title=bm_title, domain=bm_domain,
-                                 comment=bm_comment)
-
-    # copie = Bookmarks.get_or_insert(Bookmarks.ui == uik,
-    #                                 Bookmarks.url == bm_url,
-    #                                 Bookmarks.feed == feedk)
-    # if copie.get() is None:
-    #     bmk = Bookmarks(ui=uik, feed=feedk, url=bm_url, title=bm_title,
-    #                     domain=bm_domain, comment=bm_comment).put()
+        bm = Bookmarks.get_or_insert(bm_url, parent=uik, feed=feedk,
+                                     title=bm_title, domain=bm_domain,
+                                     comment=bm_comment)
 
     if feedk is None and uik.get().mys is True:
         deferred.defer(send_bm, bm.key, _queue="email")
@@ -108,20 +101,6 @@ def fetch_url(url):
         return result.final_url if result.final_url else url
     except urlfetch.Error:
         return url
-
-
-def index_bm(key):
-    bm = key.get()
-    index = search.Index(name=str(bm.key.parent().id()))
-    doc = search.Document(doc_id=str(bm.key.urlsafe()), fields=[
-                          search.TextField(name='url', value=bm.key.id()),
-                          search.TextField(name='title', value=bm.title),
-                          search.HtmlField(name='comment', value=bm.comment)
-                          ])
-    try:
-        index.put(doc)
-    except search.Error:
-        pass
 
 
 def delete_bms(uik, cursor=None):

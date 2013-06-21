@@ -10,14 +10,19 @@
 
   <div class="nav">
     <ul class="nav">
+      {% if tweets is defined %}
+      <li><a href="#" onclick="twitter_form()"><i class="icon-edit"></i> tweet</a></li>
+      {% else %}
       <li><a href="/twitter/"><i class="icon-home"></i></a></li>
-      <li><a href="#" onclick="getbms('archive','{{c}}')"> <i class="icon-folder-close"></i></a></li>
-      <li><a href="#" onclick="getbms('trash','{{c}}')"><i class="icon-trash"></i></a></li>
-      <li class="hidden-phone"><a href="#" onclick="getbms('star','{{c}}')"><i class="icon-star"></i></a></li>
-      <li class="hidden-phone"><a href="#" onclick="getbms('share','{{c}}')"><i class="icon-share"></i></a></li>
-      <li class="hidden-phone"><a href="#" onclick="getbms('stream','{{c}}')"><i class="icon-gift"></i></a></li>
+      <li><a href="/#" onclick="getbms('archive','{{c}}')"> <i class="icon-folder-close"></i></a></li>
+      <li><a href="/#" onclick="getbms('trash','{{c}}')"><i class="icon-trash"></i></a></li>
+      <li class="hidden-phone"><a href="/#" onclick="getbms('star','{{c}}')"><i class="icon-star"></i></a></li>
+      <li class="hidden-phone"><a href="/#" onclick="getbms('share','{{c}}')"><i class="icon-share"></i></a></li>
+      <li class="hidden-phone"><a href="/#" onclick="getbms('stream','{{c}}')"><i class="icon-gift"></i></a></li>
+      {% endif %}
     </ul>
   </div>
+
 
   <div class="nav pull-right">
     <ul class="nav pull-right visible-desktop">
@@ -39,6 +44,7 @@
       </li>
     </ul>
 
+    {% if tweets is undefined %}
     <ul class="nav hidden-phone">
       <li id="more"> {% include 'more.html' %} </li>
       <li id="collapse_btn"> <a href="#" onclick="hide_all()"> <i class="icon-arrow-up"></i></a> </li>
@@ -51,6 +57,7 @@
         </form>
       </li>
     </ul>
+    {% endif %}
   </div>
 
   <div class="nav-collapse">
@@ -62,9 +69,11 @@
       </li>
     </ul>
     <ul class="nav hidden-desktop">
+    {% if tweets is undefined %}
       <li class=" visible-phone"><a href="#" onclick="getbms('star','{{c}}')">Starred</a></li>
       <li class=" visible-phone"><a href="#" onclick="getbms('share','{{c}}')">Shared</a></li>
       <li class=" visible-phone"><a href="#" onclick="getbms('stream','{{c}}')">Stream</a></li>
+    {% endif %}
       <li><a href="/feeds"> Feeds</a></li>
       <li><a href="/setting"> Setting</a></li>
       <li class="divider"></li>

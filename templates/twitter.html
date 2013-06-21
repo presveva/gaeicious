@@ -4,83 +4,15 @@
 
 {% block content %}
 <div class="container-narrow">
-<div class="row-fluid">
 
-{% if redirect_url %}
-<div class="alert alert-block">
-  <button type="button" class="close" data-dismiss="alert">×</button>
-  <a class="btn" data-toggle="button" href='{{redirect_url}}'>Twitter login</a>
-</div>
-{% else %}
-<div class="well visible-desktop">
-<table class="table table-condensed">
-  <tbody>
-    {% for tweet in tweets %}
-    <tr>
-      <td><img title="{{tweet.user.screen_name }}" src="{{tweet.user.profile_image_url }}"></td>
-      <td>{{tweet.user.screen_name }}</td>
-      <td class="tweet">{{tweet.text|urlize}}</td>
-      <td>
-        <div class="btn-group">
-          <a class="btn btn-mini rt-{{ tweet.id_str }}" > <i class="icon-retweet"></i></a>
-        </div>
-      </td>
-    <script type="text/javascript">
-    $('#tweet a').attr('target', '_blank');
-    $("#rt-{{ tweet.id_str }}").click(function() {
-      $.get("/twitter/retweet", {id_str: '{{ tweet.id_str }}'})
-    })
-    </script>
-    </tr>
-    {% for media in tweet.entities.media %}
-    <tr>
-      <td colspan="2"></td>
-      <td colspan="2"> <img src="{{media.media_url}}"> </td>
-    </tr>
-    {% endfor %}
-    {% endfor %}
-  </tbody>
-</table>
-</div>
-
-<div class="hidden-desktop">
-<table class="table table-condensed">
-  <tbody>
-    {% for tweet in tweets %}
-    <tr>
-      <td><b>{{tweet.user.screen_name }}</b>: {{tweet.text|urlize}}</td>
-      <td>
-        <div class="btn-group">
-          <a class="btn btn-mini rt-{{ tweet.id_str }}" > <i class="icon-retweet"></i></a>
-        </div>
-      </td>
-      <script type="text/javascript">
-      $('.tweet a').attr('target', '_blank');
-      $(".rt-{{ tweet.id_str }}").click(function() {
-        $.get("/twitter/retweet", {id_str: '{{ tweet.id_str }}'})
-      })
-      </script>
-    </tr>
-    {% for media in tweet.entities.media %}
-    <tr>
-      <td colspan="2"> <img src="{{media.media_url}}"> </td>
-    </tr>
-    {% endfor %}
-    {% endfor %}
-  </tbody>
-</table>
-</div>
-</div>
-
-<div class="row-fluid">
-<form id="twittami" class="form-inline" action="/twitter/tweet">
+<div class="row-fluid hide" id="twitter_form">
+<form class="form-inline" action="/twitter/tweet">
   <div class="control-group" id="input_tweet">
     <textarea name="text_tweet" id="text_tweet" rows="3" class="span9" placeholder="140 caratteri"></textarea>
-    <button class="btn btn-large " type="submit" >tweet</button>
+    <button class="btn btn-large span3" type="submit" >tweet</button>
   </div>
   <script type="text/javascript">
   $('#text_tweet').keyup(function() {
-
     var len = this.value.length;
     if (len >= 140) {
       $('#input_tweet').removeClass('success');
@@ -94,17 +26,30 @@
 </div>
 
 <div class="row-fluid">
-<div class="alert alert-info">
-{% for fl in ui.new_foll() %}
-<dd>hai un nuovo follower:<a href='http://twitter.com/{{fl.get().screen_name}}'> {{fl.get().screen_name}}</a>
-{% endfor %}
-{% for fl in ui.lost_foll() %}
-<dd>hai perso un follower:<a href='http://twitter.com/{{fl.get().screen_name}}'> {{fl.get().screen_name}}</a>
-{% endfor %}
-<dd><a class="btn" data-toggle="button" href='/twitter/check'>Check Followers</a>
-</div>
+<table class="table table-condensed">
+  <tbody>
+    {% for tweet in tweets %}
+    <tr class="hidden-desktop">
+      <td> <b>{{tweet.user.screen_name }}</b>: {{tweet.text|urlize}} </td>
+      <td> <a class="btn btn-mini" onclick="retweet('{{ tweet.id_str }}')"> <i class="icon-retweet"></i></a> </td>
+    </tr>
+    <tr class="visible-desktop">
+      <td><img title="{{tweet.user.screen_name }}" src="{{tweet.user.profile_image_url }}" height="48" width="48"></td>
+      <td> {{tweet.user.screen_name }} </td>
+      <td class="tweet"> {{tweet.text|urlize}} </td>
+      <td><a class="btn btn-mini" onclick="retweet('{{ tweet.id_str }}')"><i class="icon-retweet"></i></a></div></td>
+    </tr>
+    {% for media in tweet.entities.media %}
+    <tr class="hidden-desktop"> <td colspan="2"> <img src="{{media.media_url}}"> </td> </tr>
+    <tr class="visible-desktop"> <td colspan="2"></td> <td colspan="4"> <img src="{{media.media_url}}"> </td> </tr>
+    {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
 </div>
 
 </div>
-{% endif %}
+<script type="text/javascript">
+  $('.tweet a').attr('target', '_blank');
+</script>
 {% endblock %}
