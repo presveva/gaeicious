@@ -17,11 +17,12 @@ indexes:
   - name: data
     direction: desc
 
-# - kind: Bookmarks
-#   ancestor: yes
-#   properties:
-#   - name: trashed
-#   - name: data
+- kind: Bookmarks
+  ancestor: yes
+  properties:
+  - name: domain
+  - name: data
+    direction: desc
 
 - kind: Feeds
   properties:

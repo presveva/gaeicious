@@ -1,23 +1,16 @@
 {% for bm in bms %}
-<div class="well well-small" id="row-{{ bm.key.urlsafe() }}">
-  <dt> <i class="icon-bookmark"></i>
-    <a href="{{ bm.key.id() }}" target="_blank">{{ bm.title|e|truncate(110) }}</a>
-    <a class="btn btn-link btn-mini " onclick="getbms('domain','','{{ bm.domain }}')"><em>{{ bm.domain }}</em> </a>
-    <div class="btn-group pull-right">
-      <button class="btn btn-mini" id="copy-{{ bm.key.urlsafe() }}"><i class="icon-retweet"></i> copy</button>
-    </div>
-    <dd><i class="icon-user"></i> {{bm.key.parent().id()}}
-    <dd>{{ bm.comment }}
-</div>
-<script>
-$("#copy-{{ bm.key.urlsafe() }}").click(function() {
-  $.ajax({
-    url: "/copy",
-    data: { bm: "{{ bm.key.urlsafe() }}" },
-    success: function() {
-      $("#copy-{{ bm.key.urlsafe() }}").html('<i class="icon-ok"></i> copied');
-    },
-  });
-})
-</script>
+<table class="table table-condensed table-striped"> <tbody> <tr> <td>
+    <button class="btn btn-mini" onclick="copy_bm({{ bm.key.urlsafe() }})"><i class="icon-retweet"></i> copy</button>
+    <span class="text-left"><i class="icon-user"></i> shared by {{bm.key.parent().id()}}</span>
+    <a class="btn btn-link btn-mini hidden-phone pull-right" onclick="getbms('domain','','{{ bm.domain }}')">
+      <em>{{ bm.domain }}</em>
+    </a>
+  </td></tr>
+  <tr> <td>
+    <i class="icon-bookmark hidden-phone"></i>
+    <a href="{{ bm.key.id() }}" target="_blank">{{ bm.title|e }}</a>
+  </td> </tr>
+  <tr> <td>
+    {{bm.comment}}
+  </td> </tr> </tbody> </table>
 {% endfor %}

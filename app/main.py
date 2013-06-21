@@ -84,32 +84,17 @@ class Main_Frame(BaseHandler):
         qry = Bookmarks.query(ancestor=self.ui.key).order(-Bookmarks.data)
         if page == 'domain':
             bmq = qry.filter(Bookmarks.domain == self.request.get('domain'))
+        elif page == 'stream':
+            bmq = Bookmarks.query(Bookmarks.stato == 'share')
         else:
             bmq = qry.filter(Bookmarks.stato == page)
         return bmq
-        # q2 = q1.filter(Bookmarks.trashed == False)
-
-        # if page == 'archived':
-            # bmq = q1.filter(Bookmarks.stato == page)
-        # elif page == 'shared':
-            # bmq = q2.filter(Bookmarks.shared == True)
-        # if page == 'starred':
-        #     bmq = q2.filter(Bookmarks.starred == True)
-        # elif page == 'trashed':
-        #     bmq = q1.filter(Bookmarks.trashed == True)
-        # elif page == 'stream':
-        #     bmq = Bookmarks.query(Bookmarks.trashed == False,
-        #                           Bookmarks.shared == True
-        #                           ).order(-Bookmarks.data)
 
     def build(self, page, bmq, cursor):
         bms, next_curs, more = bmq.fetch_page(10, start_cursor=cursor)
         next_c = next_curs.urlsafe() if more else None
-        # if page == 'stream':
-        #     html = self.render('stream.html', {'bms': bms})
-        # else:
-        html = self.render('frame.html', {'bms': bms, 'cursor': next_c})
-        # count = bmq.count(start_cursor=cursor)
+        tmpl = 'stream.html' if page == 'stream' else 'frame.html'
+        html = self.render(tmpl, {'bms': bms, 'cursor': next_c})
         more = self.render('more.html', {'cursor': next_c})
         self.response.set_cookie('active-tab', page)
         self.send_json({"html": html, "more": more})
@@ -127,17 +112,6 @@ class AdminPage(BaseHandler):
     def get(self):
         self.response.set_cookie('active-tab', 'admin')
         self.generate('admin.html', {})
-        # bmq = Bookmarks.query(Bookmarks.trashed == False).fetch(keys_only=True)
-        # integer = 0
-        # strings = 0
-        # trashed = Bookmarks.query(Bookmarks.trashed == True).count()
-        # for bmk in bmq:
-        #     if isinstance(bmk.id(), str):
-        #         strings += 1
-        #     else:
-        #         integer += 1
-        # self.generate('admin.html', {'integer': integer, 'strings': strings,
-        # 'trashed': trashed})
 
 
 class SettingPage(BaseHandler):
@@ -159,39 +133,6 @@ class SettingPage(BaseHandler):
                              'upload_url': upload_url, 'brand': brand, })
 
 
-class SharedPage(BaseHandler):
-
-    @util.login_required
-    def get(self):
-        qry = Shared.query(Shared.ui == self.ui.key).fetch(20)
-        bms = ndb.get_multi([sh.bm for sh in qry])
-        self.response.set_cookie('active-tab', 'shared')
-        html = self.render('frame.html', {'bms': bms})
-        self.response.write(html)
-
-
-# class StarredPage(BaseHandler):
-
-#     @util.login_required
-#     def get(self):
-#         qry = Starred.query(Starred.ui == self.ui.key).fetch(20)
-#         bms = ndb.get_multi([sh.bm for sh in qry])
-#         self.response.set_cookie('active-tab', 'starred')
-#         html = self.render('frame.html', {'bms': bms})
-#         self.response.write(html)
-
-
-class StreamPage(BaseHandler):
-
-    @util.login_required
-    def get(self):
-        qry = Shared.query().fetch(20)
-        bms = ndb.get_multi([sh.bm for sh in qry])
-        self.response.set_cookie('active-tab', 'stream')
-        html = self.render('stream.html', {'bms': bms})
-        self.response.write(html)
-
-
 class FeedsPage(BaseHandler):
 
     @util.login_required
@@ -210,7 +151,7 @@ class EditBM(BaseHandler):
             bm.title = self.request.get('title').encode('utf8')
             bm.comment = self.request.get('comment').encode('utf8')
             bm.put()
-        self.redirect(self.request.referer)
+        self.redirect('/')
 
 
 class ArchiveBM(BaseHandler):
@@ -239,6 +180,43 @@ class TrashBM(BaseHandler):
                 bm.put()
 
 
+class ShareBM(BaseHandler):
+
+    @util.login_required
+    def get(self, us):
+
+        bm = ndb.Key(urlsafe=str(us)).get()
+        if self.ui.key == bm.key.parent():
+            if bm.stato == 'share':
+                bm.stato = 'inbox'
+                eye = '<i class="icon-eye-close"></i>'
+                btn = ''
+            else:
+                bm.stato = 'share'
+                eye = '<i class="icon-eye-open"></i>'
+                btn = '<a class="btn btn-small btn-link" href="/bm/' + \
+                    us + '" target="_blank">link</a>'
+            bm.put()
+            self.send_json({"eye": eye, "btn": btn})
+
+
+class StarBM(BaseHandler):
+
+    @util.login_required
+    def get(self, us):
+
+        bm = ndb.Key(urlsafe=str(us)).get()
+        if self.ui.key == bm.key.parent():
+            if bm.stato == 'star':
+                bm.stato = 'inbox'
+                data = '<i class="icon-star-empty"></i>'
+            else:
+                bm.stato = 'star'
+                data = '<i class="icon-star"></i>'
+            bm.put()
+            self.response.write(data)
+
+
 class empty_trash(BaseHandler):
 
     @util.login_required
@@ -247,50 +225,11 @@ class empty_trash(BaseHandler):
         self.redirect(self.request.referer)
 
 
-# class StarBM(BaseHandler):
-
-#     @util.login_required
-#     def get(self, us):
-#         bm = ndb.Key(urlsafe=str(us)).get()
-# bm = Bookmarks.get_by_id(int(self.request.get('bm')))
-#         if self.ui.key == bm.key.parent():
-#             if bm.starred is False:
-# bm.archived = True
-#                 bm.starred = True
-#                 html = '<i class="icon-star"></i>'
-#             else:
-#                 bm.starred = False
-#                 html = '<i class="icon-star-empty"></i>'
-#             bm.put()
-#         self.response.write(html)
-
-
-class ShareBM(BaseHandler):
-
-    @util.login_required
-    def get(self, us):
-
-        bm = ndb.Key(urlsafe=str(us)).get()
-        if self.ui.key == bm.key.parent():
-            shq = Shared.query(Shared.bm == bm.key)
-            if shq.get() is None:
-                shk = Shared(ui=self.ui.key, bm=bm.key).put()
-                eye = '<i class="icon-eye-open"></i>'
-                btn = '<a class="btn btn-small btn-link" href="/bm/' + \
-                    str(shk.id()) + '" target="_blank">link</a>'
-            else:
-                shq.get().key.delete()
-                eye = '<i class="icon-eye-close"></i>'
-                btn = ''
-            self.send_json({"eye": eye, "btn": btn})
-
-
 class ItemPage(BaseHandler):
 
-    def get(self, sh_id):
-        sh = Shared.get_by_id(int(sh_id))
-        if sh is not None:
-            bm = sh.bm.get()
+    def get(self, us):
+        bm = ndb.Key(urlsafe=str(us)).get()
+        if bm.stato == 'share':
             self.generate('item.html', {'bm': bm})
         else:
             self.redirect('/')
@@ -462,8 +401,8 @@ class BounceHandler(webapp2.RequestHandler):
 
     def post(self):
         bounce = BounceNotification(self.request.POST)
-        logging.info('Bounce original: %s' + str(bounce.original))
-        logging.info('Bounce notification: %s' + str(bounce.notification))
+        logging.error('Bounce original: %s' + str(bounce.original))
+        logging.error('Bounce notification: %s' + str(bounce.notification))
 
 app = webapp2.WSGIApplication([
     ('/', HomePage),
@@ -480,15 +419,12 @@ app = webapp2.WSGIApplication([
     (r'/trash/(.*)', TrashBM),
     ('/empty_trash', empty_trash),
     ('/setting', SettingPage),
-    # ('/starred', StarredPage),
-    ('/stream', StreamPage),
-    ('/shared', SharedPage),
     ('/feeds', FeedsPage),
     ('/setmys', SetMys),
     ('/setdaily', SetDaily),
     ('/setnotify', SetNotify),
-    # (r'/star/(.*)', StarBM),
     (r'/share/(.*)', ShareBM),
+    (r'/star/(.*)', StarBM),
     ('/save_email', SaveEmail),
     (r'/getcomment/(.*)', GetComment),
     (r'/getedit/(.*)', GetEdit),

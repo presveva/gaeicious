@@ -36,13 +36,6 @@ def check_feed(feedk, e=0):
         deferred.defer(feed_digest, feedk, _queue='email', _countdown=360)
 
 
-# class SendDigest(webapp2.RequestHandler):
-
-#     def get(self):
-#         for feedk in Feeds.query(Feeds.notify == 'digest').fetch(keys_only=True):
-#             deferred.defer(feed_digest, feedk, _queue='email')
-
-
 def feed_digest(feedk):
 
     bmq = Bookmarks.query(Bookmarks.feed == feedk, Bookmarks.stato == 'inbox')
@@ -58,7 +51,6 @@ def feed_digest(feedk):
         queue = []
         for bm in bmq:
             bm.stato = 'trash'
-            # bm.trashed = True
             queue.append(bm)
         ndb.put_multi(queue)
 
@@ -77,7 +69,7 @@ def activity_digest(uik):
     now = datetime.datetime.now()
     period = now - delta
     bmq = Bookmarks.query(Bookmarks.data > period,
-                          Bookmarks.stato == 'trash',
+                          Bookmarks.stato != 'trash',
                           ancestor=uik)
     email = uik.get().email
     if bmq.get() is not None and email is not None:
@@ -91,12 +83,9 @@ def activity_digest(uik):
 
 
 def cron_trash(uik):
-    delta = datetime.timedelta(days=7)
-    now = datetime.datetime.now()
-    period = now - delta
-    ndb.delete_multi(Bookmarks.query(Bookmarks.stato == 'trash',
-                                     Bookmarks.data < period,
-                                     ancestor=uik).fetch(25, keys_only=True))
+    bmq = Bookmarks.query(
+        Bookmarks.stato == 'trash', ancestor=uik).fetch(25, keys_only=True)
+    ndb.delete_multi(bmq)
 
 # ITERATOR
 
@@ -111,16 +100,15 @@ class Iterator(webapp2.RequestHandler):
 
 def itera(model, cursor=None, arg=None):
     qry = ndb.gql("SELECT * FROM %s" % model)
-    res, cur, more = qry.fetch_page(10, start_cursor=cursor)
+    res, cur, more = qry.fetch_page(30, start_cursor=cursor)
+    dadel = []
     for ent in res:
         if ent.trashed is True:
-            ent.key.delete()
+            dadel.append(ent.key)
         elif ent.key.string_id() is None:
             deferred.defer(make_some, ent, _queue='upgrade')
-        else:
-            deferred.defer(delattrs, ent, _queue='upgrade')
-        # if ent.shared and ent.trashed is False:
-            # Shared(ui=ent.key.parent(), bm=ent.key).put()
+    ndb.delete_multi(dadel)
+
     if more:
         deferred.defer(itera, model, cur, _queue='upgrade', _countdown=3600)
 
@@ -131,14 +119,6 @@ def make_some(ent, arg=None):
                             title=ent.title, comment=ent.comment,
                             domain=ent.domain, stato=stato)
     ent.key.delete()
-
-
-def delattrs(ent, arg=None):
-    if hasattr(ent, 'trashed'):
-        delattr(ent, 'trashed')
-    if hasattr(ent, 'archived'):
-        delattr(ent, 'archived')
-    ent.put()
 
 
 # SEARCH INDEX
@@ -173,9 +153,9 @@ def reindex(cursor=None):
     bmq = Bookmarks.query()
     bms, cur, more = bmq.fetch_page(10, start_cursor=cursor)
     for bm in bms:
-        deferred.defer(util.index_bm, bm.key)
+        deferred.defer(util.index_bm, bm.key, _queue='upgrade')
     if more:
-        deferred.defer(reindex, cur)
+        deferred.defer(reindex, cur, _queue='upgrade', _countdown=600)
 
 
 # DELATTR
@@ -207,12 +187,10 @@ def delatt(ent, prop):
 
 app = ndb.toplevel(webapp2.WSGIApplication([
     routes.PathPrefixRoute('/admin', [
-        # webapp2.Route('/digest', SendDigest),
         webapp2.Route('/activity', Activity),
         webapp2.Route('/check', CheckFeeds),
-        # webapp2.Route('/cron_trash', cron_trash),
-        webapp2.Route('/delete_index', DeleteIndex),
         webapp2.Route('/del_attr', del_attr),
+        webapp2.Route('/delete_index', DeleteIndex),
         webapp2.Route('/reindex_all', reindex_all),
         webapp2.Route('/iterator', Iterator),
     ])], debug=util.debug, config=util.config))

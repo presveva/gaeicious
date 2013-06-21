@@ -1,4 +1,4 @@
-<form class="form-horizontal" action="/edit" id="save-{{ bm.id }}" >
+<form class="form-horizontal" action="/edit/{{bm.key.urlsafe()}}" id="save-{{ bm.id }}" >
   <fieldset>
     <div class="control-group hide">
       <input type="number" class="input-block-level" name="bm" value="{{ bm.id }}">

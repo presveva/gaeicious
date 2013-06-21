@@ -18,18 +18,6 @@ function getbms(page, c, domain) {
   });
 }
 
-function get_shared() {
-  $.get("/shared", function (html) {
-    $(".main_frame").html(html);
-    $(window).scrollTop(0);
-    $('pre code').each(function (i, e) {
-      hljs.highlightBlock(e);
-    });
-    $('#expande_btn').hide();
-    $('#collapse_btn').show();
-  });
-}
-
 function search() {
   event.preventDefault();
   $.post('/search', $('#search').serialize(), function (html) {
@@ -63,12 +51,11 @@ function trash(id) {
   });
 }
 
-// function star(us) {
-//   $.get('/star/' + us, function (data) {
-//     $(".star-" + us).html(data);
-//     // $(".row-" + us).hide();
-//   });
-// }
+function star(us) {
+  $.get('/star/' + us, function (data) {
+    $(".star-" + us).html(data);
+  });
+}
 
 function share(us) {
   $.get("/share/" + us, function (data) {

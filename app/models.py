@@ -47,16 +47,13 @@ class Feeds(ndb.Model):
                                 default="web")
     last_id = ndb.StringProperty()
 
-    # @property
-    # def id(self):
-    #     return self.key.id()
-
 
 class Bookmarks(ndb.Expando):
     title = ndb.StringProperty(indexed=False)
     comment = ndb.TextProperty(indexed=False)
-    stato = ndb.StringProperty(choices=['inbox', 'trash', 'archive'],
-                               default="inbox")
+    stato = ndb.StringProperty(
+        choices=['inbox', 'trash', 'archive', 'share', 'star'],
+        default="inbox")
     data = ndb.DateTimeProperty(auto_now=True)
     feed = ndb.KeyProperty(kind=Feeds)
     domain = ndb.StringProperty()
@@ -68,10 +65,10 @@ class Bookmarks(ndb.Expando):
     # shared = ndb.BooleanProperty(default=False)  # todo new model Shared
 
     # @property
-    def share(self):
-        qry = Shared.query(Shared.bm == self.key)
-        if qry.get():
-            return qry.get().key.id()
+    # def share(self):
+    #     qry = Shared.query(Shared.bm == self.key)
+    #     if qry.get():
+    #         return qry.get().key.id()
 
     # @classmethod
     # def _pre_delete_hook(cls, key):
@@ -95,9 +92,11 @@ class Bookmarks(ndb.Expando):
     #         pass
 
 
-class Shared(ndb.Model):
-    ui = ndb.KeyProperty(kind=UserInfo)  # parent()
-    bm = ndb.KeyProperty(kind=Bookmarks)  # parent()
+# class Shared(ndb.Model):
+# ui = ndb.KeyProperty(kind=UserInfo)  # parent()
+# bm = ndb.KeyProperty(kind=Bookmarks)  # parent()
+#     data = ndb.DateTimeProperty(auto_now=True)
+
 
 
 

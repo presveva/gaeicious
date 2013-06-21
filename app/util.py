@@ -68,7 +68,7 @@ def submit_bm(feedk, uik, title, url, comment):
 
     bm = Bookmarks.get_or_insert(bm_url, parent=uik, feed=feedk,
                                  title=bm_title, domain=bm_domain,
-                                 comment=bm_comment, stato='inbox')
+                                 comment=bm_comment)
 
     # copie = Bookmarks.get_or_insert(Bookmarks.ui == uik,
     #                                 Bookmarks.url == bm_url,
@@ -125,11 +125,12 @@ def index_bm(key):
 
 
 def delete_bms(uik, cursor=None):
-    bmq = Bookmarks.query(Bookmarks.stato == 'trash', ancestor=uik)
+    bmq = Bookmarks.query(
+        Bookmarks.stato == 'trash', ancestor=uik).fetch(keys_only=True)
     bms, cur, more = bmq.fetch_page(10, start_cursor=cursor)
-    ndb.delete_multi([bm.key for bm in bms])
+    ndb.delete_multi(bms)
     if more:
-        deferred.defer(delete_bms, uik, cur)
+        deferred.defer(delete_bms, uik, cur, _countdown=3600)
 
 
 def login_required(handler_method):
