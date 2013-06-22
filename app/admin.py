@@ -47,7 +47,7 @@ def check_feed(feedk, e=0):
             deferred.defer(util.submit_bm, feedk=feedk, uik=feed.ui,
                            title=entry['title'], url=entry['link'],
                            comment=util.build_comment(entry),
-                           _queue='submit', _countdown=60)
+                           _queue='submit')
             e += 1
             entry = parsed['items'][e]
         feed.last_id = parsed['items'][0]['link']
@@ -88,13 +88,12 @@ def activity_digest(uik):
     delta = datetime.timedelta(hours=6)
     now = datetime.datetime.now()
     period = now - delta
-    bmq = Bookmarks.query(Bookmarks.data > period,
-                          Bookmarks.stato != 'trash',
+    bmq = Bookmarks.query(Bookmarks.stato == 'inbox',
+                          Bookmarks.data > period,
                           ancestor=uik)
     email = uik.get().email
     if bmq.get() is not None and email is not None:
-        title = '[%s] Daily digest for your activity: %s' % (
-            util.brand, util.dtf(now))
+        title = '[%s] Last 6 hours inbox: %s' % (util.brand, util.dtf(now))
         template = util.jinja_environment.get_template('activity.html')
         html = template.render({'bmq': bmq, 'title': title})
         sender = 'bm@%s.appspotmail.com' % util.brand
@@ -103,8 +102,12 @@ def activity_digest(uik):
 
 
 def cron_trash(uik):
-    bmq = Bookmarks.query(
-        Bookmarks.stato == 'trash', ancestor=uik).fetch(25, keys_only=True)
+    delta = datetime.timedelta(days=3)
+    now = datetime.datetime.now()
+    period = now - delta
+    bmq = Bookmarks.query(Bookmarks.data < period,
+                          Bookmarks.stato == 'trash',
+                          ancestor=uik).fetch(25, keys_only=True)
     ndb.delete_multi(bmq)
 
 
@@ -120,14 +123,19 @@ class Iterator(webapp2.RequestHandler):
 def itera(model, cursor=None, arg=None):
     qry = ndb.gql("SELECT * FROM %s" % model)
     res, cur, more = qry.fetch_page(40, start_cursor=cursor)
+    count = 0
     dadel = []
     for ent in res:
         if ent.trashed is True:
             dadel.append(ent.key)
+            count += 1
         elif ent.key.string_id() is None:
             deferred.defer(make_some, ent, _queue='upgrade')
+            count += 1
     ndb.delete_multi(dadel)
-    if more:
+    if more and count < 20:
+        deferred.defer(itera, model, cur, _queue='upgrade')
+    elif more:
         deferred.defer(itera, model, cur, _queue='upgrade', _countdown=1800)
 
 

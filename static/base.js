@@ -39,21 +39,22 @@ function show_all() {
   $('#collapse_btn').show();
 }
 
-function archive(id) {
-  $.get('/archive/' + id, function () {
-    $(".row-" + id).hide();
+function archive(us) {
+  $.get('/archive/' + us, function () {
+    $(".row-" + us).hide();
   });
 }
 
-function trash(id) {
-  $.get('/trash/' + id, function () {
-    $(".row-" + id).hide();
+function trash(us) {
+  $.get('/trash/' + us, function () {
+    $(".row-" + us).hide();
   });
 }
 
 function star(us) {
-  $.get('/star/' + us, function (data) {
-    $(".star-" + us).html(data);
+  $.get('/star/' + us, function () {
+    $(".row-" + us).hide();
+    // $(".star-" + us).html(data);
   });
 }
 
@@ -64,18 +65,18 @@ function share(us) {
   });
 }
 
-function comment(id) {
-  $(".edit-" + id).hide();
-  $(".comment-" + id).toggle();
+function comment(us) {
+  $(".edit-" + us).hide();
+  $(".comment-" + us).toggle();
 }
 
-function edit(id) {
-  $(".comment-" + id).hide();
-  $(".edit-" + id).toggle();
+function edit(us) {
+  $(".comment-" + us).hide();
+  $(".edit-" + us).toggle();
 }
 
-function tweet(id) {
-  $(".tweet-" + id).toggle();
+function tweet(us) {
+  $(".tweet-" + us).toggle();
 }
 
 function twitter_form() {
@@ -102,6 +103,15 @@ function setnotify(id, notify) {
 function sync_feed(id) {
   $.get('/checkfeed', {
     feed: id
+  });
+}
+
+function del_feed(id) {
+  $.ajax({
+    type: "delete",
+    url: "/feeds?id=" + id
+  }).done(function () {
+    $("#row-" + id).hide();
   });
 }
 

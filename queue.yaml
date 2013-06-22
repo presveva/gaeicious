@@ -9,14 +9,17 @@ queue:
 - name: check
   rate: 10/s
   bucket_size: 20
+  target: check
 
 - name: submit
   rate: 10/s
   bucket_size: 20
+  target: check
 
 - name: email
   rate: 10/s
   bucket_size: 20
+  target: check
 
 - name: upgrade
   rate: 1/s

@@ -6,27 +6,11 @@
 <div class="container-narrow">
 <div class="row-fluid">
 <div class="well well-small">
-<form class="form-horizontal" action="/feed" method="post">
+<form class="form-horizontal" action="/feeds" method="post">
   <div class="control-group">
     <label class="control-label">Add Feed</label>
     <div class="controls">
       <input type="text" class="input span12" name="url" allowBlank="true">
-    </div>
-  </div>
-</form>
-<!-- <form class="form-horizontal" action="/feed" method="post">
-  <div class="control-group">
-    <label class="control-label">twitter username</label>
-    <div class="controls">
-      <input type="text" class="input span12" name="twitter" allowBlank="true">
-    </div>
-  </div>
-</form> -->
-<form class="form-horizontal" action="/feed" method="post">
-  <div class="control-group">
-    <label class="control-label">youtube username</label>
-    <div class="controls">
-      <input type="text" class="input span12" name="youtube" allowBlank="true">
     </div>
   </div>
 </form>
@@ -39,7 +23,7 @@
     <td><a href="{{ feed.link }}" target="_blank"><b>{{ feed.title|truncate(36, true) }}</b></a></td>
     <td>
       <div class="btn-group">
-        <a class="btn btn-mini" href="/feed?id={{ feed.key.id() }}"> <i class="icon-remove"></i> delete</a>
+        <a class="btn btn-mini" onclick="del_feed({{ feed.key.id() }})"> <i class="icon-remove"></i> delete</a>
         <a class="btn btn-mini" onclick="sync_feed({{ feed.key.id() }})"> <i class="icon-refresh"></i> sync</a>
       </div>
     </td>

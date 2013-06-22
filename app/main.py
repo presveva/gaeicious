@@ -118,6 +118,26 @@ class FeedsPage(BaseHandler):
         self.response.set_cookie('active-tab', 'feeds')
         self.generate('feeds.html', {'feeds': feed_list})
 
+    @util.login_required
+    def delete(self):
+        feed = Feeds.get_by_id(int(self.request.get('id')))
+        feed.key.delete()
+        # self.redirect(self.request.referer)
+
+    @util.login_required
+    def post(self):
+        from libs.feedparser import parse
+        feed = self.request.get('url')
+        q = Feeds.query(Feeds.ui == self.ui.key, Feeds.feed == feed)
+        if q.get() is None:
+            d = parse(str(feed))
+            feed_k = Feeds(ui=self.ui.key, feed=feed,
+                           title=d['channel']['title'],
+                           link=d['channel']['link'],
+                           last_id=d['items'][2]['link']).put()
+            deferred.defer(check_feed, feed_k, _queue='check')
+        self.redirect('/feeds')
+
 
 class EditBM(BaseHandler):
 
@@ -185,13 +205,10 @@ class StarBM(BaseHandler):
         bm = ndb.Key(urlsafe=str(us)).get()
         if self.ui.key == bm.key.parent():
             if bm.stato == 'star':
-                bm.stato = 'inbox'
-                data = '<i class="icon-star-empty"></i>'
+                bm.stato = 'archive'
             else:
                 bm.stato = 'star'
-                data = '<i class="icon-star"></i>'
             bm.put()
-            self.response.write(data)
 
 
 class empty_trash(BaseHandler):
@@ -226,34 +243,6 @@ class cerca(BaseHandler):
             self.response.write(html)
         except search.Error:
             pass
-
-
-class AddFeed(BaseHandler):
-
-    @util.login_required
-    def get(self):
-        feed = Feeds.get_by_id(int(self.request.get('id')))
-        feed.key.delete()
-        self.redirect(self.request.referer)
-
-    @util.login_required
-    def post(self):
-        from libs.feedparser import parse
-        if self.request.get('url'):
-            feed = self.request.get('url')
-        elif self.request.get('youtube'):
-            feed = "http://gdata.youtube.com/feeds/base/users/" \
-                + self.request.get('youtube') + \
-                "/uploads?alt=rss&v=2&orderby=published&client=ytapi-youtube-profile"
-        q = Feeds.query(Feeds.ui == self.ui.key, Feeds.feed == feed)
-        if q.get() is None:
-            d = parse(str(feed))
-            feed_k = Feeds(ui=self.ui.key, feed=feed,
-                           title=d['channel']['title'],
-                           link=d['channel']['link'],
-                           last_id=d['items'][2]['link']).put()
-            deferred.defer(check_feed, feed_k, _queue='check')
-        self.redirect('/feeds')
 
 
 class GetComment(webapp2.RequestHandler):
@@ -355,7 +344,6 @@ app = webapp2.WSGIApplication([
     (r'/bms/(.*)', Main_Frame),
     ('/submit', AddBM),
     (r'/copy/(.*)', CopyBM),
-    ('/feed', AddFeed),
     (r'/edit/(.*)', EditBM),
     ('/checkfeed', CheckFeed),
     (r'/archive/(.*)', ArchiveBM),
