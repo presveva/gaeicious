@@ -107,7 +107,7 @@ class SettingPage(BaseHandler):
         self.response.set_cookie('active-tab', 'setting')
         self.generate(
             'setting.html', {'bookmarklet': bookmarklet,
-                             'upload_url': util.upload_url, 'brand': util.brand})
+                             'upload_url': util.upload_url})
 
 
 class FeedsPage(BaseHandler):
@@ -350,7 +350,6 @@ class CopyBM(BaseHandler):
 
 app = webapp2.WSGIApplication([
     ('/', HomePage),
-    # ('/admin', AdminPage),
     ('/logout', Logout),
     ('/search', cerca),
     (r'/bms/(.*)', Main_Frame),
@@ -374,8 +373,6 @@ app = webapp2.WSGIApplication([
     (r'/getedit/(.*)', GetEdit),
     (r'/bm/(.*)', ItemPage),
     ('/upload', util.UploadDelicious),
-    # ('/_ah/mail/post@.*', ReceiveMail),
-    # ('/_ah/bounce', BounceHandler),
 ], debug=util.debug, config=util.config)
 
 if __name__ == "__main__":

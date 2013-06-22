@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 from google.appengine.ext import ndb
-from google.appengine.api import search
+# from google.appengine.api import search
 
 
 class UserInfo(ndb.Model):
@@ -36,19 +36,19 @@ class Bookmarks(ndb.Expando):
     feed = ndb.KeyProperty(kind=Feeds)
     domain = ndb.StringProperty()
 
-    @classmethod
-    def _pre_delete_hook(cls, key):
-        bm = key.get()
-        index = search.Index(name=bm.key.parent().id())
-        index.delete(bm.key.urlsafe())
+    # @classmethod
+    # def _pre_delete_hook(cls, key):
+    #     index = search.Index(name=key.parent().id())
+    #     index.delete(key.urlsafe())
 
-    def _post_put_hook(self, future):
-        index = search.Index(name=self.key.parent().string_id())
-        doc = search.Document(doc_id=self.key.urlsafe(), fields=[
-            search.TextField(name='url', value=self.key.string_id()),
-            search.TextField(name='title', value=self.title),
-            search.HtmlField(name='comment', value=self.comment)])
-        try:
-            index.put(doc)
-        except search.Error:
-            pass
+    # def _post_put_hook(self, future):
+    #     index = search.Index(name=self.key.parent().string_id())
+    #     doc = search.Document(doc_id=self.key.urlsafe(), fields=[
+    #         search.TextField(name='url', value=self.key.string_id()),
+    #         search.TextField(name='title', value=self.title),
+    #         search.HtmlField(name='comment', value=self.comment)])
+    #     try:
+    #         index.put(doc)
+    #     except search.Error:
+    #         pass
+
