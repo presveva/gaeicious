@@ -7,13 +7,13 @@
 {% block content %}
 <div class="visible-desktop">
 <div class="container-narrow">
+{% if admin %}
 <div class="row-fluid">
   <div>
     <a class="btn" href="/admin/digest" > digest </a>
     <a class="btn" href="/admin/activity" > activity </a>
     <a class="btn" href="/admin/check" > CheckFeeds </a>
     <a class="btn" href="/admin/import" > Import Delicious </a>
-    <!-- <a class="btn" href="/admin/cron_trash" > Cron_trash </a> -->
   </div>
 </div>
 <hr>
@@ -48,6 +48,10 @@
   </div>
 </div>
 <hr>
+{% endif %}
+  <div class="well well-small">
+    <a href="{{url}}" class="btn btn-block">{{text}}</a>
+  </div>
 </div>
 </div>
 {% endblock %}

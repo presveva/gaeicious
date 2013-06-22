@@ -1,26 +1,19 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-import logging
 import tweepy
 import webapp2
 from webapp2_extras import json
-from google.appengine.api import app_identity, search, mail
-from google.appengine.ext import ndb, blobstore, deferred
+from google.appengine.api import search
+from google.appengine.ext import ndb, deferred
 from . import util, secret
 from .models import *
-from .admin import check_feed
+from .admin import check_feed, is_admin
 
 auth = tweepy.OAuthHandler(secret.consumer_token,
                            secret.consumer_secret)
 
 
 class BaseHandler(webapp2.RequestHandler):
-
-    @property
-    def admin(self):
-        screen_name = self.request.cookies.get('screen_name')
-        if screen_name:
-            return True if screen_name in secret.admins else False
 
     @property
     def ui(self):
@@ -37,11 +30,7 @@ class BaseHandler(webapp2.RequestHandler):
         self.response.write(json.encode(_values))
 
     def generate(self, template_name, template_values={}):
-        values = {
-            'brand': app_identity.get_application_id(),
-            'admin': self.admin,
-            'ui': self.ui
-        }
+        values = {'brand': util.brand, 'ui': self.ui, 'admin': is_admin}
         values.update(template_values)
         template = util.jinja_environment.get_template(template_name)
         self.response.write(template.render(values))
@@ -60,10 +49,8 @@ class HomePage(BaseHandler):
             api = tweepy.API(auth)
             screen_name = api.me().screen_name
 
-            ui = UserInfo.get_or_insert(screen_name)
-            ui.access_k = auth.access_token.key
-            ui.access_s = auth.access_token.secret
-            ui.put()
+            UserInfo.get_or_insert(
+                screen_name, access_k=auth.access_token.key, access_s=auth.access_token.secret)
             self.response.set_cookie('screen_name', screen_name, max_age=604800)
             self.redirect('/')
         else:
@@ -106,19 +93,10 @@ class Logout(BaseHandler):
         self.redirect('/')
 
 
-class AdminPage(BaseHandler):
-
-    def get(self):
-        self.response.set_cookie('active-tab', 'admin')
-        self.generate('admin.html', {})
-
-
 class SettingPage(BaseHandler):
 
     @util.login_required
     def get(self):
-        upload_url = blobstore.create_upload_url('/upload')
-        brand = app_identity.get_application_id()
         bookmarklet = "javascript:location.href='" + \
             self.request.host_url + "/submit?" + \
             "url='+encodeURIComponent(location.href)+'" + \
@@ -129,7 +107,7 @@ class SettingPage(BaseHandler):
         self.response.set_cookie('active-tab', 'setting')
         self.generate(
             'setting.html', {'bookmarklet': bookmarklet,
-                             'upload_url': upload_url, 'brand': brand, })
+                             'upload_url': util.upload_url, 'brand': util.brand})
 
 
 class FeedsPage(BaseHandler):
@@ -370,42 +348,9 @@ class CopyBM(BaseHandler):
         deferred.defer(util.submit_bm, feedk=None, uik=self.ui.key,
                        title=bm.title, url=bm.key.id(), comment=bm.comment)
 
-
-class ReceiveMail(webapp2.RequestHandler):
-
-    def post(self):
-        from email import utils
-        message = mail.InboundEmailMessage(self.request.body)
-        texts = message.bodies('text/plain')
-        for text in texts:
-            txtmsg = ""
-            txtmsg = text[1].decode().strip()
-        email = utils.parseaddr(message.sender)[1]
-        ui = UserInfo.query(UserInfo.email == email).get()
-        util.submit_bm(feedk=None,
-                       uik=ui.key,
-                       url=txtmsg.encode('utf8'),
-                       title=self.get_subject(txtmsg.encode('utf8'), message),
-                       comment='Sent via email')
-
-    def get_subject(self, o, message):
-        from email import header
-        try:
-            return header.decode_header(message.subject)[0][0]
-        except:
-            return o
-
-
-class BounceHandler(webapp2.RequestHandler):
-
-    def post(self):
-        bounce = BounceNotification(self.request.POST)
-        logging.error('Bounce original: %s' + str(bounce.original))
-        logging.error('Bounce notification: %s' + str(bounce.notification))
-
 app = webapp2.WSGIApplication([
     ('/', HomePage),
-    ('/admin', AdminPage),
+    # ('/admin', AdminPage),
     ('/logout', Logout),
     ('/search', cerca),
     (r'/bms/(.*)', Main_Frame),
@@ -429,8 +374,8 @@ app = webapp2.WSGIApplication([
     (r'/getedit/(.*)', GetEdit),
     (r'/bm/(.*)', ItemPage),
     ('/upload', util.UploadDelicious),
-    ('/_ah/mail/post@.*', ReceiveMail),
-    ('/_ah/bounce', BounceHandler),
+    # ('/_ah/mail/post@.*', ReceiveMail),
+    # ('/_ah/bounce', BounceHandler),
 ], debug=util.debug, config=util.config)
 
 if __name__ == "__main__":

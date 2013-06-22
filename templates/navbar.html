@@ -33,13 +33,13 @@
         <ul class="dropdown-menu">
           <li><a href="/feeds">Feeds</a></li>
           <li><a href="/setting">Setting</a></li>
+          <li><a href="/logout">Logout</a></li>
           <li class="divider"></li>
-          {% if admin %}
           <li><a href="/admin">Admin</a></li>
+          {% if admin %}
           <li><a href="/_ah/admin" target="_blank">AppEngine</a></li>
           {% endif %}
           <li><a href="https://github.com/presveva/gaeicious" target="_blank">GitHub</a></li>
-          <li><a href="/logout">Logout</a></li>
         </ul>
       </li>
     </ul>
@@ -76,11 +76,9 @@
     {% endif %}
       <li><a href="/feeds"> Feeds</a></li>
       <li><a href="/setting"> Setting</a></li>
-      <li class="divider"></li>
-      {% if admin %}
-      <li ><a href="/admin"> Admin </a></li>
-      {% endif %}
       <li><a href="/logout"> Logout</a></li>
+      <li class="divider"></li>
+      <li><a href="/admin"> Admin </a></li>
     </ul>
   </div>
 </div>

@@ -1,6 +1,5 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-
 from google.appengine.ext import ndb
 from google.appengine.api import search
 
@@ -41,23 +40,14 @@ class Bookmarks(ndb.Expando):
     def _pre_delete_hook(cls, key):
         bm = key.get()
         index = search.Index(name=bm.key.parent().id())
-        index.delete(bm.key.string_id())
+        index.delete(bm.key.urlsafe())
 
     def _post_put_hook(self, future):
-        Bookmarks.index_bm(self.key)
-
-    @classmethod
-    def index_bm(cls, key):
-        bm = key.get()
-        index = search.Index(name=bm.key.parent().string_id())
-        doc = search.Document(doc_id=bm.key.urlsafe(), fields=[
-                              search.TextField(
-                              name='url', value=bm.key.string_id()),
-                              search.TextField(
-                              name='title', value=bm.title),
-                              search.HtmlField(
-                              name='comment', value=bm.comment)
-                              ])
+        index = search.Index(name=self.key.parent().string_id())
+        doc = search.Document(doc_id=self.key.urlsafe(), fields=[
+            search.TextField(name='url', value=self.key.string_id()),
+            search.TextField(name='title', value=self.title),
+            search.HtmlField(name='comment', value=self.comment)])
         try:
             index.put(doc)
         except search.Error:

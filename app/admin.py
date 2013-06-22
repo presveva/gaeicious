@@ -1,13 +1,32 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
+import logging
 import datetime
 import webapp2
 from webapp2_extras import routes
 from google.appengine.ext import ndb, deferred
-from google.appengine.api import search, mail
-# from google.appengine.runtime.apiproxy_errors import OverQuotaError
+from google.appengine.api import search, mail, users
 from . import util
 from .models import *
+
+is_admin = users.is_current_user_admin()
+
+
+class AdminPage(webapp2.RequestHandler):
+
+    def get(self):
+        continue_url = self.request.get('continue')
+
+        if users.get_current_user():
+            url = users.create_logout_url(continue_url)
+            text = 'Admin logout'
+        else:
+            url = users.create_login_url(continue_url)
+            text = 'Admin login'
+        template = util.jinja_environment.get_template('admin.html')
+        self.response.write(template.render({
+                            'brand': util.brand, 'text': text,
+                            'url': url, 'admin': is_admin}))
 
 
 # CHECK FEEDS
@@ -42,10 +61,10 @@ def feed_digest(feedk):
     feed = feedk.get()
     email = feed.ui.get().email
     if feed.notify == 'digest' and email is not None and bmq.count() > 4:
-        title = '[%s] Digest for %s' % (util.appid, feed.title)
+        title = '[%s] Digest for %s' % (util.brand, feed.title)
         template = util.jinja_environment.get_template('digest.html')
         html = template.render({'bmq': bmq, 'title': title})
-        sender = 'bm@%s.appspotmail.com' % util.appid
+        sender = 'bm@%s.appspotmail.com' % util.brand
         mail.send_mail(sender=sender, subject=title,
                        to=email, body=html, html=html)
         queue = []
@@ -75,10 +94,10 @@ def activity_digest(uik):
     email = uik.get().email
     if bmq.get() is not None and email is not None:
         title = '[%s] Daily digest for your activity: %s' % (
-            util.appid, util.dtf(now))
+            util.brand, util.dtf(now))
         template = util.jinja_environment.get_template('activity.html')
         html = template.render({'bmq': bmq, 'title': title})
-        sender = 'bm@%s.appspotmail.com' % util.appid
+        sender = 'bm@%s.appspotmail.com' % util.brand
         mail.send_mail(sender=sender, subject=title,
                        to=email, body=html, html=html)
 
@@ -150,12 +169,25 @@ class reindex_all(webapp2.RequestHandler):
 
 
 def reindex(cursor=None):
-    bmq = Bookmarks.query()
+    bmq = Bookmarks.query().fetch(keys_only=True)
     bms, cur, more = bmq.fetch_page(100, start_cursor=cursor)
-    for bm in bms:
-        deferred.defer(Bookmarks.index_bm, bm.key, _queue='upgrade')
+    for bmk in bms:
+        deferred.defer(index_bm, bmk, _queue='upgrade')
     if more:
         deferred.defer(reindex, cur, _queue='upgrade', _countdown=3600)
+
+
+def index_bm(key):
+    bm = key.get()
+    index = search.Index(name=key.parent().string_id())
+    doc = search.Document(doc_id=key.urlsafe(), fields=[
+        search.TextField(name='url', value=key.string_id()),
+        search.TextField(name='title', value=bm.title),
+        search.HtmlField(name='comment', value=bm.comment)])
+    try:
+        index.put(doc)
+    except search.Error:
+        pass
 
 
 # DELATTR
@@ -175,8 +207,8 @@ def iter_entity(model, prop, cursor=None):
     for ent in res:
         deferred.defer(delatt, ent, prop, _queue='upgrade')
     if more:
-        deferred.defer(iter_entity, model, prop,
-                       cur, _queue='upgrade', _countdown=3600)
+        deferred.defer(iter_entity, model, prop, cur,
+                       _queue='upgrade', _countdown=3600)
 
 
 def delatt(ent, prop):
@@ -184,7 +216,44 @@ def delatt(ent, prop):
         delattr(ent, prop)
         ent.put()
 
-app = ndb.toplevel(webapp2.WSGIApplication([
+
+class ReceiveMail(webapp2.RequestHandler):
+
+    def post(self):
+        from email import utils
+        message = mail.InboundEmailMessage(self.request.body)
+        texts = message.bodies('text/plain')
+        for text in texts:
+            txtmsg = ""
+            txtmsg = text[1].decode().strip()
+        email = utils.parseaddr(message.sender)[1]
+        ui = UserInfo.query(UserInfo.email == email).get()
+        util.submit_bm(feedk=None,
+                       uik=ui.key,
+                       url=txtmsg.encode('utf8'),
+                       title=self.get_subject(txtmsg.encode('utf8'), message),
+                       comment='Sent via email')
+
+    def get_subject(self, o, message):
+        from email import header
+        try:
+            return header.decode_header(message.subject)[0][0]
+        except:
+            return o
+
+
+class BounceHandler(webapp2.RequestHandler):
+
+    def post(self):
+        bounce = BounceNotification(self.request.POST)
+        logging.error('Bounce original: %s' + str(bounce.original))
+        logging.error('Bounce notification: %s' + str(bounce.notification))
+
+app = webapp2.WSGIApplication([routes.RedirectRoute(
+    '/admin/', AdminPage, name='Admin', strict_slash=True),
+    webapp2.Route('/_ah/mail/post@.*', ReceiveMail),
+    webapp2.Route('/_ah/bounce', BounceHandler),
+    webapp2.Route('/_ah/login_required', AdminPage),
     routes.PathPrefixRoute('/admin', [
         webapp2.Route('/activity', Activity),
         webapp2.Route('/check', CheckFeeds),
@@ -192,4 +261,4 @@ app = ndb.toplevel(webapp2.WSGIApplication([
         webapp2.Route('/delete_index', DeleteIndex),
         webapp2.Route('/reindex_all', reindex_all),
         webapp2.Route('/iterator', Iterator),
-    ])], debug=util.debug, config=util.config))
+    ])], debug=util.debug, config=util.config)

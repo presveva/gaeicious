@@ -1,10 +1,8 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-from __future__ import with_statement
 import os
 import jinja2
-from google.appengine.api import urlfetch, files, images
-from google.appengine.api import mail, app_identity
+from google.appengine.api import urlfetch, mail, app_identity
 from google.appengine.ext import deferred, blobstore, ndb
 from google.appengine.ext.webapp import blobstore_handlers
 from .models import Bookmarks, UserInfo
@@ -14,7 +12,8 @@ from libs.feedparser import parse
 
 debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 dtf = lambda value: value.strftime('%d/%m/%Y %H:%M')
-appid = app_identity.get_application_id()
+brand = app_identity.get_application_id()
+upload_url = blobstore.create_upload_url('/upload')
 jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(['templates']))
 jinja_environment.filters['dtf'] = dtf
@@ -52,8 +51,7 @@ def submit_bm(feedk, uik, title, url, comment):
 
     elif ext in ['jpg', 'png', 'jpeg', 'gif']:
         bm_url = url_candidate
-        blob_key = upload_to_blobstore(url_candidate, ext)
-        bm_comment = '<img src="%s" />' % images.get_serving_url(blob_key, size=1600)
+        bm_comment = '<img src="%s" width="767"/>' % url_candidate
 
     elif ext in ['mp3', 'flac', 'aac', 'ogg']:
         bm_url = url_candidate
@@ -122,23 +120,10 @@ def login_required(handler_method):
     return check_login
 
 
-def upload_to_blobstore(url_candidate, ext):
-    result = urlfetch.fetch(url=url_candidate)
-    if result.status_code == 200:
-        data = result.content
-        mime_type = "img/%s" % ext
-        file_name = files.blobstore.create(mime_type=mime_type)
-        with files.open(file_name, 'a') as f:
-            f.write(data)
-        files.finalize(file_name)
-        blob_key = files.blobstore.get_blob_key(file_name)
-        return blob_key
-
-
 def send_bm(bmk):
     bm = bmk.get()
-    sender = 'bm@%s.appspotmail.com' % appid
-    subject = "[%s] %s" % (appid, bm.title)
+    sender = 'bm@%s.appspotmail.com' % brand
+    subject = "[%s] %s" % (brand, bm.title)
     html = """
 <html> <table> <tbody>
     <tr> <td><b>%s</b> (%s)</td> </tr>
@@ -150,9 +135,8 @@ def send_bm(bmk):
     mail.send_mail(sender=sender, to=bm.key.parent().get().email,
                    subject=subject, body=html, html=html)
 
+
 # Delicious import
-
-
 class UploadDelicious(blobstore_handlers.BlobstoreUploadHandler):
 
     def post(self):
