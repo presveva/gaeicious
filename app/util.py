@@ -64,9 +64,9 @@ def submit_bm(feedk, uik, title, url, comment):
         bm_url = url_candidate
         bm_comment = comment
 
-        bm = Bookmarks.get_or_insert(bm_url, parent=uik, feed=feedk,
-                                     title=bm_title, domain=bm_domain,
-                                     comment=bm_comment)
+    bm = Bookmarks.get_or_insert(bm_url, parent=uik, feed=feedk,
+                                 title=bm_title, domain=bm_domain,
+                                 comment=bm_comment)
 
     if feedk is None and uik.get().mys is True:
         deferred.defer(send_bm, bm.key, _queue='email')

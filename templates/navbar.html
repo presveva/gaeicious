@@ -6,19 +6,25 @@
     <span class="icon-bar"></span>
     <span class="icon-bar"></span>
   </a>
-  <a class="brand" href="/">{{ brand }}</a>
+  <a class="brand hidden-phone" href="/">{{ brand }}</a>
+  <a class="brand visible-phone" href="/"><i class="icon-home"></i></a>
 
   <div class="nav">
     <ul class="nav">
       {% if tweets is defined %}
       <li><a href="#" onclick="twitter_form()"><i class="icon-edit"></i> tweet</a></li>
-      {% else %}
-      <li><a href="/twitter/"><i class="icon-home"></i></a></li>
+      {% elif feeds is defined %}
+      <form class="navbar-form pull-left" action="/feeds" method="post">
+        <input type="text" class="input input-medium" name="url" placeholder="Add feed">
+      </form>
+      {% elif is_gae %}
+      <li><a href="/twitter/"><i class="icon-bullhorn"></i></a></li>
       <li><a href="/#" onclick="getbms('archive','{{c}}')"> <i class="icon-folder-close"></i></a></li>
       <li><a href="/#" onclick="getbms('trash','{{c}}')"><i class="icon-trash"></i></a></li>
-      <li class="hidden-phone"><a href="/#" onclick="getbms('star','{{c}}')"><i class="icon-star"></i></a></li>
+      <li><a href="/#" onclick="getbms('star','{{c}}')"><i class="icon-star"></i></a></li>
       <li class="hidden-phone"><a href="/#" onclick="getbms('share','{{c}}')"><i class="icon-share"></i></a></li>
       <li class="hidden-phone"><a href="/#" onclick="getbms('stream','{{c}}')"><i class="icon-gift"></i></a></li>
+      {% else %}
       {% endif %}
     </ul>
   </div>
@@ -44,7 +50,7 @@
       </li>
     </ul>
 
-    {% if tweets is undefined %}
+    {% if is_gae %}
     <ul class="nav hidden-phone">
       <li id="more"> {% include 'more.html' %} </li>
       <li id="collapse_btn"> <a href="#" onclick="hide_all()"> <i class="icon-arrow-up"></i></a> </li>
@@ -61,6 +67,7 @@
   </div>
 
   <div class="nav-collapse">
+    {% if is_gae %}
     <ul class="nav pull-right">
       <li class="visible-phone">
         <form id="search" class="navbar-search" action="/search" onsubmit="search()">
@@ -68,9 +75,9 @@
         </form>
       </li>
     </ul>
+    {% endif %}
     <ul class="nav hidden-desktop">
-    {% if tweets is undefined %}
-      <li class=" visible-phone"><a href="#" onclick="getbms('star','{{c}}')">Starred</a></li>
+    {% if is_gae %}
       <li class=" visible-phone"><a href="#" onclick="getbms('share','{{c}}')">Shared</a></li>
       <li class=" visible-phone"><a href="#" onclick="getbms('stream','{{c}}')">Stream</a></li>
     {% endif %}

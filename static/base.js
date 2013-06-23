@@ -66,8 +66,9 @@ function share(us) {
 }
 
 function comment(us) {
-  $(".edit-" + us).hide();
-  $(".comment-" + us).toggle();
+  $(".row-" + us).hide();
+  // $(".edit-" + us).hide();
+  // $(".comment-" + us).toggle();
 }
 
 function edit(us) {

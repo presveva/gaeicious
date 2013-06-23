@@ -43,7 +43,7 @@ class HomePage(BaseHandler):
         if self.ui is not None:
             auth.set_access_token(self.ui.access_k, self.ui.access_s)
             api = tweepy.API(auth)
-            self.generate('home.html', {})
+            self.generate('home.html', {'is_gae': True})
         elif oauth_verifier:
             auth.get_access_token(oauth_verifier)
             api = tweepy.API(auth)

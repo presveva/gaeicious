@@ -34,7 +34,7 @@
       <td> <a class="btn btn-mini" onclick="retweet('{{ tweet.id_str }}')"> <i class="icon-retweet"></i></a> </td>
     </tr>
     <tr class="visible-desktop">
-      <td><img title="{{tweet.user.screen_name }}" src="{{tweet.user.profile_image_url }}" height="48" width="48"></td>
+      <td><img title="{{tweet.user.screen_name }}" src="{{tweet.user.profile_image_url }}" width="48"></td>
       <td> {{tweet.user.screen_name }} </td>
       <td class="tweet"> {{tweet.text|urlize}} </td>
       <td><a class="btn btn-mini" onclick="retweet('{{ tweet.id_str }}')"><i class="icon-retweet"></i></a></div></td>
