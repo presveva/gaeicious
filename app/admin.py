@@ -5,6 +5,7 @@ import datetime
 import webapp2
 from webapp2_extras import routes
 from google.appengine.ext import ndb, deferred
+from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from google.appengine.api import search, mail, users
 from . import util
 from .models import *
@@ -225,29 +226,15 @@ def delatt(ent, prop):
         ent.put()
 
 
-class ReceiveMail(webapp2.RequestHandler):
+class PostViaEmail(InboundMailHandler):
 
-    def post(self):
-        from email import utils
-        message = mail.InboundEmailMessage(self.request.body)
-        texts = message.bodies('text/plain')
-        for text in texts:
-            txtmsg = ""
-            txtmsg = text[1].decode().strip()
-        email = utils.parseaddr(message.sender)[1]
+    def receive(self, message):
+        email = message.sender.split('<')[1].split('>')[0]
+        url = message.bodies('text/plain').next()[1].decode().strip()
         ui = UserInfo.query(UserInfo.email == email).get()
-        util.submit_bm(feedk=None,
-                       uik=ui.key,
-                       url=txtmsg.encode('utf8'),
-                       title=self.get_subject(txtmsg.encode('utf8'), message),
-                       comment='Sent via email')
-
-    def get_subject(self, o, message):
-        from email import header
-        try:
-            return header.decode_header(message.subject)[0][0]
-        except:
-            return o
+        deferred.defer(util.submit_bm, feedk=None, uik=ui.key,
+                       title=message.subject, comment='Sent via email',
+                       url=url, _queue='submit')
 
 
 class BounceHandler(webapp2.RequestHandler):
@@ -257,9 +244,9 @@ class BounceHandler(webapp2.RequestHandler):
         logging.error('Bounce original: %s' + str(bounce.original))
         logging.error('Bounce notification: %s' + str(bounce.notification))
 
-app = webapp2.WSGIApplication([routes.RedirectRoute(
-    '/admin/', AdminPage, name='Admin', strict_slash=True),
-    webapp2.Route('/_ah/mail/post@.*', ReceiveMail),
+app = webapp2.WSGIApplication([
+    routes.RedirectRoute('/admin/', AdminPage, name='Admin', strict_slash=True),
+    webapp2.Route('/_ah/mail/post@.*', PostViaEmail),
     webapp2.Route('/_ah/bounce', BounceHandler),
     webapp2.Route('/_ah/login_required', AdminPage),
     routes.PathPrefixRoute('/admin', [
@@ -269,4 +256,5 @@ app = webapp2.WSGIApplication([routes.RedirectRoute(
         webapp2.Route('/delete_index', DeleteIndex),
         webapp2.Route('/reindex_all', reindex_all),
         webapp2.Route('/iterator', Iterator),
-    ])], debug=util.debug, config=util.config)
+    ])
+], debug=util.debug, config=util.config)
