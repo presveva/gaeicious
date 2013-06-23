@@ -1,8 +1,5 @@
-<form class="form-horizontal" action="/edit/{{bm.key.urlsafe()}}" id="save-{{ bm.id }}" >
+<form class="form-horizontal" onsubmit="edit_bm('{{ bm.key.urlsafe() }}')" id="edit_bm-{{ bm.key.urlsafe() }}" >
   <fieldset>
-    <div class="control-group hide">
-      <input type="number" class="input-block-level" name="bm" value="{{ bm.id }}">
-    </div>
     <div class="control-group">
       <label class="control-label" for="Title">Title</label>
       <div class="controls">

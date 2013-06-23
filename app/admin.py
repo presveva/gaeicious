@@ -107,7 +107,7 @@ def cron_trash(uik):
     period = now - delta
     bmq = Bookmarks.query(Bookmarks.data < period,
                           Bookmarks.stato == 'trash',
-                          ancestor=uik).fetch(25, keys_only=True)
+                          ancestor=uik).fetch(50, keys_only=True)
     ndb.delete_multi(bmq)
 
 

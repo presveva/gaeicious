@@ -139,18 +139,6 @@ class FeedsPage(BaseHandler):
         self.redirect('/feeds')
 
 
-class EditBM(BaseHandler):
-
-    @util.login_required
-    def get(self, us):
-        bm = ndb.Key(urlsafe=str(us)).get()
-        if self.ui.key == bm.key.parent():
-            bm.title = self.request.get('title').encode('utf8')
-            bm.comment = self.request.get('comment').encode('utf8')
-            bm.put()
-        self.redirect('/')
-
-
 class ArchiveBM(BaseHandler):
 
     @util.login_required
@@ -227,6 +215,15 @@ class ItemPage(BaseHandler):
             self.generate('item.html', {'bm': bm})
         else:
             self.redirect('/')
+
+    @util.login_required
+    def post(self, us):
+        bm = ndb.Key(urlsafe=str(us)).get()
+        if self.ui.key == bm.key.parent():
+            bm.title = self.request.get('title').encode('utf8')
+            bm.comment = self.request.get('comment').encode('utf8')
+            bm.put()
+            self.response.write("<td>%s</td>" % bm.comment)
 
 
 class cerca(BaseHandler):
@@ -344,7 +341,6 @@ app = webapp2.WSGIApplication([
     (r'/bms/(.*)', Main_Frame),
     ('/submit', AddBM),
     (r'/copy/(.*)', CopyBM),
-    (r'/edit/(.*)', EditBM),
     ('/checkfeed', CheckFeed),
     (r'/archive/(.*)', ArchiveBM),
     (r'/trash/(.*)', TrashBM),

@@ -35,13 +35,13 @@ def submit_bm(feedk, uik, title, url, comment):
     if bm_domain == 'www.youtube.com':
         query = parse_qs(url_parsed.query)
         bm_url = 'http://www.youtube.com/watch?v=%s' % query["v"][0]
-        bm_comment = """<embed width="767" height="430" src="http://www.youtube.com/v/%s"
+        bm_comment = """<embed width="757" height="430" src="http://www.youtube.com/v/%s"
         type="application/x-shockwave-flash"> </embed>""" % query["v"][0]
 
     elif bm_domain == 'vimeo.com':
         bm_url = 'http://vimeo.com/%s' % name
         bm_comment = '''<iframe src="http://player.vimeo.com/video/%s?color=ffffff"
-        width="767" height="430" frameborder="0" webkitAllowFullScreen mozallowfullscreen
+        width="757" height="430" frameborder="0" webkitAllowFullScreen mozallowfullscreen
         allowFullScreen></iframe>''' % name
 
     elif bm_domain in avax:
@@ -51,7 +51,7 @@ def submit_bm(feedk, uik, title, url, comment):
 
     elif ext in ['jpg', 'png', 'jpeg', 'gif']:
         bm_url = url_candidate
-        bm_comment = '<img src="%s" width="767"/>' % url_candidate
+        bm_comment = '<img src="%s" width="757"/>' % url_candidate
 
     elif ext in ['mp3', 'flac', 'aac', 'ogg']:
         bm_url = url_candidate

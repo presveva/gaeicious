@@ -15,6 +15,23 @@ function getbms(page, c, domain) {
     });
     $('#expande_btn').hide();
     $('#collapse_btn').show();
+    $('.nav li').removeClass('active');
+    $('#' + page + '_pg').addClass('active');
+  });
+}
+
+function edit(us) {
+  $(".edit-" + us).toggle();
+  $('.comment-' + us).addClass('hide');
+}
+
+function edit_bm(us) {
+  event.preventDefault();
+  $.post('/bm/' + us, $('#edit_bm-' + us).serialize(), function (html) {
+    $('.comment-' + us).html(html);
+    $('.edit-' + us).toggle();
+    // $('.edit-' + us).addClass('hide');
+    $('.comment-' + us).removeClass('hide');
   });
 }
 
@@ -54,7 +71,6 @@ function trash(us) {
 function star(us) {
   $.get('/star/' + us, function () {
     $(".row-" + us).hide();
-    // $(".star-" + us).html(data);
   });
 }
 
@@ -67,13 +83,6 @@ function share(us) {
 
 function comment(us) {
   $(".row-" + us).hide();
-  // $(".edit-" + us).hide();
-  // $(".comment-" + us).toggle();
-}
-
-function edit(us) {
-  $(".comment-" + us).hide();
-  $(".edit-" + us).toggle();
 }
 
 function tweet(us) {
