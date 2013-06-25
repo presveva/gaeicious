@@ -95,7 +95,7 @@ def activity_digest(uik):
     email = uik.get().email
     if bmq.get() is not None and email is not None:
         title = '[%s] Last 6 hours inbox: %s' % (util.brand, util.dtf(now))
-        template = util.jinja_environment.get_template('activity.html')
+        template = util.jinja_environment.get_template('digest.html')
         html = template.render({'bmq': bmq, 'title': title})
         sender = 'bm@%s.appspotmail.com' % util.brand
         mail.send_mail(sender=sender, subject=title,

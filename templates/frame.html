@@ -1,9 +1,11 @@
 {% for bm in bms %}
 {% set us = bm.key.urlsafe() %}
 <table class="table table-condensed table-striped row-{{us}}">
-  <tbody> <tr > <td>
+  <tbody> <tr> <td>
+    
     <btn class="btn btn-small" onclick="comment('{{us}}')">
-      <i class="icon-remove-circle"></i> <span class="hidden-phone">hide</span> </btn>
+      <i class="icon-remove-circle"></i> <span class="hidden-phone">hide</span> 
+    </btn>
 
     <btn class="btn btn-small" onclick="trash('{{us}}')">
       {% if bm.stato == 'trash' %}
