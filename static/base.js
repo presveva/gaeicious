@@ -22,7 +22,7 @@ function getbms(page, c, domain) {
 
 function edit(us) {
   $(".edit-" + us).toggle();
-  $('.comment-' + us).addClass('hide');
+  $('.comment-' + us).toggle();
 }
 
 function edit_bm(us) {
@@ -30,7 +30,6 @@ function edit_bm(us) {
   $.post('/bm/' + us, $('#edit_bm-' + us).serialize(), function (html) {
     $('.comment-' + us).html(html);
     $('.edit-' + us).toggle();
-    // $('.edit-' + us).addClass('hide');
     $('.comment-' + us).removeClass('hide');
   });
 }

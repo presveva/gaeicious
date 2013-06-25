@@ -72,6 +72,7 @@ class Main_Frame(BaseHandler):
             bmq = qry.filter(Bookmarks.domain == self.request.get('domain'))
         elif page == 'stream':
             bmq = Bookmarks.query(Bookmarks.stato == 'share')
+            # bmq = Bookmarks.query(Bookmarks.stato == 'share').order(-Bookmarks.data)
         else:
             bmq = qry.filter(Bookmarks.stato == page)
         return bmq

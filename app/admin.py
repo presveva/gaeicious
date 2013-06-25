@@ -132,9 +132,9 @@ def itera(model, cursor=None, arg=None):
             count += 1
         elif ent.key.string_id() is None:
             deferred.defer(make_some, ent, _queue='upgrade')
-            count += 1
+            count += 2
     ndb.delete_multi(dadel)
-    if more and count < 20:
+    if more and count < 30:
         deferred.defer(itera, model, cur, _queue='upgrade')
     elif more:
         deferred.defer(itera, model, cur, _queue='upgrade', _countdown=1800)
