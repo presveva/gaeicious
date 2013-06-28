@@ -10,14 +10,12 @@ from google.appengine.api import search, mail, users
 from . import util
 from .models import *
 
-is_admin = users.is_current_user_admin()
-
 
 class AdminPage(webapp2.RequestHandler):
 
     def get(self):
         continue_url = self.request.get('continue')
-
+        is_admin = users.is_current_user_admin()
         if users.get_current_user():
             url = users.create_logout_url(continue_url)
             text = 'Admin logout'
@@ -25,9 +23,21 @@ class AdminPage(webapp2.RequestHandler):
             url = users.create_login_url(continue_url)
             text = 'Admin login'
         template = util.jinja_environment.get_template('admin.html')
-        self.response.write(template.render({
-                            'brand': util.brand, 'text': text,
-                            'url': url, 'admin': is_admin}))
+        values = {'brand': util.brand, 'text': text, 'url': url, 'admin': is_admin}
+
+        qry = Bookmarks.query()
+        a, b, c = 0, 0, 0
+        for ent in qry.iter():
+            if hasattr(ent, 'archived'):
+            # if ent.stato not in ['archive', 'trash', 'share', 'inbox', 'star']:
+                a += 1
+            # elif key.string_id() is not None:
+                # b += 1
+            else:
+                c += 1
+        values.update({'a': a, 'b': b, 'c': c})
+
+        self.response.write(template.render(values))
 
 
 # CHECK FEEDS
@@ -108,7 +118,7 @@ def cron_trash(uik):
     period = now - delta
     bmq = Bookmarks.query(Bookmarks.data < period,
                           Bookmarks.stato == 'trash',
-                          ancestor=uik).fetch(50, keys_only=True)
+                          ancestor=uik).fetch(100, keys_only=True)
     ndb.delete_multi(bmq)
 
 
@@ -118,34 +128,44 @@ class Iterator(webapp2.RequestHandler):
     def post(self):
         model = str(self.request.get('model'))
         itera(model)
-        self.redirect('/admin')
+        self.redirect('/admin/')
 
 
-def itera(model, cursor=None, arg=None):
+def itera(model, cursor=None, count=0):
     qry = ndb.gql("SELECT * FROM %s" % model)
-    res, cur, more = qry.fetch_page(40, start_cursor=cursor)
-    count = 0
-    dadel = []
+    res, cur, more = qry.fetch_page(50, start_cursor=cursor)
     for ent in res:
-        if ent.trashed is True:
-            dadel.append(ent.key)
-            count += 1
-        elif ent.key.string_id() is None:
+        if hasattr(ent, 'stato'):
+            if ent.stato != 'trash':
+                deferred.defer(make_some, ent, _queue='upgrade')
+                count += 1
+        else:
             deferred.defer(make_some, ent, _queue='upgrade')
-            count += 2
-    ndb.delete_multi(dadel)
-    if more and count < 30:
+            count += 1
+    if more and count < 25:
         deferred.defer(itera, model, cur, _queue='upgrade')
     elif more:
         deferred.defer(itera, model, cur, _queue='upgrade', _countdown=1800)
 
 
-def make_some(ent, arg=None):
-    stato = 'archive' if ent.archived else 'inbox'
-    Bookmarks.get_or_insert(ent.url, parent=ent.ui, feed=ent.feed,
-                            title=ent.title, comment=ent.comment,
-                            domain=ent.domain, stato=stato)
-    ent.key.delete()
+def make_some(ent):
+    if hasattr(ent, 'trashed'):
+        delattr(ent, 'trashed')
+    if hasattr(ent, 'shared'):
+        delattr(ent, 'shared')
+    if hasattr(ent, 'starred'):
+        delattr(ent, 'starred')
+    if hasattr(ent, 'archived'):
+        delattr(ent, 'archived')
+    if hasattr(ent, 'ui'):
+        delattr(ent, 'ui')
+    if hasattr(ent, 'url'):
+        delattr(ent, 'url')
+    ent.put()
+    # Bookmarks.get_or_insert(ent.url, parent=ent.ui, feed=ent.feed,
+    #                         title=ent.title, comment=ent.comment,
+    #                         domain=ent.domain, stato=stato)
+    # ent.key.delete()
 
 
 # DELETE SEARCH INDEX
@@ -183,7 +203,7 @@ def reindex(cursor=None):
     for bmk in bms:
         deferred.defer(index_bm, bmk, _queue='upgrade')
     if more:
-        deferred.defer(reindex, cur, _queue='upgrade', _countdown=3600)
+        deferred.defer(reindex, cur, _queue='upgrade', _countdown=600)
 
 
 def index_bm(key):
@@ -210,20 +230,23 @@ class del_attr(webapp2.RequestHandler):
         self.redirect('/admin')
 
 
-def iter_entity(model, prop, cursor=None):
+def iter_entity(model, prop, cursor=None, count=0):
     qry = ndb.gql("SELECT * FROM %s" % model)
     res, cur, more = qry.fetch_page(100, start_cursor=cursor)
     for ent in res:
-        deferred.defer(delatt, ent, prop, _queue='upgrade')
-    if more:
-        deferred.defer(iter_entity, model, prop, cur,
-                       _queue='upgrade', _countdown=3600)
+        if hasattr(ent, prop):
+            deferred.defer(delatt, ent, prop, _queue='upgrade')
+            count += 1
+    if more and count < 30:
+        deferred.defer(iter_entity, model, prop, cur, _queue='upgrade')
+    elif more:
+        deferred.defer(iter_entity, model, prop, cur, _queue='upgrade',
+                       _countdown=600)
 
 
 def delatt(ent, prop):
-    if hasattr(ent, prop):
-        delattr(ent, prop)
-        ent.put()
+    delattr(ent, prop)
+    ent.put()
 
 
 class PostViaEmail(InboundMailHandler):

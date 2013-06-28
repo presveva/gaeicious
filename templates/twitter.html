@@ -8,40 +8,48 @@
 <div class="row-fluid hide" id="twitter_form">
 <form class="form-inline" action="/twitter/tweet">
   <div class="control-group" id="input_tweet">
-    <textarea name="text_tweet" id="text_tweet" rows="3" class="span9" placeholder="140 caratteri"></textarea>
+    <textarea name="text_tweet" id="text_tweet" rows="3" class="span9" placeholder="117 characters + url"></textarea>
     <button class="btn btn-medium " type="submit" >tweet</button>
   </div>
-  <script type="text/javascript">
-  $('#text_tweet').keyup(function() {
-    var len = this.value.length;
-    if (len >= 140) {
-      $('#input_tweet').removeClass('success');
-      $('#input_tweet').addClass('error');
-    } else {
-      $('#input_tweet').addClass('success');
-    }
-  });
-  </script>
 </form>
 </div>
+
+<script type="text/javascript">
+  $('.tweet a').attr('target', '_blank');
+  $('#text_tweet').keyup(function () {
+    superato = Boolean(this.value.length >= 140);
+    $('#input_tweet-{{us}}').toggleClass('error', superato);
+    $('#input_tweet-{{us}}').toggleClass('success', !superato);
+  });
+</script>
 
 <div class="row-fluid">
 <table class="table table-condensed">
   <tbody>
     {% for tweet in tweets %}
-    <tr class="hidden-desktop">
+    <tr class="visible-phone">
       <td> <b>{{tweet.user.screen_name }}</b>: {{tweet.text|urlize}} </td>
       <td> <a class="btn btn-mini" onclick="retweet('{{ tweet.id_str }}')"> <i class="icon-retweet"></i></a> </td>
     </tr>
-    <tr class="visible-desktop">
-      <td><img title="{{tweet.user.screen_name }}" src="{{tweet.user.profile_image_url }}" width="64"></td>
-      <td> {{tweet.user.screen_name }} </td>
+    <tr class="hidden-phone">
+      <td><img title="{{tweet.user.screen_name }}" src="{{tweet.user.profile_image_url }}" width="72"></td>
+      <td>
+        <a target="_blank" href="https://twitter.com/{{tweet.user.screen_name }}">{{tweet.user.screen_name }}</a> <br>
+        <span>{{tweet.user.friends_count }}/{{tweet.user.followers_count }}</span>
+
+      </td>
       <td class="tweet"> {{tweet.text|urlize}} </td>
-      <td><a class="btn btn-mini" onclick="retweet('{{ tweet.id_str }}')"><i class="icon-retweet"></i></a></div></td>
+      <td>
+        <div class="btn-group">
+          <a class="btn" onclick="retweet('{{ tweet.id_str }}')"><i class="icon-retweet"></i></a>
+          <a class="btn" href="https://twitter.com/{{tweet.user.screen_name }}/status/{{ tweet.id_str }}" target="_blank">
+            <i class="icon-share"></i></a>
+        </div>
+      </td>
     </tr>
     {% for media in tweet.entities.media %}
-    <tr class="hidden-desktop"> <td colspan="2"> <img src="{{media.media_url}}"> </td> </tr>
-    <tr class="visible-desktop"> <td colspan="2"></td> <td colspan="4"> <img src="{{media.media_url}}"> </td> </tr>
+    <tr class="visible-phone"> <td colspan="2"> <img src="{{media.media_url}}"> </td> </tr>
+    <tr class="hidden-phone"> <td colspan="2"></td> <td colspan="4"> <img src="{{media.media_url}}"> </td> </tr>
     {% endfor %}
     {% endfor %}
   </tbody>
@@ -49,7 +57,4 @@
 </div>
 
 </div>
-<script type="text/javascript">
-  $('.tweet a').attr('target', '_blank');
-</script>
 {% endblock %}

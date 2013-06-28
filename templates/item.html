@@ -18,7 +18,7 @@
     <tr> <td>
       <button class="btn btn-mini" onclick="copy_bm({{ bm.key.urlsafe() }})"><i class="icon-retweet"></i> copy</button>
       <span class="text-left"><i class="icon-user"></i> shared by {{bm.key.parent().id()}}</span>
-      <a class="btn btn-link btn-mini hidden-phone pull-right" onclick="getbms('domain','','{{ bm.domain }}')">
+      <a class="btn btn-link btn-mini hidden-phone pull-right" onclick="getbms('domain', '{{ bm.domain }}')">
         <em>{{ bm.domain }}</em>
       </a>
     </td></tr>

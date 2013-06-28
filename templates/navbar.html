@@ -14,27 +14,17 @@
       <li id="twitter_pg"><a href="/twitter/"><i class="icon-bullhorn"></i></a></li>
       <li class="divider-vertical"></li>
       {% if tweets is defined %}
-      <li id="twitter_form"><a href="#" onclick="twitter_form()"><i class="icon-edit"></i> tweet</a></li>
+      <li><a href="#" onclick="twitter_form()"><i class="icon-edit"></i> tweet</a></li>
       {% elif feeds is defined %}
       <form class="navbar-form pull-left" action="/feeds" method="post">
         <input type="text" class="input input-medium" name="url" placeholder="Add feed">
       </form>
       {% elif is_gae %}
-      <li id="archive_pg">
-        <a href="/#" onclick="getbms('archive','{{c}}')"> <i class="icon-folder-close"></i></a>
-      </li>
-      <li id="trash_pg">
-        <a href="/#" onclick="getbms('trash','{{c}}')"><i class="icon-trash"></i></a>
-      </li>
-      <li id="star_pg">
-        <a href="/#" onclick="getbms('star','{{c}}')"><i class="icon-star"></i></a>
-      </li>
-      <li id="share_pg" class="hidden-phone">
-        <a href="/#" onclick="getbms('share','{{c}}')"><i class="icon-share"></i></a>
-      </li>
-      <li id="stream_pg" class="hidden-phone">
-        <a href="/#" onclick="getbms('stream','{{c}}')"><i class="icon-gift"></i></a>
-      </li>
+      <li id="archive_pg"> <a href="/#" onclick="getbms('archive')"> <i class="icon-folder-close"></i></a> </li>
+      <li id="trash_pg"> <a href="/#" onclick="getbms('trash')"><i class="icon-trash"></i></a> </li>
+      <li id="star_pg"> <a href="/#" onclick="getbms('star')"><i class="icon-star"></i></a> </li>
+      <li id="share_pg" class="hidden-phone"> <a href="/#" onclick="getbms('share')"><i class="icon-share"></i></a> </li>
+      <li id="stream_pg" class="hidden-phone"> <a href="/#" onclick="getbms('stream')"><i class="icon-gift"></i></a> </li>
       {% else %}
       {% endif %}
     </ul>
@@ -63,9 +53,10 @@
 
     {% if is_gae %}
     <ul class="nav hidden-phone">
-      <li id="more"> {% include 'more.html' %} </li>
-      <li id="collapse_btn"> <a href="#" onclick="hide_all()"> <i class="icon-arrow-up"></i></a> </li>
-      <li id="expande_btn" class="hide"> <a href="#" onclick="show_all()"> <i class="icon-arrow-down"></i></a> </li>
+      <li id="more"></li>
+      <li id="collapse_btn">
+        <a href="#" onclick="collapse_btn()"> <i id="collapse_arrow" class="icon-arrow-up"></i></a>
+      </li>
     </ul>
     <ul class="nav hidden-phone">
       <li class="">
@@ -89,8 +80,8 @@
     {% endif %}
     <ul class="nav hidden-desktop">
     {% if is_gae %}
-      <li class=" visible-phone"><a href="#" onclick="getbms('share','{{c}}')">Shared</a></li>
-      <li class=" visible-phone"><a href="#" onclick="getbms('stream','{{c}}')">Stream</a></li>
+      <li class=" visible-phone"><a href="#" onclick="getbms('shared')">Shared</a></li>
+      <li class=" visible-phone"><a href="#" onclick="getbms('stream')">Stream</a></li>
     {% endif %}
       <li><a href="/feeds"> Feeds</a></li>
       <li><a href="/setting"> Setting</a></li>

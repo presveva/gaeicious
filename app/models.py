@@ -36,6 +36,10 @@ class Bookmarks(ndb.Expando):
     feed = ndb.KeyProperty(kind=Feeds)
     domain = ndb.StringProperty()
 
+    @classmethod
+    def userbmq(cls, ui_key, stato):
+        return cls.query(cls.stato == stato, ancestor=ui_key).order(-cls.data)
+
     # @classmethod
     # def _pre_delete_hook(cls, key):
     #     index = search.Index(name=key.parent().id())
@@ -51,4 +55,3 @@ class Bookmarks(ndb.Expando):
     #         index.put(doc)
     #     except search.Error:
     #         pass
-

@@ -102,12 +102,11 @@ def fetch_url(url):
 
 
 def delete_bms(uik, cursor=None):
-    bmq = Bookmarks.query(
-        Bookmarks.stato == 'trash', ancestor=uik).fetch(keys_only=True)
-    bms, cur, more = bmq.fetch_page(10, start_cursor=cursor)
+    bmq = Bookmarks.query(Bookmarks.stato == 'trash', ancestor=uik)
+    bms, cur, more = bmq.fetch_page(50, start_cursor=cursor, keys_only=True)
     ndb.delete_multi(bms)
     if more:
-        deferred.defer(delete_bms, uik, cur, _countdown=3600)
+        deferred.defer(delete_bms, uik, cur, _countdown=600)
 
 
 def login_required(handler_method):

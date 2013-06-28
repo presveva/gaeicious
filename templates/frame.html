@@ -2,9 +2,9 @@
 {% set us = bm.key.urlsafe() %}
 <table class="table table-condensed table-striped row-{{us}}">
   <tbody> <tr> <td>
-    
+
     <btn class="btn btn-small" onclick="comment('{{us}}')">
-      <i class="icon-remove-circle"></i> <span class="hidden-phone">hide</span> 
+      <i class="icon-remove-circle"></i> <span class="hidden-phone">hide</span>
     </btn>
 
     <btn class="btn btn-small" onclick="trash('{{us}}')">
@@ -47,7 +47,7 @@
     {% endif %}
     </div>
 
-    <a class="btn btn-link btn-mini hidden-phone pull-right" onclick="getbms('domain','','{{ bm.domain }}')">
+    <a class="btn btn-link btn-mini hidden-phone pull-right" onclick="getbms('domain', '{{ bm.domain }}')">
       <em>{{ bm.domain }}</em>
     </a>
   </td> </tr>
@@ -64,14 +64,11 @@
       </div>
     </form>
     <script type="text/javascript">
-    $('#text_tweet-{{us}}').keyup(function() {
-      var len = this.value.length - {{bm.key.id()|length}} + 25;
-      if (len >= 140) {
-        $('#input_tweet-{{us}}').removeClass('success');
-        $('#input_tweet-{{us}}').addClass('error');
-      } else {
-        $('#input_tweet-{{us}}').addClass('success');
-      }
+    $('#text_tweet-{{us}}').keyup(function () {
+      len = this.value.length - {{bm.key.id()|length}} + 23;
+      superato = Boolean(len >= 140);
+      $('#input_tweet-{{us}}').toggleClass('error', superato);
+      $('#input_tweet-{{us}}').toggleClass('success', !superato);
     });
     </script>
   </td> </tr>
@@ -82,11 +79,12 @@
 {% endfor %}
 
 {% if cursor %}
-  <div class="well well-small">
-    <a href="#" class="btn btn-block" onclick="getbms(active(),'{{cursor}}')">more</a>
+  <div class="well well-small visible-phone">
+    <a href="#" class="btn btn-block" onclick="getbms()">more</a>
   </div>
 {% endif %}
 
 <script type="text/javascript">
   $('.comments a').attr('target', '_blank');
+  $.cookie('cursor', '{{cursor}}');
 </script>

@@ -3,11 +3,11 @@
 import tweepy
 import webapp2
 from webapp2_extras import json
-from google.appengine.api import search
+from google.appengine.api import search, users
 from google.appengine.ext import ndb, deferred
 from . import util, secret
 from .models import *
-from .admin import check_feed, is_admin
+from .admin import check_feed
 
 auth = tweepy.OAuthHandler(secret.consumer_token,
                            secret.consumer_secret)
@@ -30,6 +30,7 @@ class BaseHandler(webapp2.RequestHandler):
         self.response.write(json.encode(_values))
 
     def generate(self, template_name, template_values={}):
+        is_admin = users.is_current_user_admin()
         values = {'brand': util.brand, 'ui': self.ui, 'admin': is_admin}
         values.update(template_values)
         template = util.jinja_environment.get_template(template_name)
@@ -43,6 +44,8 @@ class HomePage(BaseHandler):
         if self.ui is not None:
             auth.set_access_token(self.ui.access_k, self.ui.access_s)
             api = tweepy.API(auth)
+            self.response.set_cookie('cursor', '')
+            self.response.set_cookie('stato', 'inbox')
             self.generate('home.html', {'is_gae': True})
         elif oauth_verifier:
             auth.get_access_token(oauth_verifier)
@@ -61,30 +64,25 @@ class HomePage(BaseHandler):
 class Main_Frame(BaseHandler):
 
     @util.login_required
-    def get(self, page):
-        bmq = self.bmq(page)
-        cursor = ndb.Cursor(urlsafe=self.request.get('cursor'))
-        self.build(page, bmq, cursor)
+    def get(self, stato):
+        bmq = self.bmq(stato)
+        start_cursor = ndb.Cursor(urlsafe=self.request.get('cursor'))
+        bms, cur, more = bmq.fetch_page(10, start_cursor=start_cursor)
+        cursor = cur.urlsafe() if more else ''
+        tmpl = 'stream.html' if stato == 'stream' else 'frame.html'
+        html = self.render(tmpl, {'bms': bms, 'cursor': cursor})
+        self.response.set_cookie('stato', stato)
+        self.response.write(html)
 
-    def bmq(self, page):
-        qry = Bookmarks.query(ancestor=self.ui.key).order(-Bookmarks.data)
-        if page == 'domain':
-            bmq = qry.filter(Bookmarks.domain == self.request.get('domain'))
-        elif page == 'stream':
+    def bmq(self, stato):
+        if stato == 'domain':
+            domain = self.request.get('domain')
+            bmq = Bookmarks.query(Bookmarks.domain == domain, ancestor=self.ui.key)
+        elif stato == 'stream':
             bmq = Bookmarks.query(Bookmarks.stato == 'share')
-            # bmq = Bookmarks.query(Bookmarks.stato == 'share').order(-Bookmarks.data)
         else:
-            bmq = qry.filter(Bookmarks.stato == page)
+            bmq = Bookmarks.userbmq(self.ui.key, stato)
         return bmq
-
-    def build(self, page, bmq, cursor):
-        bms, next_curs, more = bmq.fetch_page(10, start_cursor=cursor)
-        next_c = next_curs.urlsafe() if more else None
-        tmpl = 'stream.html' if page == 'stream' else 'frame.html'
-        html = self.render(tmpl, {'bms': bms, 'cursor': next_c})
-        more = self.render('more.html', {'cursor': next_c})
-        self.response.set_cookie('active-tab', page)
-        self.send_json({"html": html, "more": more})
 
 
 class Logout(BaseHandler):
@@ -105,7 +103,7 @@ class SettingPage(BaseHandler):
             "'+'&comment='+document.getSelection().toString()"
         self.response.set_cookie('mys', '%s' % self.ui.mys)
         self.response.set_cookie('daily', '%s' % self.ui.daily)
-        self.response.set_cookie('active-tab', 'setting')
+        self.response.set_cookie('stato', 'setting')
         self.generate(
             'setting.html', {'bookmarklet': bookmarklet,
                              'upload_url': util.upload_url})
@@ -116,7 +114,7 @@ class FeedsPage(BaseHandler):
     @util.login_required
     def get(self):
         feed_list = Feeds.query(Feeds.ui == self.ui.key).order(Feeds.title)
-        self.response.set_cookie('active-tab', 'feeds')
+        self.response.set_cookie('stato', 'feeds')
         self.generate('feeds.html', {'feeds': feed_list})
 
     @util.login_required
@@ -243,13 +241,6 @@ class cerca(BaseHandler):
             pass
 
 
-class GetComment(webapp2.RequestHandler):
-
-    def get(self, us):
-        bm = ndb.Key(urlsafe=str(us)).get()
-        self.response.write(bm.comment)
-
-
 class GetEdit(webapp2.RequestHandler):
 
     def get(self, us):
@@ -354,7 +345,6 @@ app = webapp2.WSGIApplication([
     (r'/share/(.*)', ShareBM),
     (r'/star/(.*)', StarBM),
     ('/save_email', SaveEmail),
-    (r'/getcomment/(.*)', GetComment),
     (r'/getedit/(.*)', GetEdit),
     (r'/bm/(.*)', ItemPage),
     ('/upload', util.UploadDelicious),
