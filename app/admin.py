@@ -25,17 +25,17 @@ class AdminPage(webapp2.RequestHandler):
         template = util.jinja_environment.get_template('admin.html')
         values = {'brand': util.brand, 'text': text, 'url': url, 'admin': is_admin}
 
-        qry = Bookmarks.query()
-        a, b, c = 0, 0, 0
-        for ent in qry.iter():
-            if hasattr(ent, 'archived'):
+        # qry = Bookmarks.query()
+        # a, b, c = 0, 0, 0
+        # for ent in qry.iter():
+            # if hasattr(ent, 'trashed'):
             # if ent.stato not in ['archive', 'trash', 'share', 'inbox', 'star']:
-                a += 1
+                # a += 1
             # elif key.string_id() is not None:
                 # b += 1
-            else:
-                c += 1
-        values.update({'a': a, 'b': b, 'c': c})
+            # else:
+                # c += 1
+        # values.update({'a': a, 'b': b, 'c': c})
 
         self.response.write(template.render(values))
 
@@ -135,13 +135,12 @@ def itera(model, cursor=None, count=0):
     qry = ndb.gql("SELECT * FROM %s" % model)
     res, cur, more = qry.fetch_page(50, start_cursor=cursor)
     for ent in res:
-        if hasattr(ent, 'stato'):
-            if ent.stato != 'trash':
-                deferred.defer(make_some, ent, _queue='upgrade')
-                count += 1
-        else:
+        if hasattr(ent, 'archived'):
             deferred.defer(make_some, ent, _queue='upgrade')
             count += 1
+        # else:
+            # deferred.defer(make_some, ent, _queue='upgrade')
+            # count += 1
     if more and count < 25:
         deferred.defer(itera, model, cur, _queue='upgrade')
     elif more:
@@ -198,19 +197,19 @@ class reindex_all(webapp2.RequestHandler):
 
 
 def reindex(cursor=None):
-    bmq = Bookmarks.query().fetch(keys_only=True)
+    bmq = Bookmarks.query()  # .fetch(keys_only=True)
     bms, cur, more = bmq.fetch_page(100, start_cursor=cursor)
-    for bmk in bms:
-        deferred.defer(index_bm, bmk, _queue='upgrade')
+    for bm in bms:
+        deferred.defer(index_bm, bm, _queue='upgrade')
     if more:
-        deferred.defer(reindex, cur, _queue='upgrade', _countdown=600)
+        deferred.defer(reindex, cur, _queue='upgrade', _countdown=60)
 
 
-def index_bm(key):
-    bm = key.get()
-    index = search.Index(name=key.parent().string_id())
-    doc = search.Document(doc_id=key.urlsafe(), fields=[
-        search.TextField(name='url', value=key.string_id()),
+def index_bm(bm):
+    # bm = key.get()
+    index = search.Index(name=bm.key.parent().string_id())
+    doc = search.Document(doc_id=bm.key.urlsafe(), fields=[
+        search.TextField(name='url', value=bm.key.string_id()),
         search.TextField(name='title', value=bm.title),
         search.HtmlField(name='comment', value=bm.comment)])
     try:

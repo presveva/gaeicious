@@ -36,7 +36,6 @@
       <td>
         <a target="_blank" href="https://twitter.com/{{tweet.user.screen_name }}">{{tweet.user.screen_name }}</a> <br>
         <span>{{tweet.user.friends_count }}/{{tweet.user.followers_count }}</span>
-
       </td>
       <td class="tweet"> {{tweet.text|urlize}} </td>
       <td>
@@ -55,6 +54,8 @@
   </tbody>
 </table>
 </div>
-
+<script type="text/javascript">
+  $('td a').attr('target', '_blank');
+</script>
 </div>
 {% endblock %}

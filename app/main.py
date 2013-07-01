@@ -231,12 +231,13 @@ class cerca(BaseHandler):
     def post(self):
         query_string = self.request.get('query_string')
         try:
-            results = search.Index(name=self.ui.key.id()).search(query_string)
-            bms_ids = [int(doc.doc_id) for doc in results]
-            keys = [ndb.Key(Bookmarks, id) for id in bms_ids]
-            bms = ndb.get_multi(keys)
-            html = self.generate('frame.html', {'bms': bms})
-            self.response.write(html)
+            results = search.Index(name=self.ui.key.string_id()).search(query_string)
+            bms_us = [str(doc.doc_id) for doc in results]
+            keys = [ndb.Key(urlsafe=str(us)) for us in bms_us]
+            if len(keys) > 0:
+                bms = ndb.get_multi(keys)
+                html = self.render('frame.html', {'bms': bms})
+                self.response.write(html)
         except search.Error:
             pass
 
