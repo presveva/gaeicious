@@ -1,14 +1,14 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-import logging
+# import logging
 import datetime
+import util
 import webapp2
 from webapp2_extras import routes
 from google.appengine.ext import ndb, deferred
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from google.appengine.api import search, mail, users
-from . import util
-from .models import *
+from models import Feeds, Bookmarks, UserInfo
 
 
 class AdminPage(webapp2.RequestHandler):
@@ -258,18 +258,9 @@ class PostViaEmail(InboundMailHandler):
                        title=message.subject, comment='Sent via email',
                        url=url, _queue='submit')
 
-
-class BounceHandler(webapp2.RequestHandler):
-
-    def post(self):
-        bounce = BounceNotification(self.request.POST)
-        logging.error('Bounce original: %s' + str(bounce.original))
-        logging.error('Bounce notification: %s' + str(bounce.notification))
-
 app = webapp2.WSGIApplication([
     routes.RedirectRoute('/admin/', AdminPage, name='Admin', strict_slash=True),
     webapp2.Route('/_ah/mail/post@.*', PostViaEmail),
-    webapp2.Route('/_ah/bounce', BounceHandler),
     webapp2.Route('/_ah/login_required', AdminPage),
     routes.PathPrefixRoute('/admin', [
         webapp2.Route('/activity', Activity),

@@ -16,19 +16,26 @@ function getbms(stato, domain) {
   $.get("/bms/" + stat, {
     cursor: cur,
     domain: domain
-  }, function (html) {
-    $.cookie('count', 10);
+  }, function(html) {
     $(".main_frame").html(html);
-    $("#more").html("<a href='#' onclick='getbms()'><i class='icon-arrow-right'></i></a>");
-    $(window).scrollTop(0);
-    $('pre code').each(function (i, e) {
-      hljs.highlightBlock(e);
-    });
-    $('#expande_btn').hide();
-    $('#collapse_btn').show();
-    $('.nav li').removeClass('active');
-    $('#' + $.cookie('stato') + '_pg').addClass('active');
+    update_gui();
   });
+}
+
+function update_gui() {
+  $.cookie('count', 10);
+  $(window).scrollTop(0);
+  $('pre code').each(function(i, e) {
+    hljs.highlightBlock(e);
+  });
+  $('.comments a').attr('target', '_blank');
+  $('#expande_btn').hide();
+  $('#collapse_btn').show();
+  $('.nav li').removeClass('active');
+  $('#' + $.cookie('stato') + '_pg').addClass('active');
+  if ($.cookie('cursor') !== '') {
+    $("#more").html("<a href='#' onclick='getbms()'><i class='icon-arrow-right'></i></a>");
+  }
 }
 
 function edit(us) {
@@ -38,7 +45,7 @@ function edit(us) {
 
 function edit_bm(us) {
   event.preventDefault();
-  $.post('/bm/' + us, $('#edit_bm-' + us).serialize(), function (html) {
+  $.post('/bm/' + us, $('#edit_bm-' + us).serialize(), function(html) {
     $('.comment-' + us).html(html);
     edit(us);
   });
@@ -46,7 +53,7 @@ function edit_bm(us) {
 
 function search() {
   event.preventDefault();
-  $.post('/search', $('#search').serialize(), function (html) {
+  $.post('/search', $('#search').serialize(), function(html) {
     $(".main_frame").html(html);
     $(window).scrollTop(0);
     $("#more").html('');
@@ -79,7 +86,7 @@ function star(us) {
 }
 
 function share(us) {
-  $.get("/share/" + us, function (data) {
+  $.get("/share/" + us, function(data) {
     $(".share-" + us).html(data.eye);
     $(".link-" + us).html(data.btn);
   });
@@ -121,7 +128,7 @@ function del_feed(id) {
   $.ajax({
     type: "delete",
     url: "/feeds?id=" + id
-  }).done(function () {
+  }).done(function() {
     $("#row-" + id).hide();
   });
 }

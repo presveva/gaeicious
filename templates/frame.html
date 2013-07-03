@@ -23,17 +23,17 @@
       {% endif %}
     </btn>
 
-    <btn class="btn btn-small hidden-phone" onclick="edit('{{us}}')">
-      <i class="icon-edit"></i> <span>edit</span>
+    <btn class="btn btn-small star-{{us}}" onclick="star('{{us}}')">
+      {% if bm.stato == 'star' %} <i class="icon-star"></i> {% else %} <i class="icon-star-empty"></i> {% endif %}
+      <span class="hidden-phone">star</span>
     </btn>
 
     <btn class="btn hidden-phone btn-small share-{{us}}" onclick="share('{{us}}')">
       {% if bm.stato == 'share' %} <i class="icon-eye-open"></i> {% else %} <i class="icon-eye-close"></i> {% endif %} <span class="hidden-phone">share</span>
     </btn>
 
-    <btn class="btn btn-small star-{{us}}" onclick="star('{{us}}')">
-      {% if bm.stato == 'star' %} <i class="icon-star"></i> {% else %} <i class="icon-star-empty"></i> {% endif %}
-      <span class="hidden-phone">star</span>
+    <btn class="btn btn-small hidden-phone" onclick="edit('{{us}}')">
+      <i class="icon-edit"></i> <span>edit</span>
     </btn>
 
     <btn class="btn btn-small" onclick="tweet('{{us}}')">
@@ -73,18 +73,24 @@
     </script>
   </td> </tr>
   <tr class="hide edit-{{us}}"> <td> {% include 'edit.html'%} </td> </tr>
-  <tr class="comments comment-{{us}}"> <td>{{bm.comment}}</td> </tr>
+  <tr class="comments comment-{{us}}"> <td style="max-width: 757px">{{bm.comment}}</td> </tr>
   </tbody>
 </table>
 {% endfor %}
 
 {% if cursor %}
-  <div class="well well-small visible-phone">
-    <a href="#" class="btn btn-block" onclick="getbms()">more</a>
-  </div>
+<div class="well well-small visible-phone">
+  <a href="#" class="btn btn-block" onclick="getbms()">more</a>
+</div>
+<script type="text/javascript">
+  $.cookie('cursor', '{{cursor}}');
+</script>
+{% else %}
+<script type="text/javascript">
+  $.cookie('cursor', '');
+</script>
 {% endif %}
 
 <script type="text/javascript">
-  $('.comments a').attr('target', '_blank');
-  $.cookie('cursor', '{{cursor}}');
+  // $('.comments a').attr('target', '_blank');
 </script>

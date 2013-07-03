@@ -32,10 +32,9 @@
       <td> <a class="btn btn-mini" onclick="retweet('{{ tweet.id_str }}')"> <i class="icon-retweet"></i></a> </td>
     </tr>
     <tr class="hidden-phone">
-      <td><img title="{{tweet.user.screen_name }}" src="{{tweet.user.profile_image_url }}" width="72"></td>
+      <td><img title="{{tweet.user.screen_name }}" src="{{tweet.user.profile_image_url }}" width="48" height="48"></td>
       <td>
-        <a target="_blank" href="https://twitter.com/{{tweet.user.screen_name }}">{{tweet.user.screen_name }}</a> <br>
-        <span>{{tweet.user.friends_count }}/{{tweet.user.followers_count }}</span>
+        <a target="_blank" href="https://twitter.com/{{tweet.user.screen_name }}">{{tweet.user.screen_name }}</a>
       </td>
       <td class="tweet"> {{tweet.text|urlize}} </td>
       <td>

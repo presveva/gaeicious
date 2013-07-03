@@ -6,8 +6,8 @@ from webapp2_extras import json
 from google.appengine.api import search, users
 from google.appengine.ext import ndb, deferred
 from . import util, secret
-from .models import *
-from .admin import check_feed
+from models import UserInfo, Bookmarks, Feeds
+from admin import check_feed
 
 auth = tweepy.OAuthHandler(secret.consumer_token,
                            secret.consumer_secret)
@@ -237,6 +237,7 @@ class cerca(BaseHandler):
             if len(keys) > 0:
                 bms = ndb.get_multi(keys)
                 html = self.render('frame.html', {'bms': bms})
+                self.response.set_cookie('cursor', '')
                 self.response.write(html)
         except search.Error:
             pass
