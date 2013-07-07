@@ -24,9 +24,9 @@
     </form>
     {% elif is_gae %}
     <li id="archive_pg"> <a href="/#" onclick="getbms('archive')"> <i class="icon-folder-close"></i></a> </li>
-    <li id="trash_pg"> <a href="/#" onclick="getbms('trash')"><i class="icon-trash"></i></a> </li>
     <li id="star_pg"> <a href="/#" onclick="getbms('star')"><i class="icon-star"></i></a> </li>
-    <li id="share_pg" class="hidden-phone"><a href="/#" onclick="getbms('share')"><i class="icon-share"></i></a></li>
+    <li id="share_pg" class="hidden-phone"><a href="/#" onclick="getbms('share')"><i class="icon-eye-open"></i></a></li>
+    <li id="trash_pg" class="hidden-phone"> <a href="/#" onclick="getbms('trash')"><i class="icon-trash"></i></a> </li>
     {% else %}
     {% endif %}
   </ul>
@@ -83,12 +83,13 @@
   {% endif %}
   <ul class="nav hidden-desktop">
   {% if is_gae %}
-    <li class=" visible-phone"><a href="#" onclick="getbms('shared')">Shared</a></li>
+    <li class=" visible-phone"><a href="#" onclick="getbms('share')">Share</a></li>
+    <li class=" visible-phone"><a href="#" onclick="getbms('trash')">Trash</a></li>
   {% endif %}
     <li><a href="/feeds"> Feeds</a></li>
+    <li><a href="/following">Following</a></li>
     <li><a href="/setting"> Setting</a></li>
     <li><a href="/logout"> Logout</a></li>
-    <li class="divider"></li>
     <li><a href="/admin"> Admin </a></li>
   </ul>
 </div>
