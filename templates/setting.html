@@ -9,14 +9,14 @@
 
 <legend>Methods for submit bookmarks</legend>
 
-<!-- Bookmarklet -->
-<form>
-  <label><b>Bookmarklet</b></label>
-  <span class="help-block">Drag and drop in your bookmarks bar.</span>
-  <a class="btn btn-link disabled" id="bookmarklet" href="{{ bookmarklet }}" rel="tooltip" data-placement="bottom" title="This is a bookmarklet, drag and drop in your bookmarks bar"><i class="icon-bookmark"></i> {{ brand }} it!</a>
-</form>
+<label><b>Bookmarklet</b></label>
+<span class="help-block">Drag and drop in your bookmarks bar.</span>
+<a class="btn btn-link disabled" id="bookmarklet" href="{{ bookmarklet }}" rel="tooltip" title="This is a bookmarklet, drag and drop in your bookmarks bar"><i class="icon-bookmark"></i> {{ brand }} it!</a>
+
 <hr>
-<!-- Bookmark via email -->
+<label><b>Feeds</b></label>
+<dl> Add your prefered feeds to <a href="/feeds" >feeds page</a> and {{brand}} submit each new post for you. </dl>
+<hr>
 <label><b>Bookmark via email</b></label>
 <table>
   <tbody class="">
@@ -37,9 +37,6 @@
   <input class="btn" type="submit"name="submit" value="Upload">
 </form>
 <hr>
-<label><b>Feeds</b></label>
-<dl> Add your prefered feeds to <a href="/feeds" >feeds page</a> and {{brand}} submit each new post for you. </dl>
-
 </div>
 
 <div class="span6">
@@ -56,31 +53,36 @@
     <label><b>Mail yourself</b></label>
     <span class="help-block">If enabled you will receive an email for each new bookmark.</span>
     <label class="checkbox">
-      <input type="checkbox" id="mys-check"><p id="mys-text"></p>
+      <input type="checkbox" id="mys-check" onclick="save_mail('get')"><p id="mys-text"></p>
     </label>
   </form>
   <hr>
   <!-- daily digest -->
   <form>
     <label><b>6 hours digest</b></label>
-    <span class="help-block">If enabled you will receive a 6 hours digest of your activity.</span> <label class="checkbox">
-      <input type="checkbox" id="daily-check"><p id="daily-text"></p>
+    <span class="help-block">If enabled you will receive a 6 hours digest of your activity.</span>
+    <label class="checkbox">
+      <input type="checkbox" id="daily-check" onclick="save_mail('put')"><p id="daily-text"></p>
     </label>
   </form>
   <hr>
   {% endif %}
-  <!-- empty trash -->
-  <label><b>Empty trash</b></label>
-  <!-- <span class="help-block">If enabled you will receive a daily digest of your activity.</span> <label class="checkbox"> -->
-  <a class="btn btn-block" href="/empty_trash">Empty trash</a>
-    <!-- <input type="checkbox" id="daily-check"><p id="daily-text"></p> -->
-  </label>
+  <label><b>Connect Dropbox</b></label>
+    <span class="help-block">Store files in 'gaeicious' dropbox folder.</span>
+    <a class="btn btn-small {% if not dropbox_url %} disabled {% endif %}" href="{{dropbox_url}}">Connect Dropbox</a>
   <hr>
-  <iframe src="http://www.appsgeyser.com/social_widget/social_widget.php?width=300&height=160&apkName=gaeicious&simpleVersion=no" width="310" height="180" vspace="0" hspace="0" frameborder="no" scrolling="no" seamless="" allowtransparency="true"> </iframe>
+
+  <label><b>Android App</b> </label>
+    <span class="help-block">Thanks to <a href="http://www.appsgeyser.com/">AppsGeyser</a></span>
+    <a class="btn btn-block" href="http://files.appsgeyser.com/gaeicious.apk">Download the APK</a>
   <hr>
+    <a class="btn btn-block" href="/empty_trash">Empty trash</a>
 </div>
 </div>
 </div>
 
-<script src="static/setting.js"></script>
+<script type="text/javascript">
+  update_setting();
+</script>
 {% endblock %}
+

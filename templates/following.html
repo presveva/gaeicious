@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block navbar %} {% include "navbar.html" %} {% endblock %}
+
+{% block content %}
+<div class="container-narrow">
+
+<table class="table table-condensed"> <tbody>
+{% for foll in following %}
+  <tr id="row-{{foll.key.id()}}">
+    <td class="span4"><a href="https://twitter.com/{{foll.key.id()}}" target="_blank"><b>{{foll.key.id()}}</b></a></td>
+    <td class="span4">
+      <div class="btn-group">
+        <a class="btn btn-mini" onclick="del_foll('{{foll.key.id()}}')">
+          <i class="icon-remove"></i><span class="hidden-phone"> delete</span> </a>
+      </div>
+    </td>
+    <td class="span4"><small>{{foll.data|dtf}}</small></td>
+  </tr>
+{% endfor %}
+</tbody> </table>
+{% endblock %}

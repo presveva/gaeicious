@@ -4,25 +4,6 @@
 
 {% block content %}
 <div class="container-narrow">
-
-<div class="row-fluid hide" id="twitter_form">
-<form class="form-inline" action="/twitter/tweet">
-  <div class="control-group" id="input_tweet">
-    <textarea name="text_tweet" id="text_tweet" rows="3" class="span9" placeholder="117 characters + url"></textarea>
-    <button class="btn btn-medium " type="submit" >tweet</button>
-  </div>
-</form>
-</div>
-
-<script type="text/javascript">
-  $('.tweet a').attr('target', '_blank');
-  $('#text_tweet').keyup(function () {
-    superato = Boolean(this.value.length >= 140);
-    $('#input_tweet-{{us}}').toggleClass('error', superato);
-    $('#input_tweet-{{us}}').toggleClass('success', !superato);
-  });
-</script>
-
 <div class="row-fluid">
 <table class="table table-condensed">
   <tbody>
@@ -32,7 +13,7 @@
       <td> <a class="btn btn-mini" onclick="retweet('{{ tweet.id_str }}')"> <i class="icon-retweet"></i></a> </td>
     </tr>
     <tr class="hidden-phone">
-      <td><img title="{{tweet.user.screen_name }}" src="{{tweet.user.profile_image_url }}" width="48" height="48"></td>
+      <td><img title="{{tweet.user.screen_name }}" src="{{tweet.user.profile_image_url }}" width="36" height="36"></td>
       <td>
         <a target="_blank" href="https://twitter.com/{{tweet.user.screen_name }}">{{tweet.user.screen_name }}</a>
       </td>
@@ -55,6 +36,7 @@
 </div>
 <script type="text/javascript">
   $('td a').attr('target', '_blank');
+  $('.tweet a').attr('target', '_blank');
 </script>
 </div>
 {% endblock %}

@@ -9,88 +9,108 @@
   <a class="brand hidden-phone" href="/">{{ brand }}</a>
   <a class="brand visible-phone" href="/"><i class="icon-home"></i></a>
 
-  <div class="nav">
-    <ul class="nav">
-      <li id="twitter_pg"><a href="/twitter/"><i class="icon-bullhorn"></i></a></li>
-      <li class="divider-vertical"></li>
-      {% if tweets is defined %}
-      <li><a href="#" onclick="twitter_form()"><i class="icon-edit"></i> tweet</a></li>
-      {% elif feeds is defined %}
-      <form class="navbar-form pull-left" action="/feeds" method="post">
-        <input type="text" class="input input-medium" name="url" placeholder="Add feed">
+<div class="nav">
+  <ul class="nav">
+    <li id="twitter_pg"><a href="/twitter/"><i class="icon-bullhorn"></i></a></li>
+    <li><a href="#" onclick="twitter_form()"><i class="icon-edit"></i></a></li>
+    <li class="divider-vertical"></li>
+    {% if feeds is defined %}
+    <form class="navbar-form pull-left visible-desktop" action="/feeds" method="post">
+      <input type="text" class="input input-xlarge" name="url" placeholder="Add feed">
+    </form>
+    {% elif following is defined %}
+    <form class="navbar-form pull-left visible-desktop" action="/following" method="post">
+      <input type="text" class="input input-xlarge" name="username" placeholder="twitter username">
+    </form>
+    {% elif is_gae %}
+    <li id="archive_pg"> <a href="/#" onclick="getbms('archive')"> <i class="icon-folder-close"></i></a> </li>
+    <li id="trash_pg"> <a href="/#" onclick="getbms('trash')"><i class="icon-trash"></i></a> </li>
+    <li id="star_pg"> <a href="/#" onclick="getbms('star')"><i class="icon-star"></i></a> </li>
+    <li id="share_pg" class="hidden-phone"><a href="/#" onclick="getbms('share')"><i class="icon-share"></i></a></li>
+    {% else %}
+    {% endif %}
+  </ul>
+</div>
+
+
+<div class="nav pull-right">
+  <ul class="nav pull-right visible-desktop">
+    <li class="dropdown">
+      <a href="" class="dropdown-toggle" data-toggle="dropdown">
+        <i class="icon-user"></i> <b class="caret"> </b>
+      </a>
+      <ul class="dropdown-menu">
+        <li><a href="/feeds">Feeds</a></li>
+        <li><a href="/following">Following</a></li>
+        <li><a href="/setting">Setting</a></li>
+        <li><a href="/logout">Logout</a></li>
+        <li class="divider"></li>
+        <li><a href="/admin">Admin</a></li>
+        {% if admin %}
+        <li><a href="/_ah/admin" target="_blank">AppEngine</a></li>
+        {% endif %}
+        <li><a href="https://github.com/presveva/gaeicious" target="_blank">GitHub</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  {% if is_gae %}
+  <ul class="nav hidden-phone">
+    <li id="more"></li>
+    <li id="collapse_btn">
+      <a href="#" onclick="collapse_btn()"> <i id="collapse_arrow" class="icon-arrow-up"></i></a>
+    </li>
+  </ul>
+  <ul class="nav hidden-phone">
+    <li class="">
+      <form id="search" class="navbar-search" action="/search" onsubmit="search()">
+        <input type="text" class="input-medium search-query" name="query_string" placeholder="Search">
       </form>
-      {% elif is_gae %}
-      <li id="archive_pg"> <a href="/#" onclick="getbms('archive')"> <i class="icon-folder-close"></i></a> </li>
-      <li id="trash_pg"> <a href="/#" onclick="getbms('trash')"><i class="icon-trash"></i></a> </li>
-      <li id="star_pg"> <a href="/#" onclick="getbms('star')"><i class="icon-star"></i></a> </li>
-      <li id="share_pg" class="hidden-phone"><a href="/#" onclick="getbms('share')"><i class="icon-share"></i></a></li>
-      <li id="stream_pg" class="hidden-phone"><a href="/#" onclick="getbms('stream')"><i class="icon-gift"></i></a></li>
-      {% else %}
-      {% endif %}
-    </ul>
-  </div>
+    </li>
+  </ul>
+  {% endif %}
+</div>
 
+<div class="nav-collapse">
+  {% if is_gae %}
+  <ul class="nav pull-right">
+    <li class="visible-phone">
+      <form id="search" class="navbar-search" action="/search" onsubmit="search()">
+        <input type="text" class="search-query" name="query_string" placeholder="Search">
+      </form>
+    </li>
+  </ul>
+  {% endif %}
+  <ul class="nav hidden-desktop">
+  {% if is_gae %}
+    <li class=" visible-phone"><a href="#" onclick="getbms('shared')">Shared</a></li>
+  {% endif %}
+    <li><a href="/feeds"> Feeds</a></li>
+    <li><a href="/setting"> Setting</a></li>
+    <li><a href="/logout"> Logout</a></li>
+    <li class="divider"></li>
+    <li><a href="/admin"> Admin </a></li>
+  </ul>
+</div>
 
-  <div class="nav pull-right">
-    <ul class="nav pull-right visible-desktop">
-      <li class="dropdown">
-        <a href="" class="dropdown-toggle" data-toggle="dropdown">
-          <i class="icon-user"></i> <b class="caret"> </b>
-        </a>
-        <ul class="dropdown-menu">
-          <li><a href="/feeds">Feeds</a></li>
-          <li><a href="/setting">Setting</a></li>
-          <li><a href="/logout">Logout</a></li>
-          <li class="divider"></li>
-          <li><a href="/admin">Admin</a></li>
-          {% if admin %}
-          <li><a href="/_ah/admin" target="_blank">AppEngine</a></li>
-          {% endif %}
-          <li><a href="https://github.com/presveva/gaeicious" target="_blank">GitHub</a></li>
-        </ul>
-      </li>
-    </ul>
-
-    {% if is_gae %}
-    <ul class="nav hidden-phone">
-      <li id="more"></li>
-      <li id="collapse_btn">
-        <a href="#" onclick="collapse_btn()"> <i id="collapse_arrow" class="icon-arrow-up"></i></a>
-      </li>
-    </ul>
-    <ul class="nav hidden-phone">
-      <li class="">
-        <form id="search" class="navbar-search" action="/search" onsubmit="search()">
-          <input type="text" class="input-medium search-query" name="query_string" placeholder="Search">
-        </form>
-      </li>
-    </ul>
-    {% endif %}
-  </div>
-
-  <div class="nav-collapse">
-    {% if is_gae %}
-    <ul class="nav pull-right">
-      <li class="visible-phone">
-        <form id="search" class="navbar-search" action="/search" onsubmit="search()">
-          <input type="text" class="search-query" name="query_string" placeholder="Search">
-        </form>
-      </li>
-    </ul>
-    {% endif %}
-    <ul class="nav hidden-desktop">
-    {% if is_gae %}
-      <li class=" visible-phone"><a href="#" onclick="getbms('shared')">Shared</a></li>
-      <li class=" visible-phone"><a href="#" onclick="getbms('stream')">Stream</a></li>
-    {% endif %}
-      <li><a href="/feeds"> Feeds</a></li>
-      <li><a href="/setting"> Setting</a></li>
-      <li><a href="/logout"> Logout</a></li>
-      <li class="divider"></li>
-      <li><a href="/admin"> Admin </a></li>
-    </ul>
-  </div>
 </div>
 </div>
 </div>
 
+<div class="container-narrow">
+<div class="row-fluid hide" id="twitter_form">
+<form class="form-inline" action="/twitter/tweet">
+  <div class="control-group" id="input_tweet">
+    <textarea name="text_tweet" id="text_tweet" rows="3" class="span9" placeholder="117 characters + url"></textarea>
+    <button class="btn btn-medium " type="submit" >tweet</button>
+  </div>
+</form>
+</div>
+<script type="text/javascript">
+  $('#text_tweet').keyup(function () {
+    superato = Boolean(this.value.length >= 140);
+    $('#input_tweet').toggleClass('error', superato);
+    $('#input_tweet').toggleClass('success', !superato);
+  });
+</script>
+</div>

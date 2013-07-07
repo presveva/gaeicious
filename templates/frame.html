@@ -1,13 +1,27 @@
 {% for bm in bms %}
 {% set us = bm.key.urlsafe() %}
+{% if bm.domain in follows %}
+  {% set dom = 'https://twitter.com/' + bm.domain %}
+  {% set link = 'https://twitter.com/' + bm.domain + '/status/' + bm.key.id() %}
+  {% set icon = 'bullhorn' %}
+  {% set comment = bm.comment|urlize %}
+  <script type="text/javascript">
+    get_details('{{us}}');
+  </script>
+{% else %}
+  {% set dom = 'http://' + bm.domain %}
+  {% set link = bm.key.id() %}
+  {% set icon = 'bookmark' %}
+  {% set comment = bm.comment %}
+{% endif %}
 <table class="table table-condensed table-striped row-{{us}}">
   <tbody> <tr> <td>
 
-    <btn class="btn btn-small" onclick="comment('{{us}}')">
+    <btn class="btn btn-small" onclick="hide('{{us}}')">
       <i class="icon-remove-circle"></i> <span class="hidden-phone">hide</span>
     </btn>
 
-    <btn class="btn btn-small" onclick="trash('{{us}}')">
+    <btn class="btn btn-small" onclick="status('{{us}}', 'trash')">
       {% if bm.stato == 'trash' %}
       <i class="icon-remove"></i> <span class="hidden-phone">delete</span>
       {% else %}
@@ -15,7 +29,7 @@
       {% endif %}
     </btn>
 
-    <btn class="btn btn-small" onclick="archive('{{us}}')">
+    <btn class="btn btn-small" onclick="status('{{us}}', 'inbox')">
       {% if bm.stato == 'inbox' %}
       <i class="icon-folder-close"></i> <span class="hidden-phone">archive</span>
       {% else %}
@@ -23,44 +37,49 @@
       {% endif %}
     </btn>
 
-    <btn class="btn btn-small star-{{us}}" onclick="star('{{us}}')">
+    <btn class="btn btn-small star-{{us}}" onclick="status('{{us}}', 'star')">
       {% if bm.stato == 'star' %} <i class="icon-star"></i> {% else %} <i class="icon-star-empty"></i> {% endif %}
       <span class="hidden-phone">star</span>
     </btn>
-
-    <btn class="btn hidden-phone btn-small share-{{us}}" onclick="share('{{us}}')">
-      {% if bm.stato == 'share' %} <i class="icon-eye-open"></i> {% else %} <i class="icon-eye-close"></i> {% endif %} <span class="hidden-phone">share</span>
+    {% set eye = 'open' if bm.stato == 'share' else 'close' %}
+    <btn class="btn hidden-phone btn-small" onclick="status('{{us}}', 'share')">
+      <i class="share-{{us}} icon-eye-{{eye}}"></i> <span class="hidden-phone">share</span>
     </btn>
 
     <btn class="btn btn-small hidden-phone" onclick="edit('{{us}}')">
       <i class="icon-edit"></i> <span>edit</span>
     </btn>
 
+    {% if bm.domain in follows %}
+    <btn class="btn btn-small" onclick="retweet('{{bm.key.id()}}')">
+      <i class="icon-retweet"></i> <span class="hidden-phone">retweet</span>
+    </btn>
+    {% else %}
     <btn class="btn btn-small" onclick="tweet('{{us}}')">
       <i class="icon-bullhorn"></i> <span class="hidden-phone">tweet</span>
     </btn>
-
+    {% endif %}
 
     <div class="link-{{us}} btn-group">
     {% if bm.stato == 'share' %}
     <a class="btn btn-small btn-link " href="/bm/{{us}}" target="_blank">link</a>
     {% endif %}
     </div>
-
-    <a class="btn btn-link btn-mini hidden-phone pull-right" onclick="getbms('domain', '{{ bm.domain }}')">
+    <a class="btn btn-link btn-mini hidden-phone pull-right" href="{{dom}}" target="_blank">
       <em>{{ bm.domain }}</em>
     </a>
   </td> </tr>
 
-  <tr class="{%if bm.stato == 'trash' %}error{%endif%}"> <td>
-    <i class="icon-bookmark hidden-phone"></i>
-    <a href="{{ bm.key.id() }}" target="_blank">{{ bm.title|e}}</a>
+  <tr class="{%if bm.stato == 'trash' %}error{%elif bm.domain in follows %}info{%endif%}"> <td>
+    <i class="icon-{%if bm.stato == 'trash' %}trash {%else%}{{icon}}{%endif%} hidden-phone"></i>
+    <a href="{{link}}" target="_blank">{{ bm.title|e}} </a>
+    <span class="pull-right" id="retweet_count-{{us}}"></span>
   </td> </tr>
   <tr class="hide tweet-{{us}}"> <td>
     <form class="form-inline" action="/twitter/tweet">
       <div class="control-group" id="input_tweet-{{us}}">
-        <textarea name="text_tweet" id="text_tweet-{{us}}" rows="3" class="span10">{{bm.title}} {{bm.key.id()}}</textarea>
-        <button class="btn btn-large " type="submit" >tweet</button>
+        <textarea name="text_tweet" id="text_tweet-{{us}}" rows="3" class="input-xxlarge">{{bm.title}} {{bm.key.id()}}</textarea>
+        <button class="btn" type="submit" >tweet</button>
       </div>
     </form>
     <script type="text/javascript">
@@ -73,7 +92,13 @@
     </script>
   </td> </tr>
   <tr class="hide edit-{{us}}"> <td> {% include 'edit.html'%} </td> </tr>
-  <tr class="comments comment-{{us}}"> <td style="max-width: 757px">{{bm.comment}}</td> </tr>
+  <tr class="comments comment-{{us}}"> <td>
+    <span>
+      <img id="favico-{{us}}" style="float:left;">  {{comment}} <br>
+      <!-- <hr> -->
+      <!-- <img id="pic-{{us}}"> -->
+    </span>
+  </td> </tr>
   </tbody>
 </table>
 {% endfor %}
@@ -90,7 +115,3 @@
   $.cookie('cursor', '');
 </script>
 {% endif %}
-
-<script type="text/javascript">
-  // $('.comments a').attr('target', '_blank');
-</script>

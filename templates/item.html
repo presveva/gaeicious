@@ -6,6 +6,7 @@
 <div class="navbar-inner">
 <div class="container-narrow">
   <a class="brand" href="/">{{ brand }}</a>
+  <p class="navbar-text pull-right"> <i class="icon-user"></i> shared by {{bm.key.parent().id()}} </p>
 </div>
 </div>
 </div>
@@ -15,13 +16,6 @@
 <div class="container-narrow">
 <div class="row-fluid">
   <table class="table table-condensed table-striped"> <tbody>
-    <tr> <td>
-      <button class="btn btn-mini" onclick="copy_bm({{ bm.key.urlsafe() }})"><i class="icon-retweet"></i> copy</button>
-      <span class="text-left"><i class="icon-user"></i> shared by {{bm.key.parent().id()}}</span>
-      <a class="btn btn-link btn-mini hidden-phone pull-right" onclick="getbms('domain', '{{ bm.domain }}')">
-        <em>{{ bm.domain }}</em>
-      </a>
-    </td></tr>
     <tr> <td>
       <i class="icon-bookmark hidden-phone"></i>
       <a href="{{ bm.key.id() }}" target="_blank">{{ bm.title|e }}</a>
