@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # import logging
 from os import environ
-from jinja2 import Environment, FileSystemLoader
 from . import secret
 from .models import Bookmarks, UserInfo
 from google.appengine.api import urlfetch, app_identity
@@ -19,8 +18,18 @@ brand = app_identity.get_application_id()
 debug = environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 upload_url = create_upload_url('/upload')
 dtf = lambda value: value.strftime('%d/%m/%Y %H:%M')
-jinja_environment = Environment(loader=FileSystemLoader(['templates']))
-jinja_environment.filters['dtf'] = dtf
+
+
+def jinja_env():
+    from jinja2 import Environment, FileSystemLoader
+    env = Environment(loader=FileSystemLoader(['templates']))
+    env.filters.update({'dtf': dtf})
+    return env
+
+
+def hours_ago(ore):
+    from datetime import datetime, timedelta
+    return datetime.now() - timedelta(hours=ore)
 
 
 sess = session.DropboxSession(secret.dropbox_key, secret.dropbox_secret, 'app_folder')

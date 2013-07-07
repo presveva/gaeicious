@@ -23,8 +23,9 @@ class Feeds(ndb.Model):
     title = ndb.StringProperty()
     link = ndb.StringProperty(indexed=False)
     data = ndb.DateTimeProperty(auto_now=True)
-    notify = ndb.StringProperty(choices=['web', 'email', 'digest'],
-                                default="web")
+    notify = ndb.StringProperty(
+        choices=['web', 'email', 'digest'],
+        default="web")
     last_id = ndb.StringProperty()
 
 
@@ -33,7 +34,7 @@ class Following(ndb.Model):
     last_id = ndb.StringProperty()
 
 
-class Bookmarks(ndb.Expando):
+class Bookmarks(ndb.Model):
     title = ndb.StringProperty(indexed=False)
     comment = ndb.TextProperty(indexed=False)
     stato = ndb.StringProperty(

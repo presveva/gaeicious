@@ -1,7 +1,5 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-# import logging
-# import webapp2
 from . import util
 from webapp2 import RequestHandler
 from google.appengine.ext.deferred import defer
@@ -21,7 +19,7 @@ class AdminPage(RequestHandler):
         else:
             url = users.create_login_url(continue_url)
             text = 'Admin login'
-        template = util.jinja_environment.get_template('admin.html')
+        template = util.jinja_env().get_template('admin.html')
         values = {'brand': util.brand, 'text': text, 'url': url, 'admin': is_admin}
 
         # qry = Bookmarks.query()
@@ -89,7 +87,7 @@ def feed_digest(feedk):
     email = feed.ui.get().email
     if feed.notify == 'digest' and email is not None and bmq.count() > 4:
         title = '[%s] Digest for %s' % (util.brand, feed.title)
-        template = util.jinja_environment.get_template('digest.html')
+        template = util.jinja_env().get_template('digest.html')
         html = template.render({'bmq': bmq, 'title': title})
         sender = 'bm@%s.appspotmail.com' % util.brand
         send_mail(sender=sender, subject=title,
@@ -113,15 +111,14 @@ class Activity(RequestHandler):
 
 def activity_digest(uik):
     from google.appengine.api.mail import send_mail
-    from datetime import datetime, timedelta
-    period = datetime.now() - timedelta(hours=6)
+    from datetime import datetime
     bmq = Bookmarks.query(Bookmarks.stato == 'inbox',
-                          Bookmarks.data > period,
+                          Bookmarks.data > util.hours_ago(6),
                           ancestor=uik)
     email = uik.get().email
     if bmq.get() is not None and email is not None:
         title = '[%s] Last 6 hours inbox: %s' % (util.brand, util.dtf(datetime.now()))
-        template = util.jinja_environment.get_template('digest.html')
+        template = util.jinja_env().get_template('digest.html')
         html = template.render({'bmq': bmq, 'title': title})
         sender = 'bm@%s.appspotmail.com' % util.brand
         send_mail(sender=sender, subject=title,
@@ -130,9 +127,7 @@ def activity_digest(uik):
 
 def cron_trash(uik):
     from google.appengine.ext.ndb import delete_multi
-    from datetime import datetime, timedelta
-    period = datetime.now() - timedelta(days=3)
-    bmq = Bookmarks.query(Bookmarks.data < period,
+    bmq = Bookmarks.query(Bookmarks.data < util.hours_ago(72),
                           Bookmarks.stato == 'trash',
                           ancestor=uik).fetch(100, keys_only=True)
     delete_multi(bmq)

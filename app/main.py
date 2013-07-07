@@ -18,7 +18,7 @@ class BaseHandler(RequestHandler):
             return UserInfo.get_by_id(screen_name)
 
     def render(self, _template, _values):
-        template = util.jinja_environment.get_template(_template)
+        template = util.jinja_env().get_template(_template)
         return template.render(_values)
 
     def send_json(self, _values):
@@ -31,7 +31,7 @@ class BaseHandler(RequestHandler):
         is_admin = users.is_current_user_admin()
         values = {'brand': util.brand, 'ui': self.ui, 'admin': is_admin}
         values.update(template_values)
-        template = util.jinja_environment.get_template(template_name)
+        template = util.jinja_env().get_template(template_name)
         self.response.write(template.render(values))
 
 
@@ -276,7 +276,10 @@ class CheckFeed(RequestHandler):
     @util.login_required
     def get(self):
         feed = Feeds.get_by_id(int(self.request.get('feed')))
-        defer(check_feed, feed.key, _queue='check')
+        if feed.data < util.hours_ago(120):
+            feed.last_id = ''
+            feed.put()
+        check_feed(feed.key)
 
 
 class Logout(BaseHandler):
