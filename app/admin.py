@@ -1,19 +1,18 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 # import logging
-import datetime
-import util
-import webapp2
-from webapp2_extras import routes
-from google.appengine.ext import ndb, deferred
+# import webapp2
+from . import util
+from webapp2 import RequestHandler
+from google.appengine.ext.deferred import defer
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
-from google.appengine.api import search, mail, users
-from models import Feeds, Bookmarks, UserInfo
+from .models import Feeds, Bookmarks, UserInfo, Following
 
 
-class AdminPage(webapp2.RequestHandler):
+class AdminPage(RequestHandler):
 
     def get(self):
+        from google.appengine.api import users
         continue_url = self.request.get('continue')
         is_admin = users.is_current_user_admin()
         if users.get_current_user():
@@ -41,11 +40,13 @@ class AdminPage(webapp2.RequestHandler):
 
 
 # CHECK FEEDS
-class CheckFeeds(webapp2.RequestHandler):
+class CheckFeeds(RequestHandler):
 
     def get(self):
         for feedk in Feeds.query().fetch(keys_only=True):
-            deferred.defer(check_feed, feedk, _queue='check')
+            defer(check_feed, feedk, _queue='check')
+        for foolk in Following.query().fetch(keys_only=True):
+            defer(check_following, foolk, _queue='check')
 
 
 def check_feed(feedk, e=0):
@@ -55,19 +56,34 @@ def check_feed(feedk, e=0):
     if n > 0 and feed.last_id != parsed['items'][0]['link']:
         entry = parsed['items'][e]
         while feed.last_id != entry['link'] and e < (n - 1):
-            deferred.defer(util.submit_bm, feedk=feedk, uik=feed.ui,
-                           title=entry['title'], url=entry['link'],
-                           comment=util.build_comment(entry),
-                           _queue='submit')
+            defer(util.submit_bm, feedk=feedk, uik=feed.ui,
+                  title=entry['title'], url=entry['link'],
+                  comment=util.build_comment(entry),
+                  _queue='submit')
             e += 1
             entry = parsed['items'][e]
         feed.last_id = parsed['items'][0]['link']
         feed.put()
-        deferred.defer(feed_digest, feedk, _queue='email', _countdown=300)
+        defer(feed_digest, feedk, _queue='email', _countdown=300)
+
+
+def check_following(follk, e=0):
+    ui = UserInfo.get_by_id(follk.parent().id())
+    api = util.get_api(ui.key)
+    tweets = api.user_timeline(screen_name=follk.id())
+    while tweets[e].id_str != ui.last_id and e < 15:
+        Bookmarks.get_or_insert(
+            tweets[e].id_str, parent=ui.key, title=tweets[e].user.screen_name,
+            domain=tweets[e].user.screen_name, comment=tweets[e].text)
+        e += 1
+    foll = follk.get()
+    foll.last_id = tweets[0].id_str
+    foll.put()
 
 
 def feed_digest(feedk):
-
+    from google.appengine.ext.ndb import put_multi
+    from google.appengine.api.mail import send_mail
     bmq = Bookmarks.query(Bookmarks.feed == feedk, Bookmarks.stato == 'inbox')
     feed = feedk.get()
     email = feed.ui.get().email
@@ -76,54 +92,54 @@ def feed_digest(feedk):
         template = util.jinja_environment.get_template('digest.html')
         html = template.render({'bmq': bmq, 'title': title})
         sender = 'bm@%s.appspotmail.com' % util.brand
-        mail.send_mail(sender=sender, subject=title,
-                       to=email, body=html, html=html)
+        send_mail(sender=sender, subject=title,
+                  to=email, body=html, html=html)
         queue = []
         for bm in bmq:
             bm.stato = 'trash'
             queue.append(bm)
-        ndb.put_multi(queue)
+        put_multi(queue)
 
 
 # 6 HOURS DIGEST
-class Activity(webapp2.RequestHandler):
+class Activity(RequestHandler):
 
     def get(self):
         for ui in UserInfo.query():
-            deferred.defer(cron_trash, ui.key, _queue='worker')
+            defer(cron_trash, ui.key, _queue='worker')
             if ui.daily is True:
-                deferred.defer(activity_digest, ui.key, _queue='worker')
+                defer(activity_digest, ui.key, _queue='worker')
 
 
 def activity_digest(uik):
-    delta = datetime.timedelta(hours=6)
-    now = datetime.datetime.now()
-    period = now - delta
+    from google.appengine.api.mail import send_mail
+    from datetime import datetime, timedelta
+    period = datetime.now() - timedelta(hours=6)
     bmq = Bookmarks.query(Bookmarks.stato == 'inbox',
                           Bookmarks.data > period,
                           ancestor=uik)
     email = uik.get().email
     if bmq.get() is not None and email is not None:
-        title = '[%s] Last 6 hours inbox: %s' % (util.brand, util.dtf(now))
+        title = '[%s] Last 6 hours inbox: %s' % (util.brand, util.dtf(datetime.now()))
         template = util.jinja_environment.get_template('digest.html')
         html = template.render({'bmq': bmq, 'title': title})
         sender = 'bm@%s.appspotmail.com' % util.brand
-        mail.send_mail(sender=sender, subject=title,
-                       to=email, body=html, html=html)
+        send_mail(sender=sender, subject=title,
+                  to=email, body=html, html=html)
 
 
 def cron_trash(uik):
-    delta = datetime.timedelta(days=3)
-    now = datetime.datetime.now()
-    period = now - delta
+    from google.appengine.ext.ndb import delete_multi
+    from datetime import datetime, timedelta
+    period = datetime.now() - timedelta(days=3)
     bmq = Bookmarks.query(Bookmarks.data < period,
                           Bookmarks.stato == 'trash',
                           ancestor=uik).fetch(100, keys_only=True)
-    ndb.delete_multi(bmq)
+    delete_multi(bmq)
 
 
 # ITERATOR
-class Iterator(webapp2.RequestHandler):
+class Iterator(RequestHandler):
 
     def post(self):
         model = str(self.request.get('model'))
@@ -132,19 +148,20 @@ class Iterator(webapp2.RequestHandler):
 
 
 def itera(model, cursor=None, count=0):
-    qry = ndb.gql("SELECT * FROM %s" % model)
+    from google.appengine.ext.ndb import gql
+    qry = gql("SELECT * FROM %s" % model)
     res, cur, more = qry.fetch_page(50, start_cursor=cursor)
     for ent in res:
         if hasattr(ent, 'archived'):
-            deferred.defer(make_some, ent, _queue='upgrade')
+            defer(make_some, ent, _queue='upgrade')
             count += 1
         # else:
-            # deferred.defer(make_some, ent, _queue='upgrade')
+            # defer(make_some, ent, _queue='upgrade')
             # count += 1
     if more and count < 25:
-        deferred.defer(itera, model, cur, _queue='upgrade')
+        defer(itera, model, cur, _queue='upgrade')
     elif more:
-        deferred.defer(itera, model, cur, _queue='upgrade', _countdown=1800)
+        defer(itera, model, cur, _queue='upgrade', _countdown=1800)
 
 
 def make_some(ent):
@@ -168,7 +185,7 @@ def make_some(ent):
 
 
 # DELETE SEARCH INDEX
-class DeleteIndex(webapp2.RequestHandler):
+class DeleteIndex(RequestHandler):
 
     def post(self):
         index_name = self.request.get('index_name')
@@ -177,7 +194,9 @@ class DeleteIndex(webapp2.RequestHandler):
 
     def reset_index(self, index_name):
         """Delete all the docs in the given index."""
-        doc_index = search.Index(name=index_name)
+
+        from google.appengine.api.search import Index
+        doc_index = Index(name=index_name)
 
         while True:
             document_ids = [document.doc_id
@@ -189,10 +208,10 @@ class DeleteIndex(webapp2.RequestHandler):
 
 
 # REINDEX ALL BMS
-class reindex_all(webapp2.RequestHandler):
+class reindex_all(RequestHandler):
 
     def get(self):
-        deferred.defer(reindex)
+        defer(reindex)
         self.redirect('/admin')
 
 
@@ -200,13 +219,13 @@ def reindex(cursor=None):
     bmq = Bookmarks.query()  # .fetch(keys_only=True)
     bms, cur, more = bmq.fetch_page(100, start_cursor=cursor)
     for bm in bms:
-        deferred.defer(index_bm, bm, _queue='upgrade')
+        defer(index_bm, bm, _queue='upgrade')
     if more:
-        deferred.defer(reindex, cur, _queue='upgrade', _countdown=60)
+        defer(reindex, cur, _queue='upgrade', _countdown=60)
 
 
 def index_bm(bm):
-    # bm = key.get()
+    from google.appengine.api import search
     index = search.Index(name=bm.key.parent().string_id())
     doc = search.Document(doc_id=bm.key.urlsafe(), fields=[
         search.TextField(name='url', value=bm.key.string_id()),
@@ -219,9 +238,10 @@ def index_bm(bm):
 
 
 # DELATTR
-class del_attr(webapp2.RequestHandler):
+class del_attr(RequestHandler):
 
     """Delete property unused after a schema update"""
+
     def post(self):
         model = str(self.request.get('model'))
         prop = str(self.request.get('prop'))
@@ -230,17 +250,18 @@ class del_attr(webapp2.RequestHandler):
 
 
 def iter_entity(model, prop, cursor=None, count=0):
-    qry = ndb.gql("SELECT * FROM %s" % model)
+    from google.appengine.ext.ndb import gql
+    qry = gql("SELECT * FROM %s" % model)
     res, cur, more = qry.fetch_page(100, start_cursor=cursor)
     for ent in res:
         if hasattr(ent, prop):
-            deferred.defer(delatt, ent, prop, _queue='upgrade')
+            defer(delatt, ent, prop, _queue='upgrade')
             count += 1
     if more and count < 30:
-        deferred.defer(iter_entity, model, prop, cur, _queue='upgrade')
+        defer(iter_entity, model, prop, cur, _queue='upgrade')
     elif more:
-        deferred.defer(iter_entity, model, prop, cur, _queue='upgrade',
-                       _countdown=600)
+        defer(iter_entity, model, prop, cur, _queue='upgrade',
+              _countdown=600)
 
 
 def delatt(ent, prop):
@@ -254,20 +275,22 @@ class PostViaEmail(InboundMailHandler):
         email = message.sender.split('<')[1].split('>')[0]
         url = message.bodies('text/plain').next()[1].decode().strip()
         ui = UserInfo.query(UserInfo.email == email).get()
-        deferred.defer(util.submit_bm, feedk=None, uik=ui.key,
-                       title=message.subject, comment='Sent via email',
-                       url=url, _queue='submit')
+        defer(util.submit_bm, feedk=None, uik=ui.key,
+              title=message.subject, comment='Sent via email',
+              url=url, _queue='submit')
 
-app = webapp2.WSGIApplication([
-    routes.RedirectRoute('/admin/', AdminPage, name='Admin', strict_slash=True),
-    webapp2.Route('/_ah/mail/post@.*', PostViaEmail),
-    webapp2.Route('/_ah/login_required', AdminPage),
-    routes.PathPrefixRoute('/admin', [
-        webapp2.Route('/activity', Activity),
-        webapp2.Route('/check', CheckFeeds),
-        webapp2.Route('/del_attr', del_attr),
-        webapp2.Route('/delete_index', DeleteIndex),
-        webapp2.Route('/reindex_all', reindex_all),
-        webapp2.Route('/iterator', Iterator),
-    ])
-], debug=util.debug, config=util.config)
+
+from webapp2 import WSGIApplication, Route
+from webapp2_extras.routes import RedirectRoute, PathPrefixRoute
+app = WSGIApplication([
+    RedirectRoute('/admin/', AdminPage, name='Admin', strict_slash=True),
+    Route('/_ah/mail/post@.*', PostViaEmail),
+    Route('/_ah/login_required', AdminPage),
+    PathPrefixRoute('/admin', [
+        Route('/activity', Activity),
+        Route('/check', CheckFeeds),
+        Route('/del_attr', del_attr),
+        Route('/delete_index', DeleteIndex),
+        Route('/reindex_all', reindex_all),
+        Route('/iterator', Iterator),
+    ])], debug=util.debug)

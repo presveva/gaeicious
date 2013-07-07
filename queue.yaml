@@ -9,27 +9,27 @@ queue:
 - name: check
   rate: 10/s
   bucket_size: 20
-  target: check
+  # target: check
 
 - name: submit
   rate: 10/s
   bucket_size: 20
-  target: check
+  # target: check
 
 - name: email
   rate: 10/s
   bucket_size: 20
-  target: check
+  # target: check
 
 - name: upgrade
   rate: 1/s
   bucket_size: 20
-  target: check
+  # target: check
 
 - name: worker
   rate: 10/s
   bucket_size: 20
-  target: worker
+  # target: worker
 
 - name: delicious
   rate: 10/s

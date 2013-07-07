@@ -1,28 +1,60 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-import os
-import jinja2
-from google.appengine.api import urlfetch, mail, app_identity
-from google.appengine.ext import deferred, blobstore, ndb
-from google.appengine.ext.webapp import blobstore_handlers
+# import logging
+from os import environ
+from jinja2 import Environment, FileSystemLoader
+from . import secret
 from .models import Bookmarks, UserInfo
+from google.appengine.api import urlfetch, app_identity
+from google.appengine.ext.deferred import defer
+from google.appengine.ext.blobstore import create_upload_url
+from google.appengine.ext.webapp import blobstore_handlers
 from urlparse import urlparse, parse_qs
 from HTMLParser import HTMLParser
 from libs.feedparser import parse
+from tweepy import OAuthHandler, API
+from dropbox import session, client
 
-debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
-dtf = lambda value: value.strftime('%d/%m/%Y %H:%M')
 brand = app_identity.get_application_id()
-upload_url = blobstore.create_upload_url('/upload')
-jinja_environment = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(['templates']))
+debug = environ.get('SERVER_SOFTWARE', '').startswith('Dev')
+upload_url = create_upload_url('/upload')
+dtf = lambda value: value.strftime('%d/%m/%Y %H:%M')
+jinja_environment = Environment(loader=FileSystemLoader(['templates']))
 jinja_environment.filters['dtf'] = dtf
-config = {}
 
 
-def submit_bm(feedk, uik, title, url, comment):
-    url_fetched = fetch_url(url)
-    url_candidate = url_fetched.lstrip().rstrip().split(
+sess = session.DropboxSession(secret.dropbox_key, secret.dropbox_secret, 'app_folder')
+request_token = sess.obtain_request_token()
+dropbox_url = sess.build_authorize_url(request_token, oauth_callback='http://box.dinoia.eu/setting')
+
+auth = OAuthHandler(secret.twitter_key, secret.twitter_secret)
+api = API(auth)
+
+
+def get_api(uik):
+    ui = UserInfo.get_by_id(uik.id())
+    auth.set_access_token(ui.access_k, ui.access_s)
+    return API(auth)
+
+
+def fetch_url(url):
+    try:
+        result = urlfetch.fetch(url=url, follow_redirects=True,
+                                allow_truncated=True, deadline=60)
+        if result.status_code == 200:
+            final_url = result.final_url if result.final_url else url
+            # content = result.content
+            # size = float(result.headers['Content-Length'])
+            return final_url, result.content
+        else:
+            return url, None
+    except urlfetch.Error:
+        return url, None
+
+
+def submit_bm(uik, title, url, comment, feedk=None):
+    final_url, content = fetch_url(url)
+    url_candidate = final_url.lstrip().rstrip().split(
         '?utm_source')[0].split('&feature')[0]
     url_parsed = urlparse(url_candidate)
 
@@ -52,6 +84,8 @@ def submit_bm(feedk, uik, title, url, comment):
     elif ext in ['jpg', 'png', 'jpeg', 'gif']:
         bm_url = url_candidate
         bm_comment = '<img src="%s" width="757"/>' % url_candidate
+        if content:
+            defer(upload_to_dropbox, uik, name, ext, content, _queue='worker')
 
     elif ext in ['mp3', 'flac', 'aac', 'ogg']:
         bm_url = url_candidate
@@ -59,6 +93,8 @@ def submit_bm(feedk, uik, title, url, comment):
         src="http://www.google.com/reader/ui/3523697345-audio-player.swf"
         quality="best" flashvars="audioUrl=%s" width="433" height="27">
         </embed>''' % url_candidate
+        if content:
+            defer(upload_to_dropbox, uik, name, ext, content, _queue='worker')
 
     else:
         bm_url = url_candidate
@@ -69,9 +105,16 @@ def submit_bm(feedk, uik, title, url, comment):
                                  comment=bm_comment)
 
     if feedk is None and uik.get().mys is True:
-        deferred.defer(send_bm, bm.key, _queue='email')
+        defer(send_bm, bm.key, _queue='email')
     elif feedk is not None and feedk.get().notify == 'email':
-        deferred.defer(send_bm, bm.key, _queue='email')
+        defer(send_bm, bm.key, _queue='email')
+
+
+def upload_to_dropbox(uik, name, ext, content):
+    ui = uik.get()
+    sess.set_token(ui.db_key, ui.db_secret)
+    myclient = client.DropboxClient(sess)
+    myclient.put_file('/%s.%s' % (name, ext), content)
 
 
 def build_comment(entry):
@@ -92,21 +135,14 @@ def fetch_feed(feed_feed):
         return False
 
 
-def fetch_url(url):
-    try:
-        result = urlfetch.fetch(
-            url=url, follow_redirects=True, allow_truncated=True, deadline=60)
-        return result.final_url if result.final_url else url
-    except urlfetch.Error:
-        return url
-
-
 def delete_bms(uik, cursor=None):
+
+    from google.appengine.ext.ndb import delete_multi
     bmq = Bookmarks.query(Bookmarks.stato == 'trash', ancestor=uik)
     bms, cur, more = bmq.fetch_page(50, start_cursor=cursor, keys_only=True)
-    ndb.delete_multi(bms)
+    delete_multi(bms)
     if more:
-        deferred.defer(delete_bms, uik, cur, _countdown=600)
+        defer(delete_bms, uik, cur, _countdown=600)
 
 
 def login_required(handler_method):
@@ -120,6 +156,8 @@ def login_required(handler_method):
 
 
 def send_bm(bmk):
+
+    from google.appengine.api.mail import send_mail
     bm = bmk.get()
     sender = 'bm@%s.appspotmail.com' % brand
     subject = "[%s] %s" % (brand, bm.title)
@@ -131,8 +169,8 @@ def send_bm(bmk):
     <tr> <td>%s</td> </tr>
 </tbody> </table> </html>
 """ % (bm.title, dtf(bm.data), bm.key.id(), bm.comment)
-    mail.send_mail(sender=sender, to=bm.key.parent().get().email,
-                   subject=subject, body=html, html=html)
+    send_mail(sender=sender, to=bm.key.parent().get().email,
+              subject=subject, body=html, html=html)
 
 
 # Delicious import
@@ -145,13 +183,13 @@ class UploadDelicious(blobstore_handlers.BlobstoreUploadHandler):
         blob_info = upload_files[0]
         ui.delicious = blob_info.key()
         ui.put()
-        deferred.defer(delicious, ui.key, _queue="delicious")
+        defer(delicious, ui.key, _queue="delicious")
         self.redirect('/')
 
 
 def delicious(uik):
-    blob_reader = blobstore.BlobReader(
-        uik.get().delicious, buffer_size=1048576)
+    from google.appengine.ext.blobstore import BlobReader
+    blob_reader = BlobReader(uik.get().delicious, buffer_size=1048576)
     parser = BookmarkParser()
     parser.feed(blob_reader.read())
     parser.close()
@@ -163,10 +201,9 @@ def delicious(uik):
         t = bm['title']
         o = bm['url']
         c = bm['comment']
-        deferred.defer(
-            submit_bm, f, u, t, o, c, _queue="delicious", _countdown=300)
+        defer(submit_bm, f, u, t, o, c, _queue="delicious", _countdown=300)
     if was == 'was_true':
-        deferred.defer(mys_on, uik, _queue="delicious")
+        defer(mys_on, uik, _queue="delicious")
 
 
 class BookmarkParser(HTMLParser):

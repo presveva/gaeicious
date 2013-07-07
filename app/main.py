@@ -1,22 +1,18 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-import tweepy
-import webapp2
-from webapp2_extras import json
-from google.appengine.api import search, users
-from google.appengine.ext import ndb, deferred
-from . import util, secret
-from models import UserInfo, Bookmarks, Feeds
-from admin import check_feed
-
-auth = tweepy.OAuthHandler(secret.consumer_token,
-                           secret.consumer_secret)
+from . import util
+from webapp2 import RequestHandler, WSGIApplication
+from google.appengine.ext.deferred import defer
+from google.appengine.ext.ndb import Key
+from .models import Feeds, Following
+from .admin import check_feed, check_following
 
 
-class BaseHandler(webapp2.RequestHandler):
+class BaseHandler(RequestHandler):
 
     @property
     def ui(self):
+        from .models import UserInfo
         screen_name = self.request.cookies.get('screen_name')
         if screen_name:
             return UserInfo.get_by_id(screen_name)
@@ -26,10 +22,12 @@ class BaseHandler(webapp2.RequestHandler):
         return template.render(_values)
 
     def send_json(self, _values):
+        from webapp2_extras import json
         self.response.headers['Content-Type'] = 'application/json'
         self.response.write(json.encode(_values))
 
     def generate(self, template_name, template_values={}):
+        from google.appengine.api import users
         is_admin = users.is_current_user_admin()
         values = {'brand': util.brand, 'ui': self.ui, 'admin': is_admin}
         values.update(template_values)
@@ -40,24 +38,25 @@ class BaseHandler(webapp2.RequestHandler):
 class HomePage(BaseHandler):
 
     def get(self):
+        from .models import UserInfo
         oauth_verifier = self.request.get("oauth_verifier")
         if self.ui is not None:
-            auth.set_access_token(self.ui.access_k, self.ui.access_s)
-            api = tweepy.API(auth)
+            util.auth.set_access_token(self.ui.access_k, self.ui.access_s)
             self.response.set_cookie('cursor', '')
             self.response.set_cookie('stato', 'inbox')
             self.generate('home.html', {'is_gae': True})
         elif oauth_verifier:
-            auth.get_access_token(oauth_verifier)
-            api = tweepy.API(auth)
-            screen_name = api.me().screen_name
+            util.auth.get_access_token(oauth_verifier)
+            screen_name = util.api.me().screen_name
 
-            UserInfo.get_or_insert(
-                screen_name, access_k=auth.access_token.key, access_s=auth.access_token.secret)
+            UserInfo.get_or_insert(screen_name,
+                                   access_k=util.auth.access_token.key,
+                                   access_s=util.auth.access_token.secret)
+
             self.response.set_cookie('screen_name', screen_name, max_age=604800)
             self.redirect('/')
         else:
-            redirect_url = auth.get_authorization_url()
+            redirect_url = util.auth.get_authorization_url()
             self.generate('just.html', {'redirect_url': redirect_url})
 
 
@@ -65,48 +64,48 @@ class Main_Frame(BaseHandler):
 
     @util.login_required
     def get(self, stato):
-        bmq = self.bmq(stato)
-        start_cursor = ndb.Cursor(urlsafe=self.request.get('cursor'))
+        from .models import Bookmarks
+        from google.appengine.ext.ndb import Cursor
+        follqry = Following.query().fetch(keys_only=True)
+        follows = [f.id() for f in follqry]
+        bmq = Bookmarks.userbmq(self.ui.key, stato)
+        start_cursor = Cursor(urlsafe=self.request.get('cursor'))
         bms, cur, more = bmq.fetch_page(10, start_cursor=start_cursor)
         cursor = cur.urlsafe() if more else ''
-        tmpl = 'stream.html' if stato == 'stream' else 'frame.html'
-        html = self.render(tmpl, {'bms': bms, 'cursor': cursor})
+        html = self.render(
+            'frame.html', {'bms': bms, 'cursor': cursor, 'follows': follows})
         self.response.set_cookie('stato', stato)
         self.response.write(html)
-
-    def bmq(self, stato):
-        if stato == 'domain':
-            domain = self.request.get('domain')
-            bmq = Bookmarks.query(Bookmarks.domain == domain, ancestor=self.ui.key)
-        elif stato == 'stream':
-            bmq = Bookmarks.query(Bookmarks.stato == 'share')
-        else:
-            bmq = Bookmarks.userbmq(self.ui.key, stato)
-        return bmq
-
-
-class Logout(BaseHandler):
-
-    def get(self):
-        self.response.set_cookie('screen_name', '')
-        self.redirect('/')
 
 
 class SettingPage(BaseHandler):
 
     @util.login_required
     def get(self):
+        oauth_token = self.request.get('oauth_token')
+
         bookmarklet = "javascript:location.href='" + \
             self.request.host_url + "/submit?" + \
             "url='+encodeURIComponent(location.href)+'" + \
             "&title='+encodeURIComponent(document.title)+'" + \
             "'+'&comment='+document.getSelection().toString()"
-        self.response.set_cookie('mys', '%s' % self.ui.mys)
-        self.response.set_cookie('daily', '%s' % self.ui.daily)
+        self.response.set_cookie('mys', str(self.ui.mys))
+        self.response.set_cookie('daily', str(self.ui.daily))
         self.response.set_cookie('stato', 'setting')
-        self.generate(
-            'setting.html', {'bookmarklet': bookmarklet,
-                             'upload_url': util.upload_url})
+        values = {'bookmarklet': bookmarklet, 'upload_url': util.upload_url}
+        if oauth_token:
+            access_token = util.sess.obtain_access_token(util.request_token)
+            ui = self.ui
+            ui.db_key = access_token.key
+            ui.db_secret = access_token.secret
+            ui.put()
+            self.redirect('/setting')
+        if not util.sess.is_linked():
+            if self.ui.db_key:
+                util.sess.set_token(self.ui.db_key, self.ui.db_secret)
+            else:
+                values.update({'dropbox_url': util.dropbox_url})
+        self.generate('setting.html', values)
 
 
 class FeedsPage(BaseHandler):
@@ -118,12 +117,6 @@ class FeedsPage(BaseHandler):
         self.generate('feeds.html', {'feeds': feed_list})
 
     @util.login_required
-    def delete(self):
-        feed = Feeds.get_by_id(int(self.request.get('id')))
-        feed.key.delete()
-        # self.redirect(self.request.referer)
-
-    @util.login_required
     def post(self):
         from libs.feedparser import parse
         feed = self.request.get('url')
@@ -131,171 +124,38 @@ class FeedsPage(BaseHandler):
         if q.get() is None:
             d = parse(str(feed))
             feed_k = Feeds(ui=self.ui.key, feed=feed,
-                           title=d['channel']['title'],
+                           title=d.feed.title if 'title' in d.feed else d[
+                               'channel']['title'],
                            link=d['channel']['link'],
                            last_id=d['items'][2]['link']).put()
-            deferred.defer(check_feed, feed_k, _queue='check')
+            defer(check_feed, feed_k, _queue='check')
         self.redirect('/feeds')
 
-
-class ArchiveBM(BaseHandler):
-
     @util.login_required
-    def get(self, us):
-        bm = ndb.Key(urlsafe=str(us)).get()
-        if self.ui.key == bm.key.parent():
-            if bm.stato == 'inbox':
-                bm.stato = 'archive'
-            else:
-                bm.stato = 'inbox'
-            bm.put()
+    def delete(self):
+        feed = Feeds.get_by_id(int(self.request.get('id')))
+        feed.key.delete()
 
 
-class TrashBM(BaseHandler):
-
-    @util.login_required
-    def get(self, us):
-        bm = ndb.Key(urlsafe=str(us)).get()
-        if self.ui.key == bm.key.parent():
-            if bm.stato == 'trash':
-                bm.key.delete()
-            else:
-                bm.stato = 'trash'
-                bm.put()
-
-
-class ShareBM(BaseHandler):
-
-    @util.login_required
-    def get(self, us):
-
-        bm = ndb.Key(urlsafe=str(us)).get()
-        if self.ui.key == bm.key.parent():
-            if bm.stato == 'share':
-                bm.stato = 'inbox'
-                eye = '<i class="icon-eye-close"></i>'
-                btn = ''
-            else:
-                bm.stato = 'share'
-                eye = '<i class="icon-eye-open"></i>'
-                btn = '<a class="btn btn-small btn-link" href="/bm/' + \
-                    us + '" target="_blank">link</a>'
-            bm.put()
-            self.send_json({"eye": eye, "btn": btn})
-
-
-class StarBM(BaseHandler):
-
-    @util.login_required
-    def get(self, us):
-
-        bm = ndb.Key(urlsafe=str(us)).get()
-        if self.ui.key == bm.key.parent():
-            if bm.stato == 'star':
-                bm.stato = 'archive'
-            else:
-                bm.stato = 'star'
-            bm.put()
-
-
-class empty_trash(BaseHandler):
+class FollowingPage(BaseHandler):
 
     @util.login_required
     def get(self):
-        deferred.defer(util.delete_bms, self.ui.key)
-        self.redirect(self.request.referer)
-
-
-class ItemPage(BaseHandler):
-
-    def get(self, us):
-        bm = ndb.Key(urlsafe=str(us)).get()
-        if bm.stato == 'share':
-            self.generate('item.html', {'bm': bm})
-        else:
-            self.redirect('/')
-
-    @util.login_required
-    def post(self, us):
-        bm = ndb.Key(urlsafe=str(us)).get()
-        if self.ui.key == bm.key.parent():
-            bm.title = self.request.get('title').encode('utf8')
-            bm.comment = self.request.get('comment').encode('utf8')
-            bm.put()
-            self.response.write("<td>%s</td>" % bm.comment)
-
-
-class cerca(BaseHandler):
+        following = Following.query(ancestor=self.ui.key)
+        self.response.set_cookie('stato', 'following')
+        self.generate('following.html', {'following': following})
 
     @util.login_required
     def post(self):
-        query_string = self.request.get('query_string')
-        try:
-            results = search.Index(name=self.ui.key.string_id()).search(query_string)
-            bms_us = [str(doc.doc_id) for doc in results]
-            keys = [ndb.Key(urlsafe=str(us)) for us in bms_us]
-            if len(keys) > 0:
-                bms = ndb.get_multi(keys)
-                html = self.render('frame.html', {'bms': bms})
-                self.response.set_cookie('cursor', '')
-                self.response.write(html)
-        except search.Error:
-            pass
-
-
-class GetEdit(webapp2.RequestHandler):
-
-    def get(self, us):
-        bm = ndb.Key(urlsafe=str(us)).get()
-        self.render('edit.html', {'bm': bm})
-
-
-class CheckFeed(webapp2.RequestHandler):
+        username = self.request.get('username')
+        foll = Following.get_or_insert(username, parent=self.ui.key)
+        defer(check_following, foll.key)
+        self.redirect('/following')
 
     @util.login_required
-    def get(self):
-        feed = Feeds.get_by_id(int(self.request.get('feed')))
-        deferred.defer(
-            check_feed, feed.key, _queue='check')
-
-
-class SetMys(BaseHandler):
-
-    @util.login_required
-    def get(self):
-        ui = self.ui
-        if ui.mys is False:
-            ui.mys = True
-            html = '<i class="icon-thumbs-up"></i> <b>Enabled </b>'
-        else:
-            ui.mys = False
-            html = '<i class="icon-thumbs-down"></i> <b>Disabled</b>'
-        ui.put()
-        self.response.write(html)
-
-
-class SetDaily(BaseHandler):
-
-    @util.login_required
-    def get(self):
-        ui = self.ui
-        if ui.daily is False:
-            ui.daily = True
-            html = '<i class="icon-thumbs-up"></i> <b>Enabled </b>'
-        else:
-            ui.daily = False
-            html = '<i class="icon-thumbs-down"></i> <b>Disabled</b>'
-        ui.put()
-        self.response.write(html)
-
-
-class SetNotify(webapp2.RequestHandler):
-
-    @util.login_required
-    def get(self):
-        feed = Feeds.get_by_id(int(self.request.get('feed')))
-        feed.notify = self.request.get('notify')
-        feed.put()
+    def delete(self):
+        foll = Following.get_by_id(self.request.get('id'), parent=self.ui.key)
+        foll.key.delete()
 
 
 class SaveEmail(BaseHandler):
@@ -307,50 +167,140 @@ class SaveEmail(BaseHandler):
         ui.put()
         self.redirect(self.request.referer)
 
+    @util.login_required
+    def get(self):
+        ui = self.ui
+        mys = True if ui.mys is False else False
+        self.response.set_cookie('mys', str(mys))
+        ui.mys = mys
+        ui.put()
+        # self.response.write(html)
+
+    @util.login_required
+    def put(self):
+        ui = self.ui
+        daily = True if ui.daily is False else False
+        self.response.set_cookie('daily', str(daily))
+        ui.daily = daily
+        ui.put()
+
+
+class Bookmark(BaseHandler):
+
+    def get(self, us):
+        bm = Key(urlsafe=str(us)).get()
+        if bm.stato == 'share':
+            self.generate('item.html', {'bm': bm})
+        else:
+            self.redirect('/')
+
+    @util.login_required
+    def post(self, us):
+        bm = Key(urlsafe=str(us)).get()
+        if self.ui.key == bm.key.parent():
+            bm.title = self.request.get('title').encode('utf8')
+            bm.comment = self.request.get('comment').encode('utf8')
+            bm.put()
+            self.response.write("<td>%s</td>" % bm.comment)
+
+    @util.login_required
+    def put(self, us):
+        bm = Key(urlsafe=str(us)).get()
+        if self.ui.key == bm.key.parent():
+            old, btn = self.request.cookies.get('stato'), self.request.get('btn')
+            if btn == 'trash':
+                if old == 'trash':
+                    bm.key.delete()
+                else:
+                    bm.stato = 'trash'
+            if btn == 'inbox':
+                bm.stato = 'archive' if old == 'inbox' else 'inbox'
+            if btn == 'star':
+                bm.stato = 'archive' if old == 'star' else 'star'
+            if btn == 'share':
+                bm.stato = 'inbox' if bm.stato == 'share' else 'share'
+            bm.put()
+
+
+class cerca(BaseHandler):
+
+    @util.login_required
+    def post(self):
+
+        from google.appengine.ext.ndb import get_multi
+        from google.appengine.api.search import Index, Error
+        query_string = self.request.get('query_string')
+        try:
+            results = Index(name=self.ui.key.string_id()).search(query_string)
+            bms_us = [str(doc.doc_id) for doc in results]
+            keys = [Key(urlsafe=str(us)) for us in bms_us]
+            if len(keys) > 0:
+                bms = get_multi(keys)
+                html = self.render('frame.html', {'bms': bms})
+                self.response.set_cookie('cursor', '')
+                self.response.write(html)
+        except Error:
+            pass
+
+
+class SetNotify(RequestHandler):
+
+    @util.login_required
+    def get(self):
+        feed = Feeds.get_by_id(int(self.request.get('feed')))
+        feed.notify = self.request.get('notify')
+        feed.put()
+
 
 class AddBM(BaseHandler):
 
     @util.login_required
     def get(self):
-        util.submit_bm(feedk=None,
-                       uik=self.ui.key,
+        util.submit_bm(uik=self.ui.key,
                        title=self.request.get('title'),
                        url=self.request.get('url'),
                        comment=self.request.get('comment'))
         self.redirect('/')
 
 
-class CopyBM(BaseHandler):
+class empty_trash(BaseHandler):
 
     @util.login_required
-    def get(self, us):
-        bm = ndb.Key(urlsafe=str(us)).get()
-        deferred.defer(util.submit_bm, feedk=None, uik=self.ui.key,
-                       title=bm.title, url=bm.key.id(), comment=bm.comment)
+    def get(self):
+        defer(util.delete_bms, self.ui.key)
+        self.redirect(self.request.referer)
 
-app = webapp2.WSGIApplication([
+
+class CheckFeed(RequestHandler):
+
+    @util.login_required
+    def get(self):
+        feed = Feeds.get_by_id(int(self.request.get('feed')))
+        defer(check_feed, feed.key, _queue='check')
+
+
+class Logout(BaseHandler):
+
+    def get(self):
+        self.response.set_cookie('screen_name', '')
+        self.redirect('/')
+
+app = WSGIApplication([
     ('/', HomePage),
     ('/logout', Logout),
     ('/search', cerca),
     (r'/bms/(.*)', Main_Frame),
     ('/submit', AddBM),
-    (r'/copy/(.*)', CopyBM),
-    ('/checkfeed', CheckFeed),
-    (r'/archive/(.*)', ArchiveBM),
-    (r'/trash/(.*)', TrashBM),
     ('/empty_trash', empty_trash),
     ('/setting', SettingPage),
     ('/feeds', FeedsPage),
-    ('/setmys', SetMys),
-    ('/setdaily', SetDaily),
+    ('/following', FollowingPage),
+    ('/checkfeed', CheckFeed),
     ('/setnotify', SetNotify),
-    (r'/share/(.*)', ShareBM),
-    (r'/star/(.*)', StarBM),
     ('/save_email', SaveEmail),
-    (r'/getedit/(.*)', GetEdit),
-    (r'/bm/(.*)', ItemPage),
+    (r'/bm/(.*)', Bookmark),
     ('/upload', util.UploadDelicious),
-], debug=util.debug, config=util.config)
+], debug=util.debug)
 
 if __name__ == "__main__":
     app.run()

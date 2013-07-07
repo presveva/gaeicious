@@ -4,6 +4,7 @@ How to install
 - create a new app in [appengine](https://appengine.google.com/)
 - change the 'app-id' in app.yaml
 - add [Tweepy](https://github.com/tweepy/tweepy) to the project folder.
+- add [Dropbox](https://www.dropbox.com/developers/core/sdk) to the project folder.
 - [deploy](https://developers.google.com/appengine/docs/python/tools/uploadinganapp#Uploading_the_App) in google app engine
 
 Goodies
@@ -48,6 +49,7 @@ Open source libraries used in gaeicious
 - jquery cookie [github](https://github.com/carhartl/jquery-cookie)
 - Universal feed parser: [docs](http://pythonhosted.org/feedparser/)
 - Tweepy: [github](https://github.com/tweepy/tweepy)
+- Dropbox sdk: [docs](https://www.dropbox.com/developers/core/sdk)
 
 Copyright and license
 ---

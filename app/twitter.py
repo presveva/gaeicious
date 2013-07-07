@@ -1,64 +1,61 @@
-import webapp2
-import tweepy
-from . import secret, util
+#!/usr/local/bin/python
+# -*- coding: utf-8 -*-
 from .main import BaseHandler
-from webapp2_extras import routes
-
-auth = tweepy.OAuthHandler(secret.consumer_token,
-                           secret.consumer_secret)
+from .util import api, login_required, get_api
+from webapp2 import WSGIApplication, Route, RequestHandler
 
 
 class TwitterPage(BaseHandler):
 
-    @util.login_required
+    @login_required
     def get(self):
-        ui = self.ui
-        auth.set_access_token(ui.access_k, ui.access_s)
-        api = tweepy.API(auth)
-        new_tweets = api.home_timeline()
-        ntw_ids = [tw.id_str for tw in new_tweets]
-        tw_ids = []
-        n = 0
-        while n < (len(ntw_ids) - 1):
-        # while ntw_ids[n] != ui.last_id and n < (len(ntw_ids) - 1):
-            tw_ids.append(ntw_ids[n])
-            n += 1
-        tweets = [api.get_status(tw_id) for tw_id in tw_ids]
-        # ui.last_id = new_tweets[0].id_str
-        # ui.put()
-        self.generate('twitter.html', {'tweets': tweets, 'ui': ui})
+        new_api = get_api(self.ui.key)
+        new_tweets = new_api.home_timeline()
+        self.generate('twitter.html', {'tweets': new_tweets})
 
 
-class Retweet(BaseHandler):
+class Retweet(RequestHandler):
 
-    @util.login_required
+    @login_required
     def get(self):
-        ui = self.ui
-        auth.set_access_token(ui.access_k, ui.access_s)
-        api = tweepy.API(auth)
         id_str = self.request.get('id_str')
         api.retweet(id_str)
 
 
-class Tweet(BaseHandler):
+class Tweet(RequestHandler):
 
-    @util.login_required
+    @login_required
     def get(self):
-        ui = self.ui
-        auth.set_access_token(ui.access_k, ui.access_s)
-        api = tweepy.API(auth)
         text = self.request.get('text_tweet')
         api.update_status(text)
         self.redirect(self.request.referer)
 
 
-app = webapp2.WSGIApplication([
-    routes.RedirectRoute(
-        '/twitter/', TwitterPage, name='Twitter', strict_slash=True),
-    routes.PathPrefixRoute('/twitter', [
-                           webapp2.Route('/retweet', Retweet),
-                           webapp2.Route('/tweet', Tweet),
-                           ]), ])
+class GetDetails(BaseHandler):
+
+    @login_required
+    def get(self):
+        new_api = get_api(self.ui.key)
+        from google.appengine.ext.ndb import Key
+        bmk = Key(urlsafe=str(self.request.get('us')))
+        tweet = new_api.get_status(int(bmk.id()))
+        data = {
+            "retweets": tweet.retweet_count,
+            "favorites": tweet.favorite_count,
+            "favico": tweet.user.profile_image_url,
+            # "pic": tweet.entities['media'][0].media_url
+        }
+        self.send_json(data)
+
+
+from webapp2_extras.routes import RedirectRoute, PathPrefixRoute
+app = WSGIApplication([
+    RedirectRoute('/twitter/', TwitterPage, name='Twitter', strict_slash=True),
+    PathPrefixRoute('/twitter', [
+                    Route('/details', GetDetails),
+                    Route('/retweet', Retweet),
+                    Route('/tweet', Tweet),
+                    ]), ])
 
 if __name__ == "__main__":
     app.run()

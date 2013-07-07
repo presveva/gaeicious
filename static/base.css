@@ -11,10 +11,10 @@ body {
   body { padding-top: 0; }
 }
 
-img {
+/*img {
   max-width: 757px;
   max-height: auto;
-}
+}*/
 
 .container-narrow {
 margin: 0 auto;

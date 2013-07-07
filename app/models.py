@@ -7,6 +7,8 @@ from google.appengine.api import search
 class UserInfo(ndb.Model):
     access_k = ndb.StringProperty()
     access_s = ndb.StringProperty()
+    db_key = ndb.StringProperty()
+    db_secret = ndb.StringProperty()
     email = ndb.StringProperty()
     last_id = ndb.StringProperty()
     data = ndb.DateTimeProperty(auto_now=True)
@@ -26,6 +28,11 @@ class Feeds(ndb.Model):
     last_id = ndb.StringProperty()
 
 
+class Following(ndb.Model):
+    data = ndb.DateTimeProperty(auto_now=True)
+    last_id = ndb.StringProperty()
+
+
 class Bookmarks(ndb.Expando):
     title = ndb.StringProperty(indexed=False)
     comment = ndb.TextProperty(indexed=False)
@@ -34,7 +41,7 @@ class Bookmarks(ndb.Expando):
         default="inbox")
     data = ndb.DateTimeProperty(auto_now=True)
     feed = ndb.KeyProperty(kind=Feeds)
-    domain = ndb.StringProperty()
+    domain = ndb.StringProperty()  # 'screen_name' for tweets
 
     @classmethod
     def userbmq(cls, ui_key, stato):
@@ -46,12 +53,13 @@ class Bookmarks(ndb.Expando):
         index.delete(key.urlsafe())
 
     def _post_put_hook(self, future):
-        index = search.Index(name=self.key.parent().string_id())
-        doc = search.Document(doc_id=self.key.urlsafe(), fields=[
-            search.TextField(name='url', value=self.key.string_id()),
-            search.TextField(name='title', value=self.title),
-            search.HtmlField(name='comment', value=self.comment)])
-        try:
-            index.put(doc)
-        except search.Error:
-            pass
+        if self.stato not in ['trash', 'inbox']:
+            index = search.Index(name=self.key.parent().string_id())
+            doc = search.Document(doc_id=self.key.urlsafe(), fields=[
+                search.TextField(name='url', value=self.key.string_id()),
+                search.TextField(name='title', value=self.title),
+                search.HtmlField(name='comment', value=self.comment)])
+            try:
+                index.put(doc)
+            except search.Error:
+                pass
