@@ -4,6 +4,7 @@
 from os import environ
 from . import secret
 from .models import Bookmarks, UserInfo
+from jinja2 import Environment, FileSystemLoader
 from google.appengine.api import urlfetch, app_identity
 from google.appengine.ext.deferred import defer
 from google.appengine.ext.blobstore import create_upload_url
@@ -18,13 +19,8 @@ brand = app_identity.get_application_id()
 debug = environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 upload_url = create_upload_url('/upload')
 dtf = lambda value: value.strftime('%d/%m/%Y %H:%M')
-
-
-def jinja_env():
-    from jinja2 import Environment, FileSystemLoader
-    env = Environment(loader=FileSystemLoader(['templates']))
-    env.filters.update({'dtf': dtf})
-    return env
+env = Environment(loader=FileSystemLoader(['templates']))
+env.filters.update({'dtf': dtf})
 
 
 def hours_ago(ore):
