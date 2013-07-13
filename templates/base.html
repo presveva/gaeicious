@@ -17,7 +17,11 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.3.1/jquery.cookie.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/highlight.min.js"></script>
+  {% if debug %}
   <script src="/static/base.js"></script>
+  {% else %}
+  <script src="/static/base.min.js"></script>
+  {% endif %}
 </head>
 
 <body>

@@ -4,7 +4,7 @@ from . import util
 from webapp2 import RequestHandler, WSGIApplication
 from google.appengine.ext.deferred import defer
 from google.appengine.ext.ndb import Key
-from .models import Feeds, Following
+from .models import Feeds, Following, UserInfo
 from .admin import check_feed, check_following
 
 
@@ -12,7 +12,6 @@ class BaseHandler(RequestHandler):
 
     @property
     def ui(self):
-        from .models import UserInfo
         screen_name = self.request.cookies.get('screen_name')
         if screen_name:
             return UserInfo.get_by_id(screen_name)
@@ -112,7 +111,7 @@ class FeedsPage(BaseHandler):
 
     @util.login_required
     def get(self):
-        feed_list = Feeds.query(Feeds.ui == self.ui.key).order(Feeds.title)
+        feed_list = Feeds.query(Feeds.ui == self.ui.key).order(Feeds.data)
         self.response.set_cookie('stato', 'feeds')
         self.generate('feeds.html', {'feeds': feed_list})
 
@@ -267,7 +266,7 @@ class empty_trash(BaseHandler):
 
     @util.login_required
     def get(self):
-        defer(util.delete_bms, self.ui.key)
+        defer(util.empty_trash, self.ui.key)
         self.redirect(self.request.referer)
 
 
@@ -288,7 +287,23 @@ class Logout(BaseHandler):
         self.response.set_cookie('screen_name', '')
         self.redirect('/')
 
+
+# from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
+
+
+# class PostViaEmail(InboundMailHandler):
+
+#     def receive(self, message):
+#         email = message.sender.split('<')[1].split('>')[0]
+#         url = message.bodies('text/plain').next()[1].decode().strip()
+#         ui = UserInfo.query(UserInfo.email == email).get()
+#         if ui:
+#             defer(util.submit_bm, feedk=None, uik=ui.key,
+#                   title=message.subject, comment='Sent via email',
+#                   url=url, _queue='submit')
+
 app = WSGIApplication([
+    # ('/_ah/mail/post@.+', PostViaEmail),
     ('/', HomePage),
     ('/logout', Logout),
     ('/search', cerca),

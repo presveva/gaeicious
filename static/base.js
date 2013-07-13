@@ -16,7 +16,7 @@ function getbms(stato, domain) {
   $.get("/bms/" + stat, {
     cursor: cur,
     domain: domain
-  }, function (html) {
+  }, function(html) {
     $(".main_frame").html(html);
     update_gui();
   });
@@ -25,7 +25,7 @@ function getbms(stato, domain) {
 function update_gui() {
   $.cookie('count', 10);
   $(window).scrollTop(0);
-  $('pre code').each(function (i, e) {
+  $('pre code').each(function(i, e) {
     hljs.highlightBlock(e);
   });
   $('.comments a').attr('target', '_blank');
@@ -38,12 +38,19 @@ function update_gui() {
   } else {
     $("#more").hide();
   }
+  if ($.cookie('stato') === 'trash') {
+    $("#empty_trash").slideToggle();
+    $("#twitter_form").hide();
+    twitter_form
+  } else {
+    $("#empty_trash").hide();
+  }
 };
 
 function get_details(us) {
   $.get('/twitter/details', {
     us: us
-  }, function (data) {
+  }, function(data) {
     $('#favico-' + us).attr({
       heigth: '48',
       width: '48',
@@ -66,7 +73,7 @@ function edit(us) {
 
 function edit_bm(us) {
   event.preventDefault();
-  $.post('/bm/' + us, $('#edit_bm-' + us).serialize(), function (html) {
+  $.post('/bm/' + us, $('#edit_bm-' + us).serialize(), function(html) {
     $('.comment-' + us).html(html);
     edit(us);
   });
@@ -74,7 +81,7 @@ function edit_bm(us) {
 
 function search() {
   event.preventDefault();
-  $.post('/search', $('#search').serialize(), function (html) {
+  $.post('/search', $('#search').serialize(), function(html) {
     $(".main_frame").html(html);
     $(window).scrollTop(0);
     $("#more").html('');
@@ -123,6 +130,7 @@ function tweet(us) {
 
 function twitter_form() {
   $("#twitter_form").slideToggle();
+  $("#empty_trash").hide();
 }
 
 function retweet(id) {
@@ -148,7 +156,7 @@ function del_foll(id) {
   $.ajax({
     type: "delete",
     url: "/following?id=" + id
-  }).done(function () {
+  }).done(function() {
     $("#row-" + id).hide();
   });
 }
@@ -157,11 +165,10 @@ function del_feed(id) {
   $.ajax({
     type: "delete",
     url: "/feeds?id=" + id
-  }).done(function () {
+  }).done(function() {
     $("#row-" + id).hide();
   });
 }
-
 
 function caratteri(val) {
   var addOrRemove = Boolean(val.value.length >= 140);
@@ -190,10 +197,9 @@ function save_mail(type) {
   $.ajax({
     type: type,
     url: "/save_email",
-    success: function () {
+    success: function() {
       update_setting();
     }
   })
 }
-
 $('#bookmarklet').tooltip();

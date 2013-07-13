@@ -38,7 +38,7 @@ class Bookmarks(ndb.Model):
     title = ndb.StringProperty(indexed=False)
     comment = ndb.TextProperty(indexed=False)
     stato = ndb.StringProperty(
-        choices=['inbox', 'trash', 'archive', 'share', 'star'],
+        choices=['inbox', 'trash', 'archive', 'share', 'star', 'delete'],
         default="inbox")
     data = ndb.DateTimeProperty(auto_now=True)
     feed = ndb.KeyProperty(kind=Feeds)
@@ -51,16 +51,19 @@ class Bookmarks(ndb.Model):
     @classmethod
     def _pre_delete_hook(cls, key):
         index = search.Index(name=key.parent().id())
-        index.delete(key.urlsafe())
+        try:
+            index.delete(key.urlsafe())
+        except search.Error:
+            pass
 
     def _post_put_hook(self, future):
-        if self.stato not in ['trash', 'inbox']:
-            index = search.Index(name=self.key.parent().string_id())
-            doc = search.Document(doc_id=self.key.urlsafe(), fields=[
-                search.TextField(name='url', value=self.key.string_id()),
-                search.TextField(name='title', value=self.title),
-                search.HtmlField(name='comment', value=self.comment)])
-            try:
-                index.put(doc)
-            except search.Error:
-                pass
+        # if self.stato not in ['trash', 'inbox']:
+        index = search.Index(name=self.key.parent().string_id())
+        doc = search.Document(doc_id=self.key.urlsafe(), fields=[
+            search.TextField(name='url', value=self.key.string_id()),
+            search.TextField(name='title', value=self.title),
+            search.HtmlField(name='comment', value=self.comment)])
+        try:
+            index.put(doc)
+        except search.Error:
+            pass

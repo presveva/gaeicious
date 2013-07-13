@@ -3,4 +3,6 @@ dropbox/
 bat/
 app/secret.py
 bat.txt
+*.sublime-project
+*.sublime-workspace
 *.py[co]

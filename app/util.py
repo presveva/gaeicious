@@ -22,18 +22,17 @@ dtf = lambda value: value.strftime('%d/%m/%Y %H:%M')
 env = Environment(loader=FileSystemLoader(['templates']))
 env.filters.update({'dtf': dtf})
 
-
-def hours_ago(ore):
-    from datetime import datetime, timedelta
-    return datetime.now() - timedelta(hours=ore)
-
-
 sess = session.DropboxSession(secret.dropbox_key, secret.dropbox_secret, 'app_folder')
 request_token = sess.obtain_request_token()
 dropbox_url = sess.build_authorize_url(request_token, oauth_callback='http://box.dinoia.eu/setting')
 
 auth = OAuthHandler(secret.twitter_key, secret.twitter_secret)
 api = API(auth)
+
+
+def hours_ago(ore):
+    from datetime import datetime, timedelta
+    return datetime.now() - timedelta(hours=ore)
 
 
 def get_api(uik):
@@ -140,14 +139,18 @@ def fetch_feed(feed_feed):
         return False
 
 
-def delete_bms(uik, cursor=None):
+def empty_trash(uik, cursor=None):
 
-    from google.appengine.ext.ndb import delete_multi
+    from google.appengine.ext.ndb import put_multi
     bmq = Bookmarks.query(Bookmarks.stato == 'trash', ancestor=uik)
-    bms, cur, more = bmq.fetch_page(50, start_cursor=cursor, keys_only=True)
-    delete_multi(bms)
+    bms, cur, more = bmq.fetch_page(50, start_cursor=cursor)
+    put_queue = []
+    for bm in bms:
+        bm.stato = 'delete'
+        put_queue.append(bm)
+    put_multi(put_queue)
     if more:
-        defer(delete_bms, uik, cur, _countdown=600)
+        defer(empty_trash, uik, cur)
 
 
 def login_required(handler_method):

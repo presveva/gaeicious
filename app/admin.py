@@ -3,8 +3,8 @@
 from . import util
 from webapp2 import RequestHandler
 from google.appengine.ext.deferred import defer
-from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from .models import Feeds, Bookmarks, UserInfo, Following
+from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 
 
 class AdminPage(RequestHandler):
@@ -51,18 +51,27 @@ def check_feed(feedk, e=0):
     feed = feedk.get()
     parsed = util.fetch_feed(feed.feed)
     n = len(parsed['items']) if parsed is not False else 0
-    if n > 0 and feed.last_id != parsed['items'][0]['link']:
+    if n > 0 and feed.last_id != build_link(parsed['items'][0], feed.link):
+    # if n > 0 and feed.last_id != parsed['items'][0]['link']:
         entry = parsed['items'][e]
-        while feed.last_id != entry['link'] and e < (n - 1):
+        # while feed.last_id != entry['link'] and e < (n - 1):
+        while feed.last_id != build_link(entry, feed.link) and e < (n - 1):
             defer(util.submit_bm, feedk=feedk, uik=feed.ui,
-                  title=entry['title'], url=entry['link'],
+                  title=entry['title'], url=build_link(entry, feed.link),
                   comment=util.build_comment(entry),
                   _queue='submit')
             e += 1
             entry = parsed['items'][e]
-        feed.last_id = parsed['items'][0]['link']
+        feed.last_id = build_link(parsed['items'][0], feed.link)
         feed.put()
-        defer(feed_digest, feedk, _queue='email', _countdown=300)
+        defer(feed_digest, feedk, _queue='email', _countdown=240)
+
+
+def build_link(entry, link):
+    try:
+        return entry['link']
+    except KeyError:
+        return link
 
 
 def check_following(follk, e=0):
@@ -70,13 +79,18 @@ def check_following(follk, e=0):
     api = util.get_api(ui.key)
     tweets = api.user_timeline(screen_name=follk.id())
     while tweets[e].id_str != ui.last_id and e < 15:
-        Bookmarks.get_or_insert(
-            tweets[e].id_str, parent=ui.key, title=tweets[e].user.screen_name,
-            domain=tweets[e].user.screen_name, comment=tweets[e].text)
+        defer(submit_tweet, tweets[e], ui.key, _queue='submit')
         e += 1
     foll = follk.get()
     foll.last_id = tweets[0].id_str
     foll.put()
+
+
+def submit_tweet(tw, uik):
+    Bookmarks.get_or_insert(tw.id_str, parent=uik,
+                            title=tw.user.screen_name,
+                            domain=tw.user.screen_name,
+                            comment=tw.text)
 
 
 def feed_digest(feedk):
@@ -104,6 +118,7 @@ class Activity(RequestHandler):
 
     def get(self):
         for ui in UserInfo.query():
+            defer(cron_delete, ui.key, _queue='worker')
             defer(cron_trash, ui.key, _queue='worker')
             if ui.daily is True:
                 defer(activity_digest, ui.key, _queue='worker')
@@ -125,12 +140,25 @@ def activity_digest(uik):
                   to=email, body=html, html=html)
 
 
-def cron_trash(uik):
+def cron_delete(uik):
     from google.appengine.ext.ndb import delete_multi
+    delete = Bookmarks.query(Bookmarks.stato == 'delete',
+                             ancestor=uik).fetch(200, keys_only=True)
+    delete_multi(delete)
+
+
+def cron_trash(uik, cursor=None):
+    from google.appengine.ext.ndb import put_multi
     bmq = Bookmarks.query(Bookmarks.data < util.hours_ago(72),
-                          Bookmarks.stato == 'trash',
-                          ancestor=uik).fetch(100, keys_only=True)
-    delete_multi(bmq)
+                          Bookmarks.stato == 'trash', ancestor=uik)
+    bms, cur, more = bmq.fetch_page(50, start_cursor=cursor)
+    put_queue = []
+    for bm in bms:
+        bm.stato = 'delete'
+        put_queue.append(bm)
+    put_multi(put_queue)
+    if more:
+        defer(cron_trash, uik, cur)
 
 
 # ITERATOR
@@ -270,16 +298,16 @@ class PostViaEmail(InboundMailHandler):
         email = message.sender.split('<')[1].split('>')[0]
         url = message.bodies('text/plain').next()[1].decode().strip()
         ui = UserInfo.query(UserInfo.email == email).get()
-        defer(util.submit_bm, feedk=None, uik=ui.key,
-              title=message.subject, comment='Sent via email',
-              url=url, _queue='submit')
-
+        if ui:
+            defer(util.submit_bm, feedk=None, uik=ui.key,
+                  title=message.subject, comment='Sent via email',
+                  url=url, _queue='submit')
 
 from webapp2 import WSGIApplication, Route
 from webapp2_extras.routes import RedirectRoute, PathPrefixRoute
 app = WSGIApplication([
+    ('/_ah/mail/post@.+', PostViaEmail),
     RedirectRoute('/admin/', AdminPage, name='Admin', strict_slash=True),
-    Route('/_ah/mail/post@.*', PostViaEmail),
     Route('/_ah/login_required', AdminPage),
     PathPrefixRoute('/admin', [
         Route('/activity', Activity),
