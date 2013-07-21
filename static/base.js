@@ -16,7 +16,7 @@ function getbms(stato, domain) {
   $.get("/bms/" + stat, {
     cursor: cur,
     domain: domain
-  }, function(html) {
+  }, function (html) {
     $(".main_frame").html(html);
     update_gui();
   });
@@ -25,7 +25,7 @@ function getbms(stato, domain) {
 function update_gui() {
   $.cookie('count', 10);
   $(window).scrollTop(0);
-  $('pre code').each(function(i, e) {
+  $('pre code').each(function (i, e) {
     hljs.highlightBlock(e);
   });
   $('.comments a').attr('target', '_blank');
@@ -50,7 +50,7 @@ function update_gui() {
 function get_details(us) {
   $.get('/twitter/details', {
     us: us
-  }, function(data) {
+  }, function (data) {
     $('#favico-' + us).attr({
       heigth: '48',
       width: '48',
@@ -73,7 +73,7 @@ function edit(us) {
 
 function edit_bm(us) {
   event.preventDefault();
-  $.post('/bm/' + us, $('#edit_bm-' + us).serialize(), function(html) {
+  $.post('/bm/' + us, $('#edit_bm-' + us).serialize(), function (html) {
     $('.comment-' + us).html(html);
     edit(us);
   });
@@ -81,7 +81,7 @@ function edit_bm(us) {
 
 function search() {
   event.preventDefault();
-  $.post('/search', $('#search').serialize(), function(html) {
+  $.post('/search', $('#search').serialize(), function (html) {
     $(".main_frame").html(html);
     $(window).scrollTop(0);
     $("#more").html('');
@@ -156,7 +156,7 @@ function del_foll(id) {
   $.ajax({
     type: "delete",
     url: "/following?id=" + id
-  }).done(function() {
+  }).done(function () {
     $("#row-" + id).hide();
   });
 }
@@ -165,7 +165,7 @@ function del_feed(id) {
   $.ajax({
     type: "delete",
     url: "/feeds?id=" + id
-  }).done(function() {
+  }).done(function () {
     $("#row-" + id).hide();
   });
 }
@@ -179,6 +179,7 @@ function caratteri(val) {
 function update_setting() {
   check_box('mys');
   check_box('daily');
+  check_box('tweets');
 }
 
 function check_box(cokie) {
@@ -197,9 +198,9 @@ function save_mail(type) {
   $.ajax({
     type: type,
     url: "/save_email",
-    success: function() {
+    success: function () {
       update_setting();
     }
-  })
+  });
 }
 $('#bookmarklet').tooltip();

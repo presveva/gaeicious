@@ -17,11 +17,6 @@ indexes:
   - name: data
     direction: desc
 
-# - kind: Feeds
-#   properties:
-#   - name: ui
-#   - name: title
-
 - kind: Feeds
   properties:
   - name: ui

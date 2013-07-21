@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 from . import util
 from webapp2 import RequestHandler
+from datetime import datetime
 from google.appengine.ext.deferred import defer
+from google.appengine.ext.ndb import put_multi
+from google.appengine.api.mail import send_mail
 from .models import Feeds, Bookmarks, UserInfo, Following
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 
@@ -52,9 +55,7 @@ def check_feed(feedk, e=0):
     parsed = util.fetch_feed(feed.feed)
     n = len(parsed['items']) if parsed is not False else 0
     if n > 0 and feed.last_id != build_link(parsed['items'][0], feed.link):
-    # if n > 0 and feed.last_id != parsed['items'][0]['link']:
         entry = parsed['items'][e]
-        # while feed.last_id != entry['link'] and e < (n - 1):
         while feed.last_id != build_link(entry, feed.link) and e < (n - 1):
             defer(util.submit_bm, feedk=feedk, uik=feed.ui,
                   title=entry['title'], url=build_link(entry, feed.link),
@@ -64,7 +65,7 @@ def check_feed(feedk, e=0):
             entry = parsed['items'][e]
         feed.last_id = build_link(parsed['items'][0], feed.link)
         feed.put()
-        defer(feed_digest, feedk, _queue='email', _countdown=240)
+        defer(feed_digest, feedk, _queue='email', _countdown=60)
 
 
 def build_link(entry, link):
@@ -76,14 +77,14 @@ def build_link(entry, link):
 
 def check_following(follk, e=0):
     ui = UserInfo.get_by_id(follk.parent().id())
-    api = util.get_api(ui.key)
-    tweets = api.user_timeline(screen_name=follk.id())
-    while tweets[e].id_str != ui.last_id and e < 15:
-        defer(submit_tweet, tweets[e], ui.key, _queue='submit')
-        e += 1
     foll = follk.get()
-    foll.last_id = tweets[0].id_str
-    foll.put()
+    api = util.get_api(ui.key)
+    tweets = api.user_timeline(screen_name=follk.id(), exclude_replies=True, since_id=foll.last_id)
+    if len(tweets) > 0:
+        for tweet in tweets:
+            defer(submit_tweet, tweet, ui.key, _queue='submit')
+        foll.last_id = tweets[0].id_str
+        foll.put()
 
 
 def submit_tweet(tw, uik):
@@ -94,15 +95,13 @@ def submit_tweet(tw, uik):
 
 
 def feed_digest(feedk):
-    from google.appengine.ext.ndb import put_multi
-    from google.appengine.api.mail import send_mail
     bmq = Bookmarks.query(Bookmarks.feed == feedk, Bookmarks.stato == 'inbox')
     feed = feedk.get()
     email = feed.ui.get().email
     if feed.notify == 'digest' and email is not None and bmq.count() > 4:
         title = '[%s] Digest for %s' % (util.brand, feed.title)
         template = util.env.get_template('digest.html')
-        html = template.render({'bmq': bmq, 'title': title})
+        html = template.render({'bmq': bmq,'tweets': [], 'title': title})
         sender = 'bm@%s.appspotmail.com' % util.brand
         send_mail(sender=sender, subject=title,
                   to=email, body=html, html=html)
@@ -122,11 +121,32 @@ class Activity(RequestHandler):
             defer(cron_trash, ui.key, _queue='worker')
             if ui.daily is True:
                 defer(activity_digest, ui.key, _queue='worker')
+            if ui.tweets is True:
+                defer(twitter_digest, ui.key, _queue='worker')
+
+
+def twitter_digest(uik):
+    bmq = Bookmarks.query(Bookmarks.stato == 'inbox', ancestor=uik)
+    email = uik.get().email
+    if bmq.count() > 4 and email is not None:
+        put_queue = []
+        for bm in bmq:
+            try:
+                int(bm.key.id())
+                bm.stato = 'trash'
+                put_queue.append(bm)
+            except ValueError:
+                pass
+        title = '[%s] Last 6h tweets: %s' % (util.brand, util.dtf(datetime.now()))
+        template = util.env.get_template('digest.html')
+        html = template.render({'bmq': [],'tweets': put_queue, 'title': title})
+        sender = 'bm@%s.appspotmail.com' % util.brand
+        send_mail(sender=sender, subject=title,
+                  to=email, body=html, html=html)
+        put_multi(put_queue)
 
 
 def activity_digest(uik):
-    from google.appengine.api.mail import send_mail
-    from datetime import datetime
     bmq = Bookmarks.query(Bookmarks.stato == 'inbox',
                           Bookmarks.data > util.hours_ago(6),
                           ancestor=uik)
@@ -134,7 +154,7 @@ def activity_digest(uik):
     if bmq.get() is not None and email is not None:
         title = '[%s] Last 6 hours inbox: %s' % (util.brand, util.dtf(datetime.now()))
         template = util.env.get_template('digest.html')
-        html = template.render({'bmq': bmq, 'title': title})
+        html = template.render({'bmq': bmq,'tweets': [], 'title': title})
         sender = 'bm@%s.appspotmail.com' % util.brand
         send_mail(sender=sender, subject=title,
                   to=email, body=html, html=html)

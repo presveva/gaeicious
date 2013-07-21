@@ -15,17 +15,24 @@
 
 <hr>
 <label><b>Feeds</b></label>
-<dl> Add your prefered feeds to <a href="/feeds" >feeds page</a> and {{brand}} submit each new post for you. </dl>
+<div> Add your prefered feeds to <a href="/feeds" >feeds page</a> and {{brand}} submit each new post for you. </div>
+<div> <form action="/feeds" method="post">
+  <input type="text" class="input input-xlarge" name="url" placeholder="Add feed">
+</form> </div>
+<hr>
+<label><b>Tweets</b></label>
+<div> Add your prefered Twitters to <a href="/following" >following page</a> and {{brand}} submit each new tweet for you. </div>
+<div> <form action="/following" method="post">
+  <input type="text" class="input input-xlarge" name="username" placeholder="twitter username">
+</form> </div>
 <hr>
 <label><b>Bookmark via email</b></label>
-<table>
-  <tbody class="">
-    <tr> <td><b>From:</b>   </td> <td>the email used in {{brand}}   </td> </tr>
-    <tr> <td><b>To:</b>     </td> <td>post@{{brand}}.appspotmail.com</td> </tr>
-    <tr> <td><b>Subject:</b></td> <td>the bookmark's <em>title</em> </td> </tr>
-    <tr> <td><b>Body:</b>   </td> <td>the bookmark's <em>link</em>  </td> </tr>
-  </tbody>
-</table>
+<table> <tbody>
+  <tr> <td><b>From:</b>   </td> <td>the email used in {{brand}}   </td> </tr>
+  <tr> <td><b>To:</b>     </td> <td>post@{{brand}}.appspotmail.com</td> </tr>
+  <tr> <td><b>Subject:</b></td> <td>the bookmark's <em>title</em> </td> </tr>
+  <tr> <td><b>Body:</b>   </td> <td>the bookmark's <em>link</em>  </td> </tr>
+</tbody> </table>
 <hr>
 <form action="{{upload_url}}" method="POST" enctype="multipart/form-data">
 <label><b>Import from delicious file (delicious.html)</b></label>
@@ -41,7 +48,6 @@
 
 <div class="span6">
   <legend>Setting</legend>
-  <!-- mail yourself -->
   <form class="form-inline" action="/save_email" method="post">
     <label><b>Email</b></label>
       <input type="text" name="email" placeholder="{{ui.email}}">
@@ -49,11 +55,21 @@
   </form>
   <hr>
   {% if ui.email != None %}
+  <!-- mail yourself -->
   <form>
     <label><b>Mail yourself</b></label>
     <span class="help-block">If enabled you will receive an email for each new bookmark.</span>
     <label class="checkbox">
       <input type="checkbox" id="mys-check" onclick="save_mail('get')"><p id="mys-text"></p>
+    </label>
+  </form>
+  <hr>
+  <!-- twitter digest -->
+  <form>
+    <label><b>Twitter digest</b></label>
+    <span class="help-block">If enabled you will receive an email for new tweets.</span>
+    <label class="checkbox">
+      <input type="checkbox" id="tweets-check" onclick="save_mail('delete')"><p id="tweets-text"></p>
     </label>
   </form>
   <hr>

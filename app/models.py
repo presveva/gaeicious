@@ -4,16 +4,16 @@ from google.appengine.ext import ndb
 from google.appengine.api import search
 
 
-class UserInfo(ndb.Model):
+class UserInfo(ndb.Expando):
     access_k = ndb.StringProperty()
     access_s = ndb.StringProperty()
     db_key = ndb.StringProperty()
     db_secret = ndb.StringProperty()
     email = ndb.StringProperty()
-    last_id = ndb.StringProperty()
-    data = ndb.DateTimeProperty(auto_now=True)
+    tweets = ndb.BooleanProperty(default=False)
     mys = ndb.BooleanProperty(default=False)
     daily = ndb.BooleanProperty(default=False)
+    data = ndb.DateTimeProperty(auto_now=True)
     delicious = ndb.BlobKeyProperty()
 
 
@@ -23,9 +23,7 @@ class Feeds(ndb.Model):
     title = ndb.StringProperty()
     link = ndb.StringProperty(indexed=False)
     data = ndb.DateTimeProperty(auto_now=True)
-    notify = ndb.StringProperty(
-        choices=['web', 'email', 'digest'],
-        default="web")
+    notify = ndb.StringProperty(choices=['web', 'email', 'digest'], default="web")
     last_id = ndb.StringProperty()
 
 
@@ -38,8 +36,7 @@ class Bookmarks(ndb.Model):
     title = ndb.StringProperty(indexed=False)
     comment = ndb.TextProperty(indexed=False)
     stato = ndb.StringProperty(
-        choices=['inbox', 'trash', 'archive', 'share', 'star', 'delete'],
-        default="inbox")
+        choices=['inbox', 'trash', 'archive', 'share', 'star', 'delete'], default="inbox")
     data = ndb.DateTimeProperty(auto_now=True)
     feed = ndb.KeyProperty(kind=Feeds)
     domain = ndb.StringProperty()  # 'screen_name' for tweets

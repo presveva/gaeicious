@@ -183,6 +183,14 @@ class SaveEmail(BaseHandler):
         ui.daily = daily
         ui.put()
 
+    @util.login_required
+    def delete(self):
+        ui = self.ui
+        tweets = True if ui.tweets is False else False
+        self.response.set_cookie('tweets', str(tweets))
+        ui.tweets = tweets
+        ui.put()
+
 
 class Bookmark(BaseHandler):
 
