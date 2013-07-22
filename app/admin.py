@@ -128,15 +128,17 @@ class Activity(RequestHandler):
 def twitter_digest(uik):
     bmq = Bookmarks.query(Bookmarks.stato == 'inbox', ancestor=uik)
     email = uik.get().email
-    if bmq.count() > 4 and email is not None:
+    if email is not None:
         put_queue = []
+        follows = [f.id() for f in Following.query().fetch(keys_only=True)]
         for bm in bmq:
-            try:
-                int(bm.key.id())
-                bm.stato = 'trash'
-                put_queue.append(bm)
-            except ValueError:
-                pass
+            if bm.domain in follows:
+                try:
+                    int(bm.key.id())
+                    bm.stato = 'trash'
+                    put_queue.append(bm)
+                except ValueError:
+                    pass
         title = '[%s] Last 6h tweets: %s' % (util.brand, util.dtf(datetime.now()))
         template = util.env.get_template('digest.html')
         html = template.render({'bmq': [],'tweets': put_queue, 'title': title})

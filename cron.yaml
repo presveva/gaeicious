@@ -1,7 +1,7 @@
 cron:
-- description: check new posts
+- description: check new posts and tweets
   url: /admin/check
-  schedule: every 1 hours synchronized
+  schedule: every 30 mins synchronized
 
 - description: per user activity
   url: /admin/activity

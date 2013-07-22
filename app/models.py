@@ -47,10 +47,10 @@ class Bookmarks(ndb.Model):
 
     @classmethod
     def _pre_delete_hook(cls, key):
+        index = search.Index(name=key.parent().id())
         try:
-            index = search.Index(name=key.parent().id())
             index.delete(key.urlsafe())
-        except search.Error:
+        except ValueError:
             pass
 
     def _post_put_hook(self, future):

@@ -65,8 +65,7 @@ class Main_Frame(BaseHandler):
     def get(self, stato):
         from .models import Bookmarks
         from google.appengine.ext.ndb import Cursor
-        follqry = Following.query().fetch(keys_only=True)
-        follows = [f.id() for f in follqry]
+        follows = [f.id() for f in Following.query().fetch(keys_only=True)]
         bmq = Bookmarks.userbmq(self.ui.key, stato)
         start_cursor = Cursor(urlsafe=self.request.get('cursor'))
         bms, cur, more = bmq.fetch_page(10, start_cursor=start_cursor)
@@ -128,7 +127,8 @@ class FeedsPage(BaseHandler):
                            link=d['channel']['link'],
                            last_id=d['items'][2]['link']).put()
             defer(check_feed, feed_k, _queue='check')
-        self.redirect('/feeds')
+        # self.redirect('/feeds')
+        self.redirect(self.request.referer)
 
     @util.login_required
     def delete(self):
@@ -149,7 +149,8 @@ class FollowingPage(BaseHandler):
         username = self.request.get('username')
         foll = Following.get_or_insert(username, parent=self.ui.key)
         defer(check_following, foll.key)
-        self.redirect('/following')
+        self.redirect(self.request.referer)
+        # self.redirect('/following')
 
     @util.login_required
     def delete(self):
