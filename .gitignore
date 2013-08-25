@@ -1,5 +1,7 @@
-tweepy/
-dropbox/
+libs/tweepy/
+libs/dropbox/
+libs/feedparser.py
+libs/bottle.py
 bat/
 app/secret.py
 bat.txt
