@@ -20,7 +20,7 @@ function getbms(stato, domain) {
     $(".main_frame").html(html);
     update_gui();
   });
-};
+}
 
 function update_gui() {
   $.cookie('count', 10);
@@ -41,11 +41,11 @@ function update_gui() {
   if ($.cookie('stato') === 'trash') {
     $("#empty_trash").slideToggle();
     $("#twitter_form").hide();
-    twitter_form
+    // twitter_form();
   } else {
     $("#empty_trash").hide();
   }
-};
+}
 
 function get_details(us) {
   $.get('/twitter/details', {
@@ -102,8 +102,7 @@ function status(us, btn) {
     var addOrRemove = Boolean($(".share-" + us).hasClass('icon-eye-open'));
     if (!addOrRemove) {
       $(".share-" + us).toggleClass('icon-eye-open');
-      $(".link-" + us).html('<a class="btn btn-small btn-link" href="/bm/' +
-        us + '" target="_blank">link</a>');
+      $(".link-" + us).html('<a class="btn btn-small btn-link" href="/bm/' + us + '" target="_blank">link</a>');
     } else {
       $(".share-" + us).toggleClass('icon-eye-close');
       $(".link-" + us).html('');

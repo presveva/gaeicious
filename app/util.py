@@ -47,8 +47,6 @@ def fetch_url(url):
                                 allow_truncated=True, deadline=60)
         if result.status_code == 200:
             final_url = result.final_url if result.final_url else url
-            # content = result.content
-            # size = float(result.headers['Content-Length'])
             return final_url, result.content
         else:
             return url, None

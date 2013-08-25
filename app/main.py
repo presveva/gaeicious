@@ -121,11 +121,12 @@ class FeedsPage(BaseHandler):
         q = Feeds.query(Feeds.ui == self.ui.key, Feeds.feed == feed)
         if q.get() is None:
             d = parse(str(feed))
+            n = len(d['items'])
             feed_k = Feeds(ui=self.ui.key, feed=feed,
                            title=d.feed.title if 'title' in d.feed else d[
                                'channel']['title'],
                            link=d['channel']['link'],
-                           last_id=d['items'][2]['link']).put()
+                           last_id=d['items'][n - 1]['link']).put()
             defer(check_feed, feed_k, _queue='check')
         # self.redirect('/feeds')
         self.redirect(self.request.referer)
