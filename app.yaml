@@ -29,27 +29,27 @@ handlers:
   mime_type: image/x-icon
 
 - url: /_ah/login_required
-  script: app.admin.app
+  script: admin.app
 
 - url: /_ah/mail/.+
-  script: app.admin.app
+  script: admin.app
   login: admin
 
 - url: /admin.*
-  script: app.admin.app
+  script: admin.app
   login: admin
 
 - url: /*
-  script: app.main.app
+  script: main.app
 
 - url: /bm/.*
-  script: app.main.app
+  script: main.app
 
 - url: /twitter.*
-  script: app.twitter.app
+  script: twitter.app
 
 - url: /.*
-  script: app.main.app
+  script: main.app
 
 libraries:
 - name: jinja2

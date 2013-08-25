@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # import logging
 from os import environ
-from . import secret
-from .models import Bookmarks, UserInfo
+import secret
+from models import Bookmarks, UserInfo
 from jinja2 import Environment, FileSystemLoader
 from google.appengine.api import urlfetch, app_identity
 from google.appengine.ext.deferred import defer
@@ -11,7 +11,7 @@ from google.appengine.ext.blobstore import create_upload_url
 from google.appengine.ext.webapp import blobstore_handlers
 from urlparse import urlparse, parse_qs
 from HTMLParser import HTMLParser
-from libs.feedparser import parse
+from feedparser import parse
 from tweepy import OAuthHandler, API
 from dropbox import session, client
 

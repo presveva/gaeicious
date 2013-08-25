@@ -1,12 +1,12 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-from . import util
+import util
 from webapp2 import RequestHandler
 from datetime import datetime
 from google.appengine.ext.deferred import defer
 from google.appengine.ext.ndb import put_multi
 from google.appengine.api.mail import send_mail
-from .models import Feeds, Bookmarks, UserInfo, Following
+from models import Feeds, Bookmarks, UserInfo, Following
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 
 

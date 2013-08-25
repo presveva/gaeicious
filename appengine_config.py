@@ -1,3 +1,7 @@
+import sys
+
+sys.path.insert(0, './libs')
+sys.path.insert(0, './app')
 # appstats_MAX_STACK = 30
 appstats_SHELL_OK = True
 # appstats_MAX_LOCALS = 0

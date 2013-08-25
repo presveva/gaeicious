@@ -1,11 +1,11 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-from . import util
+import util
 from webapp2 import RequestHandler, WSGIApplication
 from google.appengine.ext.deferred import defer
 from google.appengine.ext.ndb import Key
-from .models import Feeds, Following, UserInfo
-from .admin import check_feed, check_following
+from models import Feeds, Following, UserInfo
+from admin import check_feed, check_following
 
 
 class BaseHandler(RequestHandler):
@@ -37,7 +37,6 @@ class BaseHandler(RequestHandler):
 class HomePage(BaseHandler):
 
     def get(self):
-        from .models import UserInfo
         oauth_verifier = self.request.get("oauth_verifier")
         if self.ui is not None:
             util.auth.set_access_token(self.ui.access_k, self.ui.access_s)
@@ -63,7 +62,7 @@ class Main_Frame(BaseHandler):
 
     @util.login_required
     def get(self, stato):
-        from .models import Bookmarks
+        from models import Bookmarks
         from google.appengine.ext.ndb import Cursor
         follows = [f.id() for f in Following.query().fetch(keys_only=True)]
         bmq = Bookmarks.userbmq(self.ui.key, stato)
@@ -116,7 +115,7 @@ class FeedsPage(BaseHandler):
 
     @util.login_required
     def post(self):
-        from libs.feedparser import parse
+        from feedparser import parse
         feed = self.request.get('url')
         q = Feeds.query(Feeds.ui == self.ui.key, Feeds.feed == feed)
         if q.get() is None:

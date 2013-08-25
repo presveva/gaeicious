@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
-from .main import BaseHandler
-from .util import api, login_required, get_api
+from main import BaseHandler
+from util import api, login_required, get_api
 from webapp2 import WSGIApplication, Route, RequestHandler
 
 
